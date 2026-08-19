@@ -34,7 +34,7 @@ The fork is the maintainability bug (same class as `enrich_llm.py` prompt drift)
 
 ## Key decisions and rationale
 
-**D1 — Isolation wins over self-critique.** innovation-mode's Phases 4–6 have the author filter its own output. v2 moves all filtering to the isolated critic. Rationale: an author that knows the filter optimizes for the filter; that is the anchoring failure this protocol exists to defeat. Consequence: the innovator's brief explicitly forbids self-censoring against the detector.
+**D1 — Isolation wins over self-critique.** innovation-mode's Phases 4–6 have the author filter its own output. v2 moves all filtering to the isolated critic. Rationale: an author that knows the filter optimizes for the filter; that is the anchoring failure this protocol exists to defeat. Consequence: the innovator's brief explicitly forbids self-censoring against the detector. Boundary: the workflow orchestrator may name the existence of downstream stages (a critique occurs, a scored gate occurs); the isolation requirement applies to their criteria — detector tests, probe lists, and dimension definitions stay in role files loaded only at their stage.
 
 **D2 — The fake-novelty detector becomes the critic's instrument.** v1's critic already audits `fake_novelty` but gives no operational test. The 7 named tests operationalize it. The kill list becomes a critic output field with the 8–15-of-30 calibration.
 

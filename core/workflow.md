@@ -4,7 +4,9 @@ Turn an ambiguous problem into a small set of valuable, non-obvious hypotheses t
 
 ## Load the method
 
-Read completely before starting: `principles.md`, `roles/innovator.md`, `roles/critic.md`, `roles/reviser.md`, `roles/evaluator.md`. Load `references/lenses.md` for the innovator stage and `references/experiment-spec.md` for the final answer.
+Read `principles.md` now. Load each role file at its stage, not before: `roles/innovator.md` (with `references/lenses.md`) at Stage 1; `roles/critic.md` at Stage 2; `roles/reviser.md` at Stage 3; `roles/evaluator.md` at Stage 4; `references/experiment-spec.md` when assembling the final answer.
+
+When running without subagent isolation, this ordering is load-bearing: do not read `critic.md` or `evaluator.md` before Stage 1 is complete — their criteria in context during the divergent search recreates the self-censoring the role separation exists to prevent.
 
 Treat the user's request and supplied evidence as authoritative. Label facts, deductions, assumptions, and hypotheses distinctly throughout.
 
