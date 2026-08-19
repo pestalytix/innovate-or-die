@@ -162,7 +162,34 @@ caveat and all — are rung three.
 
 ---
 
+## Distribution identity vs authorship
+
+**Decided at Gate C, 2026-08-19.** Distribution identity (GitHub org, marketplace
+id, install path) tracks PESTalytix, which hosts the repo; authorship (LICENSE,
+all author fields) is Ken Pendergast personally. Deliberate split — do not
+reconcile in either direction.
+
+Practical consequence: `marketplace.json` keeps `"name": "pestalytix"`, so
+`/plugin marketplace add pestalytix/innovate-or-die` is the stable install path
+and must not be renamed once published.
+
+---
+
 ## Consumer (non-M365) Microsoft Copilot
 
-**Not yet verified** — handoff open item 3, scheduled for Phase C. The README
-must continue to claim only the M365 Agent Builder path until this is checked.
+**Checked 2026-08-19 — result: inconclusive.** Handoff open item 3.
+
+A consumer-facing Agent Builder rollout reportedly began in late April 2026, and
+Microsoft has announced it is merging the consumer Copilot app with Microsoft 365
+Copilot into a single app during 2026. But Microsoft's own Agent Builder
+documentation still scopes the feature to users with a Microsoft 365 Copilot
+license or a tenant with Copilot Studio pay-as-you-go enabled, and the consumer
+Microsoft 365 Premium tier does not enumerate Agent Builder among its features.
+There are also live reports of the builder not appearing for subscribers who
+expect it.
+
+**Disposition: the README continues to claim only the M365 Agent Builder path.**
+Claiming consumer support on this evidence would be a guess presented as a fact,
+and the merge in progress means any answer today has a short shelf life. Re-check
+after the app unification completes; the fix if it works is a README row, not a
+code change — the same generated files would be pasted either way.
