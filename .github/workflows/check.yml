@@ -1,0 +1,14 @@
+name: check
+
+on: [push, pull_request]
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Generated trees match core/
+        run: python3 build/assemble.py --check

@@ -1,0 +1,168 @@
+# Compatibility notes
+
+Every fact below was verified against a live source on the date shown, not
+recalled. Re-verify before trusting any row older than a frontier release or a
+host UI change (see the maintenance policy in the handoff).
+
+**Verification method matters.** Where a vendor doc and a shipped validator
+disagree, the validator wins and the row says so.
+
+---
+
+## Agent Skills (`SKILL.md`) — agentskills.io
+
+**Verified 2026-08-19** · source: <https://agentskills.io/specification>
+
+| Fact | Value |
+|---|---|
+| Allowed frontmatter keys | `name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools` — **and nothing else** |
+| Required | `name`, `description` |
+| `name` | 1–64 chars; lowercase `a-z0-9` and `-`; no leading/trailing hyphen; no `--`; **must match parent directory name** |
+| `description` | 1–1024 chars |
+| `compatibility` | max 500 chars (omitted — this skill has no environment requirements) |
+| `metadata` | map of string keys to **string** values |
+| Frontmatter position | must start at byte 0 with `---` |
+| Body budget | < 5000 tokens recommended; keep `SKILL.md` under 500 lines |
+| File references | relative from skill root, one level deep |
+| Reference validator | `skills-ref validate ./my-skill` (github.com/agentskills/agentskills) — not run here; conformance is asserted by `build/assemble.py` instead |
+
+**Consequence for this repo:** `core/skill-meta.yaml` carries `version` and a
+nested `author` map. Neither is a legal top-level `SKILL.md` key, so
+`assemble.py` maps them into `metadata` as quoted strings. Our generated
+values: name 15 chars, description 757 chars — both well inside the limits.
+
+---
+
+## Claude Code plugin + marketplace
+
+**Verified 2026-08-19** · sources: `claude plugin validate` from Claude Code
+**2.1.218** (authoritative), the official marketplace manifest on disk at
+`~/.claude/plugins/marketplaces/claude-plugins-official/`, and
+<https://code.claude.com/docs/en/plugins-reference> (docs page — **partly wrong**, see below).
+
+| Fact | Value |
+|---|---|
+| Plugin manifest path | `.claude-plugin/plugin.json` |
+| Marketplace manifest path | `.claude-plugin/marketplace.json` |
+| `plugin.json` required | `name` only |
+| `skills` field | **adds to** the default `skills/` dir (does not replace it) |
+| `author` | string, or `{name, email?, url?}` |
+| Marketplace **`owner`** | **REQUIRED**, and must be an object |
+| Marketplace `plugins[].source` | a **relative-path string** (e.g. `"."`) or an object whose own `source` field names the type (`url`, `git-subdir`, …) |
+| `sourceDetails` | **does not exist** — the validator reports it as an unknown field |
+| Validation status | `claude plugin validate .` and `--strict` both pass for plugin **and** marketplace |
+
+> **The published docs page is wrong on two counts.** It omits the required
+> `owner` field entirely and documents `source` as a type string paired with a
+> `sourceDetails` object. Building to the docs produced two hard validation
+> errors and two unknown-field warnings. The shipped validator plus the
+> official marketplace manifest are the real schema. This is exactly the failure
+> the handoff's "do not trust manifest schemas from memory" rule guards against
+> — and it turns out the vendor's own docs need the same distrust.
+
+---
+
+## Codex plugin
+
+**Verified 2026-08-19** · source: OpenAI Codex plugin documentation and the
+`plugin-creator` sample skill in `openai/codex`
+
+| Fact | Value |
+|---|---|
+| Manifest path | `.codex-plugin/plugin.json` — required, and the **only** file that belongs inside `.codex-plugin/` |
+| `name` | kebab-case: lowercase letters, numbers, hyphens |
+| `skills` | points at a `skills/` directory; each skill is its own folder containing `SKILL.md` |
+| Everything else | lives at the plugin root, not under `.codex-plugin/` |
+
+No official JSON-schema validator was found for this manifest. The `interface`
+block is carried forward from the v1 manifest unchanged.
+
+---
+
+## Repo-level skill discovery paths
+
+**Verified 2026-08-19** · source: GitHub Docs, *Adding agent skills for GitHub
+Copilot*
+
+All three of `.github/skills/`, `.claude/skills/`, and `.agents/skills/` are
+valid repository-level skill discovery directories, each skill in its own
+subdirectory. This confirms the handoff's target layout: the generated copies
+under `.agents/skills/` and `.github/skills/` are discovered natively.
+
+---
+
+## VS Code / Visual Studio custom agents (`.agent.md`)
+
+**Verified 2026-08-19** · source:
+<https://code.visualstudio.com/docs/agent-customization/custom-agents>
+
+| Fact | Value |
+|---|---|
+| Extension | `.agent.md` |
+| Workspace locations | `.github/agents/` (default), `.claude/agents/`, or paths set via `chat.agentFilesLocations` |
+| User profile location | `~/.copilot/agents` |
+| Frontmatter keys | `description`, `name`, `argument-hint`, `tools`, `agents`, `model`, `user-invocable`, `disable-model-invocation`, `target`, `mcp-servers`, `handoffs`, `hooks` |
+| Required keys | **none** — `name` defaults to the filename |
+| `handoffs` entry | `{label, agent, prompt, send?, model?}` |
+| Body | Markdown; `#tool:<name>` references tools |
+
+We emit only `name` and `description`. `tools`, `model`, and `handoffs` are
+deliberately omitted: the core protocol is model-agnostic (ADR-001 D8), and
+pinning a model or tool set in a generated adapter would violate that.
+`handoffs` is a candidate for a future revision — it could automate the
+fresh-chat-per-role sequence the orchestrator currently instructs by hand.
+
+---
+
+## Flattened web targets — instruction character budgets
+
+**Verified 2026-08-19**
+
+| Target | Limit | Confidence | Source |
+|---|---|---|---|
+| M365 Copilot Agent Builder — Instructions | **8,000** | **Verified** | Microsoft Learn, *Build agents with Agent Builder*, doc dated 2026-05-26. Same table: Name 30 chars, Description 1,000 chars |
+| ChatGPT Custom GPT — Instructions | 8,000 (assumed) | **NEEDS VERIFICATION** | No first-party OpenAI page states this. The 8,000 figure comes only from secondary sources and must not be assumed — confirm by paste test in the GPT builder before Phase E |
+| Gemini Gem — Instructions | **unknown** | **UNVERIFIED** | Google's own Gems help page states **no** limit. Third-party sources conflict badly: ~4,000 vs 20,000–30,000. Build uses 8,000 as a conservative placeholder and labels the warning `UNVERIFIED` |
+| ChatGPT custom instructions (not GPTs) | 5,000 paid / 1,500 free | Verified, secondary | Raised from 1,500 on 2026-07-15. Not used by this project — recorded to prevent confusion with the Custom GPT field |
+
+**Open, both blocking Phase E:** neither the Gemini Gem limit nor the ChatGPT
+Custom GPT limit has a first-party source. Each is settled by one paste test in
+the respective builder. Only the M365 Agent Builder cap (8,000) is confirmed
+first-party.
+
+### Loader / knowledge split — fidelity caveat
+
+Web targets emit three files per target: `-instructions.md` (preamble +
+principles + workflow, sized to fit the cap), `-knowledge.md` (role briefs,
+lens bank, experiment spec, uploaded as an attachment/knowledge source), and
+`-fallback.md` (everything inlined, knowingly over budget, for hosts that take
+no attachment).
+
+**Knowledge-file access is retrieval-mediated on some hosts.** A knowledge or
+file-search attachment is not guaranteed to be loaded verbatim into context the
+way an instructions field is: the host may chunk it, embed it, and return only
+the passages its retriever judges relevant to the current turn. Consequences for
+this protocol:
+
+- A role brief may arrive **partially** — the quota lines (30 candidates, 10
+  assumptions, 8 lenses) are exactly the kind of terse enumerated text that
+  retrieval fragments.
+- The instructions file therefore names each role and its stage explicitly, so
+  the model asks for the right section rather than relying on the retriever to
+  volunteer it.
+- Where a host offers both, prefer pasting `-fallback.md` in full over relying
+  on retrieval, accepting the over-budget truncation risk instead. Which failure
+  is worse is host-specific and untested — this is a known open question, not a
+  settled recommendation.
+
+The three-rung fidelity ladder in the README should state this: agentic hosts
+with real subagent isolation are rung one; Copilot `.agent.md` profiles with
+manual fresh-chat-per-role are rung two; flattened web variants — retrieval
+caveat and all — are rung three.
+
+---
+
+## Consumer (non-M365) Microsoft Copilot
+
+**Not yet verified** — handoff open item 3, scheduled for Phase C. The README
+must continue to claim only the M365 Agent Builder path until this is checked.

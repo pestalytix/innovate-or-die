@@ -1,9 +1,10 @@
 {
   "name": "innovate-or-die",
-  "version": "1.0.0",
-  "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems.",
+  "version": "2.0.0",
+  "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search.",
   "author": {
-    "name": "Innovate or Die contributors"
+    "name": "Ken Pendergast",
+    "url": "https://kenpendergast.com"
   },
   "license": "MIT",
   "keywords": [
@@ -17,8 +18,8 @@
   "interface": {
     "displayName": "Innovate or Die",
     "shortDescription": "Find bold ideas that survive reality checks",
-    "longDescription": "A staged innovation workflow that generates unconventional hypotheses, attacks them independently, revises the survivors, and converts the strongest ideas into reality-grounded tests.",
-    "developerName": "Innovate or Die contributors",
+    "longDescription": "A staged innovation workflow that generates unconventional hypotheses, attacks them in isolation, revises the survivors, and converts the strongest ideas into cheap falsifiable tests.",
+    "developerName": "Ken Pendergast",
     "category": "Productivity",
     "capabilities": [
       "Interactive"

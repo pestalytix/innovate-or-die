@@ -1,0 +1,28 @@
+{
+  "name": "pestalytix",
+  "description": "Plugins by Ken Pendergast.",
+  "owner": {
+    "name": "Ken Pendergast",
+    "url": "https://kenpendergast.com"
+  },
+  "plugins": [
+    {
+      "name": "innovate-or-die",
+      "displayName": "Innovate or Die",
+      "version": "2.0.0",
+      "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search.",
+      "author": {
+        "name": "Ken Pendergast",
+        "url": "https://kenpendergast.com"
+      },
+      "homepage": "https://kenpendergast.com",
+      "license": "MIT",
+      "keywords": [
+        "innovation",
+        "strategy",
+        "critical-thinking"
+      ],
+      "source": "."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "innovate-or-die",
+  "displayName": "Innovate or Die",
+  "version": "2.0.0",
+  "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search.",
+  "author": {
+    "name": "Ken Pendergast",
+    "url": "https://kenpendergast.com"
+  },
+  "homepage": "https://kenpendergast.com",
+  "repository": "https://github.com/pestalytix/innovate-or-die",
+  "license": "MIT",
+  "keywords": [
+    "innovation",
+    "strategy",
+    "critical-thinking",
+    "assumption-testing",
+    "experimentation"
+  ],
+  "skills": "./skills/"
+}
