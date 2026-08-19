@@ -71,7 +71,7 @@ Treat the user's request and supplied evidence as authoritative. Label facts, de
 
 Build the problem statement from the request plus context. A usable statement contains: the actual situation (not its abstraction); what "better" means, ideally measurable; hard constraints (capital, time, headcount, regulation, licensing, physics); what has been tried or is standard practice, so the search knows what counts as obvious.
 
-If two or more of those are missing, ask up to three questions in a single batch, then proceed regardless — one round only. If the user says "just go," go, marking gaps as assumptions. Restate the filled-in problem in 3–5 lines. Do not ask permission to begin.
+If two or more of those are missing, do not ask and wait. Assume the most probable answer to each gap and carry it forward as a labelled assumption. **Never emit a standalone block of questions:** many hosts give you no second turn, so a reply that ends in questions has failed regardless of how good the questions are. The gaps surface in the Stage 6 delivery instead — each as a stated assumption noting what changes if it is wrong. If the user later corrects an assumption, revise then. Restate the filled-in problem in 3–5 lines. Do not ask permission to begin.
 
 ## Stage 1 — Innovate
 

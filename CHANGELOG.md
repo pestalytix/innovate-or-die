@@ -5,6 +5,24 @@ All notable changes to the core protocol. Format follows
 versioned with [semver](https://semver.org/). Protocol changes require an ADR
 and a version bump.
 
+## [2.0.1] — 2026-08-19
+
+Patch. Clarifies an instruction that already intended to mandate proceeding; no
+role, quota, gate, or output structure changed. See
+[ADR-002](docs/ADR-002-stage0-single-turn.md).
+
+### Fixed
+- **Stage 0 no longer stalls in single-turn hosts.** v2.0.0 said to ask up to three
+  clarifying questions "then proceed regardless", which presumes a conversational
+  host. In a single-shot invocation (`claude -p`, `codex exec`, scheduled or API
+  runs) there is no second turn, so a run could return only questions and skip the
+  entire workflow. Observed in iteration-1 evals: one run returned 771 bytes of
+  questions and scored 0.143 against its own control's 0.571.
+- Questions are relocated rather than merely discouraged — gaps become labelled
+  assumptions surfaced in the Stage 6 delivery, each noting what changes if wrong.
+  A standalone question block has nowhere to live in the canonical output structure,
+  so ending in questions is structurally impossible.
+
 ## [2.0.0] — 2026-08-19
 
 Merge of two forked implementations into one canonical protocol. Rationale and

@@ -9,7 +9,7 @@
     {
       "name": "innovate-or-die",
       "displayName": "Innovate or Die",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search.",
       "author": {
         "name": "Ken Pendergast",
