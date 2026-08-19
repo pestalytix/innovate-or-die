@@ -60,6 +60,81 @@ protocol changes are a new ADR and a semver bump.
 
 ## Gemini
 
-Not yet runnable: the Gemini CLI is not installed on the build machine
-(handoff open item 2, still open as of 2026-08-19). Tiers to be added here when
-it is available.
+**CLI installed 2026-08-19** (`gemini` 0.56.0). Headless mode is `-p/--prompt`;
+`-o/--output-format` accepts `text`, `json`, `stream-json`; model is `-m/--model`.
+
+**BLOCKED ON AUTH.** The CLI is present but unauthenticated — no
+`~/.gemini/settings.json`, and none of `GEMINI_API_KEY`,
+`GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_GENAI_USE_GCA` are set. A run returns:
+
+> Please set an Auth method in your `~/.gemini/settings.json` or specify one of
+> the following environment variables before running: `GEMINI_API_KEY`,
+> `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_GENAI_USE_GCA`
+
+There is no non-interactive login subcommand. Auth requires either an interactive
+`gemini` session completing OAuth (the Google Code Assist path, which is how a
+Gemini subscription authenticates) or an API key in the environment. Both are the
+operator's to perform.
+
+### Tier pins — PROVISIONAL, not yet confirmed against the live CLI
+
+Google's lineup as of 2026-08 runs Pro (most capable) / Flash (fast, balanced) /
+Flash-Lite (cheapest), with Gemini 3 current and 2.5 as the proven fallback.
+Published docs did **not** give a complete list of CLI-accepted model strings, and
+the CLI's own `/model` command is the authoritative source — which needs auth.
+
+| Tier | Provisional pin | Status |
+|---|---|---|
+| Workhorse | Flash-tier string | **unconfirmed — must be read from `/model`** |
+| Flagship | Pro-tier string (e.g. `gemini-3.1-pro-preview`) | **unconfirmed** |
+
+Per rule 1 these are not usable pins yet: full model strings only, and a string we
+have not seen the CLI accept is a guess. **Confirm both against `/model` after auth,
+then record them here before any Gemini baseline run.**
+
+---
+
+## Reasoning effort as recorded configuration
+
+**Verified 2026-08-19:** `claude -p` exposes `--effort <level>` with levels
+**`low, medium, high, xhigh, max`**. It is a session-level control, so it applies to
+a `-p` run and to the subagents that run spawns.
+
+Effort is part of a run's configuration and is recorded in `timing.json` alongside
+the resolved model. An unrecorded effort level makes two runs incomparable in
+exactly the way an unrecorded model alias does.
+
+Codex exposes a comparable notion — its banner prints `reasoning effort:` (observed
+`none` on default `codex exec`). Gemini's equivalent, if any, is unknown pending auth.
+
+---
+
+## Claude flagship: envelope probe replaces the full tier
+
+**Scope amendment, 2026-08-19.** The 10-run Claude flagship tier (5 cases x 2 arms
+at `claude-opus-5`) is **replaced** by a single envelope probe. Rationale: the one
+opus `with_skill` run attempted exceeded the 1800s timeout and produced zero bytes,
+so a full tier is a large, unbounded quota commitment for a result we cannot
+currently bound. The probe answers the question the tier was meant to answer — *does
+the protocol complete on the flagship model, and at what cost* — for one run instead
+of ten.
+
+**Probe design:**
+
+1. **One case, `with_skill`, `claude-opus-5`, DEFAULT effort**, `--output-format
+   stream-json`, `TIMEOUT_S=5400`.
+   Default effort is deliberate: it is the **Max-plan deployed condition**, so a
+   result there carries the upward-compatibility claim. A probe run at a
+   hand-tuned effort would not.
+2. **If it completes:** record duration, tokens, turns, subagent count, and
+   activation. That is the flagship envelope.
+3. **If it times out:** one re-run at `--effort medium` as the documented
+   mitigation. **The pair is the finding** — "the flagship model does not complete
+   this protocol at default effort within 90 minutes, and requires reduced effort"
+   is a materially different claim from a simple timeout, and it is directly
+   actionable for users.
+4. **Either way**, the effort level is recorded in `timing.json` as configuration,
+   not inferred afterwards.
+
+Gate: this probe runs only on explicit operator go-ahead alongside the Claude lane
+restart. It does not run automatically.

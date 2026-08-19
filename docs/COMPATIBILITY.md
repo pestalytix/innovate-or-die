@@ -121,14 +121,24 @@ fresh-chat-per-role sequence the orchestrator currently instructs by hand.
 | Target | Limit | Confidence | Source |
 |---|---|---|---|
 | M365 Copilot Agent Builder — Instructions | **8,000** | **Verified** | Microsoft Learn, *Build agents with Agent Builder*, doc dated 2026-05-26. Same table: Name 30 chars, Description 1,000 chars |
-| ChatGPT Custom GPT — Instructions | 8,000 (assumed) | **NEEDS VERIFICATION** | No first-party OpenAI page states this. The 8,000 figure comes only from secondary sources and must not be assumed — confirm by paste test in the GPT builder before Phase E |
-| Gemini Gem — Instructions | **unknown** | **UNVERIFIED** | Google's own Gems help page states **no** limit. Third-party sources conflict badly: ~4,000 vs 20,000–30,000. Build uses 8,000 as a conservative placeholder and labels the warning `UNVERIFIED` |
+| ChatGPT Custom GPT — Instructions | **8,000** | **Verified** | **Paste test, Ken, 2026-08-19.** 8,000-char limit shown in the GPT builder UI; the 7,874-char instructions file was accepted |
+| Gemini Gem — Instructions | **≥ ~7.9k, exact cap unknown** | **Working budget** | **Paste test, Ken, 2026-08-19.** The Gem accepted the full instructions file (7,874 chars), so the cap is at least that. Google publishes no limit and the UI shows none; upper bound untested. Build keeps 8,000 as the working budget |
 | ChatGPT custom instructions (not GPTs) | 5,000 paid / 1,500 free | Verified, secondary | Raised from 1,500 on 2026-07-15. Not used by this project — recorded to prevent confusion with the Custom GPT field |
 
-**Open, both blocking Phase E:** neither the Gemini Gem limit nor the ChatGPT
-Custom GPT limit has a first-party source. Each is settled by one paste test in
-the respective builder. Only the M365 Agent Builder cap (8,000) is confirmed
-first-party.
+**Method note.** The two previously-unverified caps were settled by paste test
+rather than documentation: paste the real generated file into the live builder,
+save, reload, and confirm what survived. Both accepted the 7,874-char file. The
+ChatGPT figure is a *hard cap* stated by the UI; the Gemini figure is a *lower
+bound* only — we know our file fits, not where the ceiling is.
+
+**Headroom warning.** At 7,874 chars the instructions file sits **126 chars** under
+the 8,000 budget. The v2.0.1 patch alone consumed 305 chars of the previous 431.
+Any further addition to `core/principles.md` or `core/workflow.md` will breach the
+ChatGPT hard cap and hard-fail `build/assemble.py --check`.
+
+**Resolved 2026-08-19.** Both caps were open blockers for Phase E; both are now
+settled by paste test (above). The only residual unknown is the Gemini *upper*
+bound, which does not block anything while the file fits.
 
 ### Loader / knowledge split — fidelity caveat
 

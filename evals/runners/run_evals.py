@@ -33,6 +33,7 @@ def assert_uncontaminated(provider: str) -> None:
     """
     homes = [Path.home() / ".claude" / "skills" / SKILL_NAME,
              Path.home() / ".codex" / "skills" / SKILL_NAME,
+             Path.home() / ".gemini" / "skills" / SKILL_NAME,
              Path.home() / ".agents" / "skills" / SKILL_NAME]
     found = [h for h in homes if h.exists()]
     if found:
@@ -47,13 +48,15 @@ def assert_uncontaminated(provider: str) -> None:
 def workspace(arm: str, provider: str) -> Path:
     d = Path(tempfile.mkdtemp(prefix=f"iod-{arm}-"))
     if arm == "with_skill":
-        dest = d / (".claude/skills" if provider == "claude" else ".agents/skills") / SKILL_NAME
+        sub = {"claude": ".claude/skills", "gemini": ".gemini/skills"}.get(
+            provider, ".agents/skills")
+        dest = d / sub / SKILL_NAME
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(SKILL, dest)
     return d
 
 
-def run_claude(prompt: str, cwd: Path, model: str) -> dict:
+def run_claude(prompt: str, cwd: Path, model: str, effort: str | None = None) -> dict:
     """Uses stream-json so skill ACTIVATION is measured, not inferred.
 
     `--output-format json` reports no tool calls, so a with_skill run where the
@@ -62,9 +65,11 @@ def run_claude(prompt: str, cwd: Path, model: str) -> dict:
     and looked exactly like its own control. Activation is now recorded per run.
     """
     t0 = time.time()
-    p = subprocess.run(["claude", "-p", prompt, "--model", model,
-                        "--output-format", "stream-json", "--verbose"],
-                       cwd=cwd, capture_output=True, text=True, timeout=TIMEOUT_S)
+    cmd = ["claude", "-p", prompt, "--model", model,
+           "--output-format", "stream-json", "--verbose"]
+    if effort:
+        cmd += ["--effort", effort]
+    p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=TIMEOUT_S)
     dur = int((time.time() - t0) * 1000)
     activated, skill_args, final = False, None, None
     tools: dict[str, int] = {}
@@ -102,11 +107,11 @@ def run_claude(prompt: str, cwd: Path, model: str) -> dict:
     return {"text": final.get("result", ""), "resolved_model": resolved,
             "total_tokens": tok, "duration_ms": final.get("duration_ms", dur),
             "cost_usd": final.get("total_cost_usd"), "all_models": list(mu),
-            "activated": activated, "skill": skill_args, "tools": tools,
-            "num_turns": final.get("num_turns")}
+            "activated": activated, "activation_method": "observed:Skill-tool-call",
+            "skill": skill_args, "tools": tools, "num_turns": final.get("num_turns")}
 
 
-def run_codex(prompt: str, cwd: Path, model: str) -> dict:
+def run_codex(prompt: str, cwd: Path, model: str, effort: str | None = None) -> dict:
     """Codex writes the answer to stdout and its banner/accounting to STDERR.
 
     Verified 2026-08-19 against codex-cli 0.147.0: stdout is the clean answer
@@ -146,7 +151,60 @@ def run_codex(prompt: str, cwd: Path, model: str) -> dict:
             "activation_method": "heuristic:markers", "marker_count": markers}
 
 
-RUNNERS = {"claude": run_claude, "codex": run_codex}
+def run_gemini(prompt: str, cwd: Path, model: str, effort: str | None = None) -> dict:
+    """Gemini CLI leg. `-p` is headless; `-o json` emits a structured envelope.
+
+    UNVALIDATED as of 2026-08-19: the CLI is installed (0.56.0) but has no auth
+    configured, so the response envelope's exact field names could not be observed.
+    The parser below reads defensively and records `parse_confidence` so a first
+    authenticated run reveals any mismatch instead of silently logging zeros.
+    """
+    t0 = time.time()
+    p = subprocess.run(["gemini", "-p", prompt, "-m", model, "-o", "json",
+                        "--approval-mode", "plan"],
+                       cwd=cwd, capture_output=True, text=True, timeout=TIMEOUT_S)
+    dur = int((time.time() - t0) * 1000)
+    try:
+        d = json.loads(p.stdout)
+    except json.JSONDecodeError:
+        return {"text": p.stdout or p.stderr, "resolved_model": "UNKNOWN",
+                "total_tokens": 0, "duration_ms": dur,
+                "error": "non-JSON output", "parse_confidence": "failed"}
+    if isinstance(d, dict) and d.get("error"):
+        return {"text": "", "resolved_model": "UNKNOWN", "total_tokens": 0,
+                "duration_ms": dur, "error": f"gemini error: {d['error'].get('message','')}",
+                "parse_confidence": "error-envelope"}
+
+    def dig(obj, *names):
+        """Find the first matching key at any depth -- field names unconfirmed."""
+        stack = [obj]
+        while stack:
+            o = stack.pop()
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if k in names and not isinstance(v, (dict, list)):
+                        return v
+                    if isinstance(v, (dict, list)):
+                        stack.append(v)
+            elif isinstance(o, list):
+                stack.extend(o)
+        return None
+
+    body = dig(d, "response", "text", "output", "content") or ""
+    resolved = dig(d, "model", "modelVersion", "model_version") or "UNKNOWN"
+    tokens = dig(d, "totalTokenCount", "total_tokens", "totalTokens") or 0
+    markers = sum(bool(re.search(k, str(body), re.I)) for k in
+                  (r"kill list", r"falsifi", r"contrarian", r"reframing",
+                   r"most instructive", r"still missing", r"critical assumption"))
+    return {"text": str(body), "resolved_model": str(resolved),
+            "total_tokens": int(tokens or 0), "duration_ms": dur, "cost_usd": None,
+            "all_models": [str(resolved)], "activated": markers >= 2,
+            "activation_method": "heuristic:markers", "marker_count": markers,
+            "parse_confidence": ("ok" if body and resolved != "UNKNOWN"
+                                 else "PARTIAL -- verify field names against a real run")}
+
+
+RUNNERS = {"claude": run_claude, "codex": run_codex, "gemini": run_gemini}
 
 
 def main() -> int:
@@ -155,6 +213,10 @@ def main() -> int:
     ap.add_argument("--model", required=True, help="requested alias; the RESOLVED id is logged separately")
     ap.add_argument("--tier", required=True, choices=["workhorse", "flagship"],
                     help="MODEL_POLICY tier this pin belongs to")
+    ap.add_argument("--effort", default=None,
+                    choices=["low", "medium", "high", "xhigh", "max"],
+                    help="claude --effort level; recorded in timing.json as configuration. "
+                         "Omit for the deployed default condition.")
     ap.add_argument("--iteration", type=int, default=1)
     ap.add_argument("--only", help="run a single eval slug")
     args = ap.parse_args()
@@ -175,7 +237,7 @@ def main() -> int:
             print(f"RUN {args.provider} {c['slug']} {arm} ...", flush=True)
             ws = workspace(arm, args.provider)
             try:
-                r = RUNNERS[args.provider](c["prompt"], ws, args.model)
+                r = RUNNERS[args.provider](c["prompt"], ws, args.model, args.effort)
             except subprocess.TimeoutExpired:
                 r = {"text": "", "resolved_model": "TIMEOUT", "total_tokens": 0,
                      "duration_ms": 1800000, "error": "timeout"}
@@ -190,9 +252,10 @@ def main() -> int:
                    "cost_usd": r.get("cost_usd"), "provider": args.provider,
                    "all_models": r.get("all_models"),
                    "activated": r.get("activated"),
-                   "activation_method": r.get("activation_method",
-                                              "observed:Skill-tool-call"),
+                   "activation_method": r.get("activation_method") or "unknown:run-failed",
                    "tools": r.get("tools"), "num_turns": r.get("num_turns"),
+                   "effort": args.effort or "default (deployed condition)",
+                   "parse_confidence": r.get("parse_confidence"),
                    "marker_count": r.get("marker_count")}
             if arm == "with_skill" and r.get("activated") is False:
                 rec["error"] = ("SKILL DID NOT ACTIVATE -- with_skill arm ran as a "

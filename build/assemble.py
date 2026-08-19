@@ -251,9 +251,16 @@ Then assemble the final answer in the Stage 6 order below.
 #   <t>-fallback.md      the whole thing in one file, for hosts without
 #                        attachments -- knowingly over budget, the degraded rung
 WEB_TARGETS = {
-    "chatgpt-gpt":  ("ChatGPT Custom GPT -- Instructions field", 8000, False),
-    "gemini-gem":   ("Gemini Gem -- Instructions field", 8000, False),
-    "m365-copilot": ("M365 Copilot Agent Builder -- Instructions field", 8000, True),
+    # (label, budget, status) -- status is a human string, not a bool, because
+    # "verified hard cap" and "accepted our file but true cap unknown" are
+    # different epistemic states and the warning text must say which.
+    "chatgpt-gpt":  ("ChatGPT Custom GPT -- Instructions field", 8000,
+                     "VERIFIED 2026-08-19: 8,000 hard cap confirmed in the GPT builder UI"),
+    "gemini-gem":   ("Gemini Gem -- Instructions field", 8000,
+                     "WORKING BUDGET: Gem accepted the full instructions file 2026-08-19, "
+                     "so the cap is >= that size; exact cap unknown"),
+    "m365-copilot": ("M365 Copilot Agent Builder -- Instructions field", 8000,
+                     "VERIFIED 2026-08-19: Microsoft Learn, Instructions field 8,000 chars"),
 }
 
 _HEADER = "<!-- GENERATED from core/ by build/assemble.py -- do not hand-edit. -->"
@@ -308,12 +315,12 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
                       *roles, "---", c["experiment"]])
 
     out = {}
-    for target, (label, budget, verified) in WEB_TARGETS.items():
+    for target, (label, budget, status) in WEB_TARGETS.items():
         out[f"{target}-instructions.md"] = instructions
         out[f"{target}-knowledge.md"] = knowledge
         out[f"{target}-fallback.md"] = fallback
 
-        flag = "" if verified else " (cap NEEDS VERIFICATION)"
+        flag = f" [{status.split(':')[0]}]"
         if len(instructions) > budget:
             # Hard failure: the instructions file is the primary install path.
             # An over-cap instructions file cannot be pasted, so the artifact is
