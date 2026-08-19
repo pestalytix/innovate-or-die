@@ -1,0 +1,32 @@
+{
+  "name": "innovate-or-die",
+  "version": "1.0.0",
+  "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems.",
+  "author": {
+    "name": "Innovate or Die contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "innovation",
+    "strategy",
+    "critical-thinking",
+    "assumption-testing",
+    "experimentation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Innovate or Die",
+    "shortDescription": "Find bold ideas that survive reality checks",
+    "longDescription": "A staged innovation workflow that generates unconventional hypotheses, attacks them independently, revises the survivors, and converts the strongest ideas into reality-grounded tests.",
+    "developerName": "Innovate or Die contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Find a non-obvious solution to this problem.",
+      "Challenge the assumptions behind this strategy.",
+      "Turn this idea into falsifiable experiments."
+    ]
+  }
+}

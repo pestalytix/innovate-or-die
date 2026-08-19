@@ -1,0 +1,4 @@
+interface:
+  display_name: "Innovate or Die"
+  short_description: "Find bold ideas that survive reality checks"
+  default_prompt: "Use $innovate-or-die to find a non-obvious, testable solution to this problem."
