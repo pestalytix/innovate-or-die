@@ -172,6 +172,32 @@ caveat and all — are rung three.
 
 ---
 
+---
+
+## `claude -p` metering — many-small-calls workloads
+
+**Measured 2026-08-19.** A single cold `claude -p` invocation carries ~85,000 tokens
+of `cacheCreation` — Claude Code caching its own system prompt and tool definitions,
+charged per invocation and near-independent of payload size. For a grading call whose
+actual payload was ~2,000 tokens, that was **85,071 of 88,424 total tokens (96%)**.
+
+**Run small calls serially and back-to-back.** Consecutive calls land inside the
+prompt-cache TTL and hit `cacheRead` instead of re-creating the cache:
+
+| | cold call | serial batch (27 calls) |
+|---|---|---|
+| cost per call | $0.5201 | **$0.0846** (6.1x cheaper) |
+| tokens per call | 88,424 | **42,549** (2.1x fewer) |
+| cached share of tokens | 96.2% | 95.9% |
+
+Batching changes *which* cache field is charged, not the ratio: ~96% of the token sum
+is scaffolding either way. **Budget many-small-calls workloads on `total_cost_usd`,
+not on summed token counts** — the token sum will overstate them by more than an order
+of magnitude relative to real work. Observed judge batch: 90.3% cached over 4 calls.
+
+Caveat: neither figure is a verified proxy for subscription (Max/Pro) weekly quota
+weighting. That mapping is unmeasured.
+
 ## Distribution identity vs authorship
 
 **Decided at Gate C, 2026-08-19.** Distribution identity (GitHub org, marketplace

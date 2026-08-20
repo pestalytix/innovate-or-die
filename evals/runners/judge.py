@@ -11,6 +11,44 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# ---- cost-basis budget (Gate D ruling: token metric counts cached scaffolding) ----
+COST_CEILING = 25.00
+_cost = {"usd": 0.0, "calls": 0, "cacheRead": 0, "cacheCreation": 0,
+         "input": 0, "output": 0}
+
+
+def _account(out: dict) -> None:
+    """Tally one claude -p invocation. Records the cacheRead/cacheCreation split
+    because that distribution is the whole reason the token metric misprices
+    many-small-calls workloads."""
+    _cost["calls"] += 1
+    _cost["usd"] += float(out.get("total_cost_usd") or 0.0)
+    for v in (out.get("modelUsage") or {}).values():
+        _cost["cacheRead"] += v.get("cacheReadInputTokens", 0)
+        _cost["cacheCreation"] += v.get("cacheCreationInputTokens", 0)
+        _cost["input"] += v.get("inputTokens", 0)
+        _cost["output"] += v.get("outputTokens", 0)
+    if _cost["usd"] > COST_CEILING:
+        raise SystemExit(f"COST CEILING HIT: ${_cost['usd']:.2f} > ${COST_CEILING:.2f} "
+                         f"after {_cost['calls']} calls. Halting.")
+
+
+def _cost_report(label: str) -> dict:
+    tok = _cost["cacheRead"] + _cost["cacheCreation"] + _cost["input"] + _cost["output"]
+    cached = _cost["cacheRead"] + _cost["cacheCreation"]
+    d = {"label": label, "calls": _cost["calls"], "cost_usd": round(_cost["usd"], 4),
+         "token_sum": tok, "cacheRead": _cost["cacheRead"],
+         "cacheCreation": _cost["cacheCreation"],
+         "cached_share_of_tokens": round(cached / tok, 4) if tok else None,
+         "input": _cost["input"], "output": _cost["output"]}
+    print(f"\n  [{label}] {d['calls']} calls  ${d['cost_usd']:.4f}  "
+          f"tokens {tok:,} (cacheRead {d['cacheRead']:,} / "
+          f"cacheCreation {d['cacheCreation']:,} = "
+          f"{100*(d['cached_share_of_tokens'] or 0):.1f}% cached scaffolding)")
+    return d
+
+
+
 PROMPT = """You are judging two answers to the same problem. You do not know how either was produced.
 
 PROBLEM:
@@ -72,6 +110,7 @@ def main() -> int:
             capture_output=True, text=True, timeout=900)
         try:
             outj = json.loads(p.stdout)
+            _account(outj)
             mu = outj.get("modelUsage", {}) or {}
             fam = "-".join(args.judge_model.split("-")[:2])
             resolved_judge.update(k for k in mu if k.startswith(fam))
@@ -94,7 +133,8 @@ def main() -> int:
          "limitation": ("A Claude-family judge scores both providers. Blind pairwise "
                         "cancels arm bias WITHIN a provider; cross-provider comparisons "
                         "carry possible same-family leniency toward Claude outputs."),
-         "verdicts": out}, indent=2) + "\n", encoding="utf-8")
+         "verdicts": out,
+         "budget": _cost_report("judge")}, indent=2) + "\n", encoding="utf-8")
     return 0
 
 

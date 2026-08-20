@@ -38,6 +38,10 @@ def main() -> int:
          "this is the resolved id reported by the run, not a requested alias.", "",
          "Paired design: every case ran twice, with and without the skill, same "
          "prompt, same model, clean context. The delta is the result.", "",
+         "> **Version span.** Iteration-1 spans **two protocol versions**: runs before "
+         "the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each "
+         "arm below is labelled. Cross-version comparisons within this iteration are "
+         "confounded and are flagged where they occur.", "",
          "> **Statistical modesty.** Five cases, **one run per case, per arm**. "
          "Every number here is **directional only** — no repeated trials, so no "
          "variance estimate and no significance. `stddev` across cases measures "
@@ -104,7 +108,8 @@ def main() -> int:
             if not t.exists():
                 L += [f"- `{arm}`: no run recorded", ""]; continue
             tj = json.loads(t.read_text())
-            bits = [f"{tj['total_tokens']:,} tok", f"{tj['duration_ms']/1000:.0f}s"]
+            bits = [f"{tj['total_tokens']:,} tok", f"{tj['duration_ms']/1000:.0f}s",
+                    f"v{tj.get('skill_version','?')}"]
             if g.exists():
                 s = json.loads(g.read_text())["summary"]
                 bits.insert(0, f"{s['passed']}/{s['total']} assertions")

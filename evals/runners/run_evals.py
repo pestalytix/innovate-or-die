@@ -45,6 +45,20 @@ def assert_uncontaminated(provider: str) -> None:
               "an invalid control.")
 
 
+def assert_skill_present(ws: Path, provider: str) -> None:
+    """Inverse of the contamination assert: a with_skill arm is only valid if the
+    skill is actually on disk where the host will look for it. A silently-failed
+    copy would make every with_skill run a baseline and manufacture a fake
+    'activation reliability' finding."""
+    sub = {"claude": ".claude/skills", "gemini": ".gemini/skills"}.get(
+        provider, ".agents/skills")
+    sk = ws / sub / SKILL_NAME / "SKILL.md"
+    if not sk.exists():
+        raise SystemExit(f"WITH_SKILL ARM INVALID: {sk} missing -- the skill was not "
+                         "copied into the run workspace. Refusing to record a run that "
+                         "would look like a non-activation.")
+
+
 def workspace(arm: str, provider: str) -> Path:
     d = Path(tempfile.mkdtemp(prefix=f"iod-{arm}-"))
     if arm == "with_skill":
@@ -54,6 +68,9 @@ def workspace(arm: str, provider: str) -> Path:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(SKILL, dest)
     return d
+
+
+TRACE_DIR: Path | None = None   # set per run; raw stream is evidence, keep it
 
 
 def run_claude(prompt: str, cwd: Path, model: str, effort: str | None = None) -> dict:
@@ -71,6 +88,11 @@ def run_claude(prompt: str, cwd: Path, model: str, effort: str | None = None) ->
         cmd += ["--effort", effort]
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=TIMEOUT_S)
     dur = int((time.time() - t0) * 1000)
+    if TRACE_DIR is not None:      # raw stream = the audit trail for a negative
+        TRACE_DIR.mkdir(parents=True, exist_ok=True)
+        (TRACE_DIR / "stream.jsonl").write_text(p.stdout, encoding="utf-8")
+        if p.stderr:
+            (TRACE_DIR / "stderr.txt").write_text(p.stderr, encoding="utf-8")
     activated, skill_args, final = False, None, None
     tools: dict[str, int] = {}
     for line in p.stdout.splitlines():
@@ -219,6 +241,8 @@ def main() -> int:
                          "Omit for the deployed default condition.")
     ap.add_argument("--iteration", type=int, default=1)
     ap.add_argument("--only", help="run a single eval slug")
+    ap.add_argument("--arm", choices=["with_skill", "without_skill"],
+                    help="run only one arm (default: both)")
     args = ap.parse_args()
 
     assert_uncontaminated(args.provider)   # control-arm validity gate
@@ -229,13 +253,16 @@ def main() -> int:
             / args.provider / args.tier)
 
     for c in cases:
-        for arm in ("with_skill", "without_skill"):
+        for arm in (("with_skill", "without_skill") if not args.arm else (args.arm,)):
             out = base / c["slug"] / arm
             (out / "outputs").mkdir(parents=True, exist_ok=True)
             if (out / "timing.json").exists():
                 print(f"skip (exists): {c['slug']}/{arm}", flush=True); continue
             print(f"RUN {args.provider} {c['slug']} {arm} ...", flush=True)
+            globals()["TRACE_DIR"] = out / "trace"
             ws = workspace(arm, args.provider)
+            if arm == "with_skill":
+                assert_skill_present(ws, args.provider)
             try:
                 r = RUNNERS[args.provider](c["prompt"], ws, args.model, args.effort)
             except subprocess.TimeoutExpired:
