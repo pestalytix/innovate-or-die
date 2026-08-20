@@ -136,9 +136,10 @@ different retrieval implementations and remain untested.
 **Level 4 — Single-paste fallback.** Everything inlined in one document, for hosts
 that take no attachment. The whole protocol — including what the critic checks
 for — is in context from the first token, which is the anchoring failure the
-design exists to defeat. It also exceeds every known instruction-field cap
-(~19,800 chars), so it may be truncated. Shipped because a documented degraded
-path beats an undocumented one, not because it is recommended.
+design exists to defeat. The inlined document (~20k chars, and growing with each
+protocol version) also exceeds every known instruction-field cap, so it may be
+truncated. Shipped because a documented degraded path beats an undocumented
+one, not because it is recommended.
 
 Two of those caps are themselves unverified: the ChatGPT Custom GPT and Gemini Gem
 instruction limits have no first-party source. See `docs/COMPATIBILITY.md`.

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -304,6 +305,36 @@ def _join(parts: list[str]) -> str:
     return "\n\n".join(p.strip("\n") for p in parts) + "\n"
 
 
+# README.md describes the fallback's size in prose, and the fallback grows with
+# every protocol version -- so a hard figure there goes stale silently. Warn when
+# prose and artifact diverge; stay quiet when the prose uses an approximate form
+# ("~20k chars") that never needs updating. A warning, not a failure: a stale
+# adjective in the README does not make a generated artifact wrong.
+README_DRIFT_TOLERANCE = 0.10
+
+
+def readme_fallback_drift(fallback_len: int) -> str | None:
+    """Return a warning if README.md quotes a fallback size that has drifted."""
+    path = ROOT / "README.md"
+    if not path.exists():
+        return None
+    para = re.search(r"Single-paste fallback\.(.*?)(?=\n\n)",
+                     path.read_text(encoding="utf-8"), re.S)
+    if not para:
+        return None
+    # Only exact digit figures are checked. "~20k chars" is deliberately loose
+    # and is treated as the drift-proof phrasing: nothing to check.
+    quoted = re.search(r"([0-9][0-9,]{2,})\s*chars", para.group(1))
+    if not quoted:
+        return None
+    n = int(quoted.group(1).replace(",", ""))
+    if abs(n - fallback_len) <= README_DRIFT_TOLERANCE * fallback_len:
+        return None
+    return (f"README.md quotes the single-paste fallback at {n:,} chars; it is now "
+            f"{fallback_len:,} -- more than {README_DRIFT_TOLERANCE:.0%} off. Either "
+            f"update it or use an approximate phrasing that cannot drift.")
+
+
 def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, str]:
     roles = [x for r in ROLE_ORDER for x in ("---", c["roles"][r])]
 
@@ -335,6 +366,10 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
         problems.append(
             f"adapters/web/{target}-fallback.md: {len(fallback):,} chars, knowingly over the "
             f"{budget:,}-char cap -- degraded no-attachment rung, not the primary install path")
+
+    drift = readme_fallback_drift(len(fallback))
+    if drift:
+        problems.append(drift)
     return out
 
 
