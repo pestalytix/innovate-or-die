@@ -168,3 +168,72 @@ def test_the_derived_line_reaches_the_written_file(build):
     assert rc == 0
     assert "Paired design: 1 of 2 cases have a matched valid pair" in text
     assert "every case ran twice" not in text
+
+
+# ------------------------------------------ the uncontrolled-context annotation
+
+class Args:
+    """Minimal stand-in for the parsed argv namespace `banners()` reads."""
+    def __init__(self, iteration, provider, tier="workhorse"):
+        self.iteration, self.provider, self.tier = iteration, provider, tier
+
+
+ANCHOR = "**Uncontrolled context (found 2026-08-20).**"
+
+
+@pytest.mark.parametrize("iteration,provider,expected", [
+    (1, "claude", True),      # the affected lane
+    (1, "codex", False),      # codex exposes no host metadata to leak
+    (2, "claude", False),     # the finding is scoped to iteration 1
+    (3, "claude", False),
+])
+def test_banner_is_gated_to_the_affected_lane(report, iteration, provider, expected):
+    L = []
+    report.banners(Args(iteration, provider), L, "2.1.0")
+    assert any(ANCHOR in line for line in L) is expected
+
+
+@pytest.mark.parametrize("iteration,provider,expected", [
+    (1, "claude", True), (1, "codex", False), (2, "claude", False),
+])
+def test_the_annotation_is_in_the_completeness_manifest(report, iteration,
+                                                        provider, expected):
+    """A banner not in the manifest can silently stop being emitted."""
+    assert (ANCHOR in report.required_sections(Args(iteration, provider))) is expected
+
+
+def test_the_banner_names_both_affected_arms(report):
+    L = []
+    report.banners(Args(1, "claude"), L, "2.0.1")
+    banner = next(line for line in L if ANCHOR in line)
+    assert "with_skill" in banner and "without_skill" in banner
+    assert "BigQuery" in banner, "the control's leak must be named, not just the treatment's"
+    assert "eval-route-density" in banner
+    assert "transcripts/README.md#" in banner, "must link the evidence"
+
+
+# --------------------------------------- the judge sentence describes what ran
+
+def test_judge_prose_matches_the_method_that_actually_ran(report):
+    """Per-ballot randomization landed in iteration 3. Regenerating an older file
+    must not retro-fit the new method onto a run that used index alternation."""
+    jdoc = {"verdicts": [{"slug": "s", "winner_arm": "with_skill", "reason": "r"}],
+            "judge_model_requested": "m", "judge_model_resolved": ["m"],
+            "limitation": "l"}
+    old, new = [], []
+    report.judge_section(jdoc, old, 1)
+    report.judge_section(jdoc, new, 3)
+    old_txt, new_txt = "\n".join(old), "\n".join(new)
+    assert "alternating per case" in old_txt
+    assert "per ballot" not in old_txt.split("Randomized per ballot")[0]
+    assert "drawn independently per ballot" in new_txt
+    assert "alternating per case" not in new_txt
+
+
+def test_iteration_2_still_reports_alternation(report):
+    jdoc = {"verdicts": [{"slug": "s", "winner_arm": "tie", "reason": "r"}],
+            "judge_model_requested": "m", "judge_model_resolved": ["m"],
+            "limitation": "l"}
+    L = []
+    report.judge_section(jdoc, L, 2)
+    assert "alternating per case" in "\n".join(L)

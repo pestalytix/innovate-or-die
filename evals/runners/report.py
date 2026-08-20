@@ -66,6 +66,25 @@ def banners(args, L, skill_version: str | None = None):
               "324,451, n 5 → 4. The narrative below already described this tier as "
               "4-case; the numbers now agree with it. No run was re-executed and no "
               "grade was re-drawn.", ""]
+    if args.iteration == 1 and args.provider == "claude":
+        L += ["> **Uncontrolled context (found 2026-08-20).** Both arms of "
+              "`eval-route-density` on the **flagship** tier drew on the host "
+              "machine's context — information the prompt did not supply and the "
+              "paired design does not hold constant. **`with_skill`** recorded the "
+              "operator's account email domain among its Stage 0 assumptions and "
+              "carried the inference through its subagent fan-out; it stayed in the "
+              "intermediate turns and is **not** in the delivered answer. "
+              "**`without_skill`** offered to query a `BigQuery` dataset connected "
+              "to the host as an MCP server, and that offer **is** in its delivered "
+              "answer. So `clean context` held for neither arm of this pair, and "
+              "the two were contaminated **differently**, not equally — this does "
+              "not cancel out. Assertion grades score output structure and are "
+              "unaffected. The blind judge read the delivered answers, so the "
+              "`eval-route-density` verdict should be read knowing the control's "
+              "answer carries a host-derived offer the treatment's does not. No "
+              "other run in any tier, and no Codex run, shows this. Evidence: "
+              "[`evals/transcripts/README.md`]"
+              "(../transcripts/README.md#known-confound-uncontrolled-host-context-in-the-flagship-pair).", ""]
     if args.iteration == 1:
         L += ["> **Post-baseline annotation.** LLM-graded assertions were later measured "
               "nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this "
@@ -169,7 +188,7 @@ def deltas_section(bench, L):
             L += ["", f"_{pr['note']}_", ""]
 
 
-def judge_section(jdoc, L):
+def judge_section(jdoc, L, iteration: int = 1):
     if not jdoc:
         return
     verdicts = jdoc.get("verdicts", jdoc if isinstance(jdoc, list) else [])
@@ -185,12 +204,19 @@ def judge_section(jdoc, L):
         L.append(f"- **{v['slug']}** → *{v['winner_arm']}*{split} — {v['reason']}")
     w = sum(1 for v in verdicts if v["winner_arm"] == "with_skill")
     o = sum(1 for v in verdicts if v["winner_arm"] == "without_skill")
+    # Per-ballot randomization landed for iteration 3. Describing an iteration-1
+    # or -2 judge run with it would put a false method statement into a
+    # historical file the moment that file is regenerated for any other reason.
+    method = ("presentation order drawn independently per ballot from a seeded "
+              "RNG, so any residual alignment between position and arm is chance "
+              "rather than design; the order each ballot saw is recorded in "
+              "`presented_first`" if iteration >= 3 else
+              "presentation order alternating per case — index alternation, not "
+              "randomization: it removes the crudest confound but fixes one order "
+              "per case. Randomized per ballot from iteration 3 onward")
     L += ["", f"(Tally for completeness only: with_skill {w}, without_skill {o}, other "
           f"{len(verdicts)-w-o}. **At n=5 with one run per case this count is noise and "
-          "carries no claim.** Answers were shown as 'A'/'B' with presentation "
-          "order drawn independently per ballot from a seeded RNG, so any residual "
-          "alignment between position and arm is chance rather than design; the "
-          "order each ballot saw is recorded in `presented_first`.)", ""]
+          f"carries no claim.** Answers were shown as 'A'/'B' with {method}.)", ""]
 
 
 def opus_section(L):
@@ -403,7 +429,8 @@ def required_sections(args) -> list[str]:
         req += ["**Version span.**", "**Post-baseline annotation.**",
                 "## Budget and metering"]
         if args.provider == "claude":
-            req += ["## Opus envelope probe", "## Activation ledger",
+            req += ["**Uncontrolled context (found 2026-08-20).**",
+                    "## Opus envelope probe", "## Activation ledger",
                     "## The route-density result"]
             if args.tier == "workhorse":
                 req += ["**Aggregation corrected in v2.0.2 per external review finding 5.**"]
@@ -487,7 +514,7 @@ def main() -> int:
           f"{cell('without_skill','tokens','{:,.0f}')} | "
           f"{bench['run_summary']['delta'].get('tokens','—')} |", ""]
     deltas_section(bench, L)
-    judge_section(jdoc, L)
+    judge_section(jdoc, L, args.iteration)
 
     L += ["## Per case", ""]
     for c in cases:

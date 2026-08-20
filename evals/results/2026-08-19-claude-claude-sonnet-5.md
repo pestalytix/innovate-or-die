@@ -4,7 +4,7 @@
 
 **Resolved model(s):** claude-sonnet-5 — the resolved id reported by the run, not a requested alias.
 
-Paired design: every case ran twice, with and without the skill, same prompt, same model, clean context. The delta is the result.
+Paired design: 4 of 5 cases have a matched valid pair (see exclusions under Two deltas).
 
 > **Version span.** Iteration-1 spans **two protocol versions**: runs before the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each arm below is labelled. Cross-version comparisons within this iteration are confounded and flagged where they occur.
 
@@ -12,9 +12,11 @@ Paired design: every case ran twice, with and without the skill, same prompt, sa
 
 > **Aggregation corrected in v2.0.2 per external review finding 5.** The figures in this file were previously computed over **unmatched** arms: `eval-dental-no-shows` contributed a `with_skill` run with no control, so a 5-case `with_skill` mean was subtracted from a 4-case control mean. The tier is now computed over **matched valid pairs only** and this file has been regenerated. What moved: `with_skill` pass rate 0.53 → 0.54, delta 0.14 → 0.15, `with_skill` tokens 299,802 → 364,742, token delta 259,511 → 324,451, n 5 → 4. The narrative below already described this tier as 4-case; the numbers now agree with it. No run was re-executed and no grade was re-drawn.
 
+> **Uncontrolled context (found 2026-08-20).** Both arms of `eval-route-density` on the **flagship** tier drew on the host machine's context — information the prompt did not supply and the paired design does not hold constant. **`with_skill`** recorded the operator's account email domain among its Stage 0 assumptions and carried the inference through its subagent fan-out; it stayed in the intermediate turns and is **not** in the delivered answer. **`without_skill`** offered to query a `BigQuery` dataset connected to the host as an MCP server, and that offer **is** in its delivered answer. So `clean context` held for neither arm of this pair, and the two were contaminated **differently**, not equally — this does not cancel out. Assertion grades score output structure and are unaffected. The blind judge read the delivered answers, so the `eval-route-density` verdict should be read knowing the control's answer carries a host-derived offer the treatment's does not. No other run in any tier, and no Codex run, shows this. Evidence: [`evals/transcripts/README.md`](../transcripts/README.md#known-confound-uncontrolled-host-context-in-the-flagship-pair).
+
 > **Post-baseline annotation.** LLM-graded assertions were later measured nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this file are **single draws**, not replicated measurements. This file is the v2.0.0 record: annotated, never re-graded.
 
-> **Reproducibility.** `evals-workspace/` holds the raw transcripts and is **local-only (gitignored)**. `evals/evals.json` plus `evals/runners/` regenerate it; this file is the durable record.
+> **Reproducibility.** The redacted raw transcripts behind this file are published under `evals/transcripts/` — per-run `response.md`, `timing.json`, `grading.json` and, where one exists, the raw `trace/stream.jsonl`. `evals-workspace/` remains the **local-only (gitignored)** working tree; `evals/evals.json` plus `evals/runners/` regenerate it, and `evals/runners/redact_transcripts.py` derives the published copy from it.
 
 ## What this measures
 
@@ -66,7 +68,7 @@ The verdict *text* is the finding. Read the reasoning, not the tally.
 - **eval-bookstore-events** → *without_skill* — A asks sharper diagnostic questions (repeat-customer assumption, which events lose money) that make the next step more concrete and falsifiable.
 - **eval-saas-onboarding-churn** → *with_skill* — A names specific causal mechanisms, ranks ideas by evidence strength, and gives a falsifiable experiment with thresholds; B lists plausible levers without mechanisms or falsifiers.
 
-(Tally for completeness only: with_skill 2, without_skill 1, other 1. **At n=5 with one run per case this count is noise and carries no claim.** Answers were shown as 'A'/'B' with presentation order alternating per case, so position bias cannot align with arm.)
+(Tally for completeness only: with_skill 2, without_skill 1, other 1. **At n=5 with one run per case this count is noise and carries no claim.** Answers were shown as 'A'/'B' with presentation order alternating per case — index alternation, not randomization: it removes the crudest confound but fixes one order per case. Randomized per ballot from iteration 3 onward.)
 
 ## Per case
 

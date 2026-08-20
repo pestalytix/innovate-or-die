@@ -27,6 +27,26 @@ Three structural limits, none of which more runs would fix:
 Roughly in dependency order. Each item is a months-scale piece of work, and the
 list is not a plan.
 
+- **A clean host, and this one is a prerequisite rather than an item.** `claude -p`
+  on a configured workstation **is not a clean context**. The harness's
+  `assert_uncontaminated` checks one thing — that the *skill* is out of scope for
+  the control arm — and nothing else; it does not and cannot check what the host
+  account already knows. Measured 2026-08-20: on the iteration-1 flagship pair for
+  `eval-route-density`, the `with_skill` run took the operator's account email
+  domain into its Stage 0 assumptions, and the `without_skill` control offered to
+  query a `BigQuery` dataset it knew about only because that MCP server was
+  connected to the machine. Neither fact was in the prompt; the two arms were
+  contaminated differently, so it does not cancel. **The same failure class was
+  already recorded on another host** — Perplexity account memory leaking four
+  facts about the user's other projects and location into a fresh session, see
+  [`COMPATIBILITY.md`](COMPATIBILITY.md) — where the standing ruling is already
+  "use an account with no history, or memory disabled". That ruling was never
+  extended to the Claude lane, and it should have been. Future Claude runs must
+  come from a dedicated account, or from a session with account context
+  demonstrably off, and the demonstration has to be recorded per run the way
+  model resolution already is. Until that holds, no lane's numbers are clean
+  enough for the items below to mean anything, which is why this is a
+  prerequisite and not a nice-to-have.
 - **Preregistered held-out cases.** A case set written before the protocol is run
   against it, with assertions authored from the *problem*, never from the
   protocol's output spec, and sealed before any run. Held-out means the author of

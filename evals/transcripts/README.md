@@ -108,27 +108,42 @@ Stated rather than left to be discovered:
 - **`session_id` and `uuid` on non-init event lines**, as described above — the
   init-event rule is scoped to the init event by design, and these two fields
   recur on every line of a stream.
-- **The operator's business domain, in model output.** In
-  `iteration-1/claude/flagship/eval-route-density/with_skill/`, the model wrote
-  the operator's email domain into its own Stage 0 assumptions and built a ranked
-  opportunity on it. It is not redacted because it is not metadata — it is the
-  reasoning under test, it is discussed in the results narrative, and removing it
-  would damage the evidence. See the note on uncontrolled context below.
+- **The operator's business domain, in model reasoning.** In
+  `iteration-1/claude/flagship/eval-route-density/with_skill/trace/stream.jsonl`,
+  the model wrote the operator's email domain into its own Stage 0 assumptions and
+  carried it through its subagent fan-out. It is not redacted because it is not
+  metadata — it is the reasoning under test, and removing it would damage the
+  evidence. It does **not** appear in that run's delivered answer. See the
+  confound note below.
 - **Model reasoning generally.** Nothing inside an answer, a grading rationale or
   an assistant turn is rewritten. Only host metadata and the patterns tabled
   above are touched.
 
-### Known confound: uncontrolled context in one flagship run
+### Known confound: uncontrolled host context in the flagship pair
 
-The prompt for `eval-route-density` does not mention the operator or any domain.
-The flagship `with_skill` run nonetheless recorded *"user email domain:
-pestalytix.com"* among its Stage 0 assumptions, having taken it from the host
-environment rather than the prompt, and one of its ranked opportunities is built
-on that inference. The paired design holds the prompt, model and workspace
-constant; it does not hold the host's ambient context constant, and here that
-context entered one arm of one pair. It does not affect the assertion grades —
-those score output structure — but any reading of that run's *content* against
-its control should account for an input the control did not have.
+The prompt for `eval-route-density` mentions no operator, domain or data
+warehouse. **Both arms of the flagship pair drew on the host machine anyway**,
+and they drew on different parts of it:
+
+| Run | What leaked in | Reached the delivered answer? |
+|---|---|---|
+| `iteration-1/claude/flagship/eval-route-density/with_skill` | the operator's account email domain, recorded in its Stage 0 assumptions and passed through its subagent fan-out (17 occurrences across intermediate turns) | **No** — confined to the stream; the `result` event and `response.md` contain none of it |
+| `iteration-1/claude/flagship/eval-route-density/without_skill` | a `BigQuery` dataset connected to the host as an MCP server, which the model offered to query | **Yes** — *"If you've got service history in BigQuery, I can pull the actual numbers"* |
+
+Measured scope, by scanning all 57 `response.md` files across both arms and every
+tier plus all three event streams for ten identifying terms: **these two runs
+only.** No other Claude run and **no Codex run** shows it — Codex exposes no
+event stream and no host metadata, so it had nothing of this kind to draw on.
+
+Why it matters: the paired design holds prompt, model and workspace constant, and
+`run_evals.py`'s `assert_uncontaminated` checks that the *skill* is out of scope
+for the control. Neither controls the host's ambient account context. Here it
+entered **both** arms, unequally and in different forms, so it does not cancel.
+
+What it does and does not touch: assertion grades score output structure and are
+unaffected. The blind judge scored the delivered answers — where the treatment's
+leak is absent and the control's is present — so the `eval-route-density` verdict
+carries that asymmetry.
 
 ## Relationship to `evals-workspace/`
 
