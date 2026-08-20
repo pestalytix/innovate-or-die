@@ -308,7 +308,11 @@ is approached. The banner costs the user one line of output.
 2. `python3 -m pytest` — must pass, including the placeholder guard, which is
    what proves the banner's version was substituted rather than shipped as
    `{{CORE_VERSION}}`.
-3. **Banner-emission measurement, pre-registered before the runs.** On Claude,
+3. **Banner-emission measurement, pre-registered before the runs.**
+   *Codex half done 2026-08-20: 5 of 5 on `gpt-5.6-terra`, recorded in
+   `NOTE-activation-variance.md`. It carries no ground truth — the Claude half
+   below is what tests the detector against independent evidence, and it is
+   quota-blocked.* On Claude,
    where the `Skill` tool call is independent ground truth, record for every
    `with_skill` run: activated (tool call) × banner present. The prediction to
    record in advance is that **banner presence equals observed activation** —

@@ -53,6 +53,54 @@ Every non-activated run shows `turns: 1` and `tools: {}` — no tool call attemp
 all — and costs within a few percent of its own control arm. A non-activated
 `with_skill` run *is* a baseline run.
 
+## Banner emission — Codex workhorse, v2.1.0 (iteration-3)
+
+**Measured 2026-08-20**, the first runs under [ADR-004](ADR-004-activation-banner.md).
+Five `with_skill` runs, `codex exec` / `gpt-5.6-terra`, one per eval case, at commit
+`bc818f3` with a clean tree. `with_skill` only — the control arm has no protocol and
+cannot emit a banner, so it would measure nothing here.
+
+| case | banner on line 1 | version | activation method | tokens |
+|---|---|---|---|---|
+| `eval-route-density` | **yes** | 2.1.0 | `observed:banner` | 29,184 |
+| `eval-dental-no-shows` | **yes** | 2.1.0 | `observed:banner` | 21,161 |
+| `eval-municipal-water-loss` | **yes** | 2.1.0 | `observed:banner` | 68,605 |
+| `eval-bookstore-events` | **yes** | 2.1.0 | `observed:banner` | 50,873 |
+| `eval-saas-onboarding-churn` | **yes** | 2.1.0 | `observed:banner` | 17,052 |
+
+**5 of 5**, in every case the exact string `⟦innovate-or-die v2.1.0⟧` as the first
+line — no code-span wrapping, no preamble in front of it, no version drift. No model
+mismatches; all five resolved `gpt-5.6-terra`.
+
+**What this does and does not support.**
+
+- It is a **count, not a rate**, and n=5 on one host and one model. The ADR predicts
+  emission well above the 71% seen on Stage 6 item 5 because the banner is item 0 and
+  carries no generation load. 5 of 5 is consistent with that prediction and does not
+  establish it.
+- **There is no ground truth on Codex.** `codex exec` exposes no tool-call stream, so
+  both the banner and the old marker heuristic are output-side inferences. This
+  measures that the banner *is emitted*, not that emission tracks activation. The
+  check that can establish the latter is the pre-registered Claude run, where an
+  observed `Skill` tool call is independent evidence — it is **quota-blocked** and
+  sits in the session-state backlog.
+- **The sample contains no negatives.** All five activated, so nothing here tests what
+  the banner does when the skill does not fire. On this host it never has.
+- **The old and new instruments agreed 5 of 5.** `marker_count` ranged 3–5, so the
+  seven-regex vote would have called every one of these activated too. Concordance
+  with no disagreement and no negatives is weak evidence — it shows the banner did not
+  make detection *worse* on the cases where the old signal was already unambiguous.
+- **Cost is not a version comparison.** Iteration-2 (v2.0.1) ran the same five cases
+  on the same model at 15,007–27,696 tokens; iteration-3 ranges 17,052–68,605. One run
+  per case, per version, with a different protocol and no repeated trials — run-to-run
+  cost on an identical prompt has already been observed to vary 47% on this project.
+  Nothing here supports a claim that v2.1.0 costs more.
+
+Raw runs are in `evals-workspace/iteration-3/` (gitignored). Recorded here rather
+than as an `evals/results/` file because it is an activation measurement, not a
+paired eval — there is no delta to report, and `report.py` generates paired
+documents only.
+
 ## Dead hypotheses
 
 **H1 — Exclusion-clause match. FALSIFIED.** The v1 dental prompt opened "Evaluate what
