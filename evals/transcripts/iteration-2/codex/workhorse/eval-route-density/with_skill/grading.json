@@ -1,0 +1,97 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 5741 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "Answer uses 'Mechanism:' labels but content is inferential reasoning (e.g. 'you stop spending field capacity to satisfy free scheduling preference'), not a named causal mechanism (e.g. no cited princi",
+      "grader": "llm-majority-3",
+      "vote_split": "1/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "Assumptions: exterior quarterly service can usually be performed without the homeowner present... Verify the last point locally.",
+      "grader": "llm-majority-3",
+      "vote_split": "2/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": true,
+      "evidence": "\"each customer's exact service date is usually an inherited constraint, not a real one\" and \"You do not really have a 'windshield time' problem. You have a service-density market design problem\"",
+      "grader": "llm-majority-3",
+      "vote_split": "2/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "Each top opportunity names a specific first action the reader could take within a week",
+      "passed": false,
+      "evidence": "Move 1's first step is 'Divide each town into compact zones' with no timeframe; the concrete pilot ('Pick one dense 50\u201375 account area...') appears only in the separate 'Cheapest experiment' section, ",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation",
+      "passed": false,
+      "evidence": "Suggests 'notify customers' with a script, 'zone service week', but no actual script text, zone boundaries, or day-by-day operator instructions are given\u2014operator would still need to design zones and ",
+      "grader": "llm-majority-3",
+      "vote_split": "1/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer does not substitute breadth of exploration for a decidable recommendation",
+      "passed": false,
+      "evidence": "Three high-leverage moves + kill list + contrarian hypothesis all offered without a single decidable pick; ends with 'What I'd inspect next' rather than a recommendation",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 5,
+    "total": 10,
+    "not_graded": 0,
+    "pass_rate": 0.5
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "llm_votes_per_assertion": 3,
+  "unstable_assertions": [
+    "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+    "The answer distinguishes facts and evidence from assumptions and speculation",
+    "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+    "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
+  ],
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

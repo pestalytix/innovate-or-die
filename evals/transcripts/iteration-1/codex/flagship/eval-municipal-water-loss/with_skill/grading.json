@@ -1,0 +1,57 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 8718 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "\"Reconcile production, storage, transfers, customer-read periods... Cross-check source meters using existing tank movements, redundant meters and pump operating data\" \u2014 named mechanism for the water-b",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "Labels claims 'Fact:', 'Deduction:', 'Hypothesis:', and separates 'Evidence confirming it' vs 'Evidence refuting it' in the opportunities table",
+      "grader": "llm"
+    },
+    {
+      "text": "Every proposed approach respects the stated constraint of no new capital expenditure",
+      "passed": false,
+      "evidence": "Reverse audit success gate: 'sustained additional billed volume... investigation cost' and pressure trial use '$1,500 of already-authorized incremental O&M' \u2014 these are operating costs, not verified a",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.7143
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

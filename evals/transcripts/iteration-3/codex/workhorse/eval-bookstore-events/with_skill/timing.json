@@ -1,0 +1,28 @@
+{
+  "total_tokens": 50873,
+  "duration_ms": 289609,
+  "requested_model": "gpt-5.6-terra",
+  "resolved_model": "gpt-5.6-terra",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": null,
+  "provider": "codex",
+  "all_models": [
+    "gpt-5.6-terra"
+  ],
+  "activated": true,
+  "activation_method": "observed:banner",
+  "banner": true,
+  "banner_version": "2.1.0",
+  "tools": null,
+  "num_turns": null,
+  "effort": "default (deployed condition)",
+  "parse_confidence": null,
+  "marker_count": 3,
+  "repo_commit": "bc818f3861e17d362e2301adc97a148368116a5c",
+  "repo_dirty": false,
+  "skill_version": "2.1.0",
+  "skill_version_method": "read:SKILL.md-frontmatter",
+  "cli_name": "codex",
+  "cli_version": "codex-cli 0.147.0"
+}

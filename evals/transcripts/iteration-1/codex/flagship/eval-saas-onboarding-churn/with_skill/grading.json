@@ -1,0 +1,57 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 8457 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "\"The mechanism is alignment: customers stop paying for idle capacity without losing accumulated setup and project memory\" (Opportunity #2's named causal mechanism)",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "'Assumptions: the product solves a recurring...' section explicitly separates stated assumptions from analysis, and the pilot sections specify measurable advance/stop thresholds distinct from speculat",
+      "grader": "llm"
+    },
+    {
+      "text": "At least one option changes pricing, incentive structure, or system architecture rather than the onboarding flow",
+      "passed": true,
+      "evidence": "Charge per active project, project-month, or completed action... changes pricing/architecture, and 'Make the system operate the workflow' proposes changing architecture from customer-operated software",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.8571
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "total_tokens": 4925,
+  "duration_ms": 21669,
+  "requested_model": "gpt-5.6-terra",
+  "resolved_model": "gpt-5.6-terra",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": null,
+  "provider": "codex",
+  "all_models": [
+    "gpt-5.6-terra"
+  ],
+  "activated": false,
+  "activation_method": "n/a:control-arm",
+  "skill_version": "2.0.0",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

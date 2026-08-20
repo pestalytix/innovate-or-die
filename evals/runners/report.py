@@ -81,9 +81,13 @@ def banners(args, L, skill_version: str | None = None):
               "with per-assertion majority vote**; split (2-1) votes are recorded as "
               "`unstable` and listed below. Introduced after grader nondeterminism was "
               "measured — see `2026-08-19-grader-variance.md`.", ""]
-    L += ["> **Reproducibility.** `evals-workspace/` holds the raw transcripts and is "
-          "**local-only (gitignored)**. `evals/evals.json` plus `evals/runners/` "
-          "regenerate it; this file is the durable record.", ""]
+    L += ["> **Reproducibility.** The redacted raw transcripts behind this file are "
+          "published under `evals/transcripts/` — per-run `response.md`, "
+          "`timing.json`, `grading.json` and, where one exists, the raw "
+          "`trace/stream.jsonl`. `evals-workspace/` remains the **local-only "
+          "(gitignored)** working tree; `evals/evals.json` plus `evals/runners/` "
+          "regenerate it, and `evals/runners/redact_transcripts.py` derives the "
+          "published copy from it.", ""]
 
 
 def paired_design_line(bench, n_cases: int) -> str:

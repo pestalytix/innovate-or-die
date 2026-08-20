@@ -1,0 +1,64 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 5604 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": true,
+      "evidence": "[mechanical:falsifier_with_number] 1 falsifier line(s) carrying a number; first: If falsified: Interview 15 recent no-show patients using a nonjudgmental script",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "Mechanism: patients protect something they perceive as scarce and personally useful, rather than ignoring a generic appointment.",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "\"Failure threshold: Less than a 15% reduction...\" paired with explicit hedges like \"if it clusters\" and \"What may still be missing\" mark speculation vs the given 14% fact",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer states that the conventional approach is at or near optimal and labels it as conventional",
+      "passed": false,
+      "evidence": "[mechanical:conventional_winner_labelled] no explicit labelling of a conventional winner",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer does NOT present an exotic or novel-sounding mechanism as its headline recommendation",
+      "passed": true,
+      "evidence": "Headline recommendation is treating appointments as 'scarce, revocable capacity' with a two-track keep/change confirmation and coordinator follow-up \u2014 a workflow/behavioral-economics reframing, not an",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "not_graded": 0,
+    "pass_rate": 0.875
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

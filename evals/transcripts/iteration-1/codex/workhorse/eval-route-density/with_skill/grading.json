@@ -1,0 +1,57 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": false,
+      "evidence": "[mechanical:delivers_answer] 3 question-final line(s), 761 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No named causal mechanism given; only clarifying questions and a vague framing ('controlling when and where demand is allowed to exist') with no explanation of why that lever produces the effect.",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": false,
+      "evidence": "Uses 'I suspect' but presents it as a claim with no cited data, no distinction of what's known vs assumed beyond that hedge word",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": true,
+      "evidence": "controlling when and where demand is allowed to exist... rather than treating every account as independently schedulable",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 6,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.1429
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 9864 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": true,
+      "evidence": "[mechanical:falsifier_with_number] 5 falsifier line(s) carrying a number; first: - Falsifier (quantified): pull 60\u201390 days of existing GPS/appointment data (already sitting in the routing software) and simulate the same 900 stops re-grouped ",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "Mechanism: every address gets a permanent zone + weekday, drawn from actual road-network drive-time clusters and re-cut every 1\u20132 quarters...",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "\"Falsifier (quantified): pull 60\u201390 days...unverified for your specific book\" \u2014 flags hypotheses explicitly, e.g. \"This is a hypothesis, not a finding yet\"",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": true,
+      "evidence": "\"You're treating this as a sequencing problem when it's a set-membership problem... 'Quarterly, scheduled by signup date, organized by town' was never designed \u2014 it accreted one sales call at a time.\"",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 1.0
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

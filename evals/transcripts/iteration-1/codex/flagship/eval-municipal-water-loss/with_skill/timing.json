@@ -1,0 +1,18 @@
+{
+  "total_tokens": 57379,
+  "duration_ms": 633412,
+  "requested_model": "gpt-5.6-sol",
+  "resolved_model": "gpt-5.6-sol",
+  "model_mismatch": false,
+  "tier": "flagship",
+  "cost_usd": null,
+  "provider": "codex",
+  "all_models": [
+    "gpt-5.6-sol"
+  ],
+  "activated": true,
+  "activation_method": "inferred:tokens+markers (run predates measurement)",
+  "inferred_marker_count": 5,
+  "skill_version": "2.0.0",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

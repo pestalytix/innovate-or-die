@@ -1,0 +1,58 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 9694 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": true,
+      "evidence": "[mechanical:falsifier_with_number] 1 falsifier line(s) carrying a number; first: - **Marketplace/invoice-factoring loss-leader model** \u2014 real precedent (Toast, ServiceTitan) but requires underwriting-grade data and scale this company almost ",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "Mechanisms named are generic economic/coordination framings ('the call is a coordination problem', 'vendor bears 100% of CAC loss') without a named causal mechanism (e.g., a psychological, behavioral,",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "'this needs to earn its investment with evidence first' and explicit hypothesis/experiment section separating 'Critical assumption tested' from measured outcome, success/failure thresholds",
+      "grader": "llm"
+    },
+    {
+      "text": "At least one option changes pricing, incentive structure, or system architecture rather than the onboarding flow",
+      "passed": true,
+      "evidence": "Option 2 'Risk-shifted commercial terms... gate billing... on a real usage milestone' and Option 3 'Offline-first field-reliability architecture... true system-architecture candidate'",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.8571
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

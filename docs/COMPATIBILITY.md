@@ -32,6 +32,10 @@ disagree, the validator wins and the row says so.
 | File references | relative from skill root, one level deep |
 | Reference validator | `skills-ref validate ./my-skill` (github.com/agentskills/agentskills) — not run here; conformance is asserted by `build/assemble.py` instead |
 
+**`allowed-tools` is schema-legal but no targeted host documents enforcing it;
+this skill does not declare it, because declaring an unenforced restriction would
+be an untestable claim (external review #2, 2026-08-20).**
+
 **Consequence for this repo:** `core/skill-meta.json` carries `version` and a
 nested `author` map. Neither is a legal top-level `SKILL.md` key, so
 `assemble.py` maps them into `metadata` as quoted strings. Our generated

@@ -1,0 +1,57 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 3691 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "Reserve perhaps 10-15% of each zone day for callbacks... A 'quick' callback across town can break an otherwise productive route... reducing that to 2.0 hours releases 1.2 hours per technician-day",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "cites external sources for claims ('optimization systems explicitly treat them as restrictions...' [OptimoRoute]) while framing its own recommendations with hedges like 'I'd change' and 'A strong oper",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": false,
+      "evidence": "Answer treats quarterly cadence/territories as fixable design choices ('create permanent micro-territories', 'apply territory economics') rather than questioning whether the quarterly cadence itself i",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 4,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.4286
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

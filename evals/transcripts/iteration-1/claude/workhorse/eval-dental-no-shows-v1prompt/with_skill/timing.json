@@ -1,0 +1,19 @@
+{
+  "total_tokens": 40923,
+  "duration_ms": 35992,
+  "requested_model": "claude-sonnet-5",
+  "resolved_model": "claude-sonnet-5",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": 0.11042,
+  "provider": "claude",
+  "all_models": [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-5"
+  ],
+  "activated": false,
+  "activation_method": "inferred:tokens+markers (run predates measurement)",
+  "inferred_marker_count": 0,
+  "skill_version": "2.0.0",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

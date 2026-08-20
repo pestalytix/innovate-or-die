@@ -1,0 +1,58 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 1 question-final line(s), 1307 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No named causal mechanism (e.g. drive-time math, clustering algorithm) is given \u2014 only heuristics like 'zone-day discipline' and general advice, no concrete mechanism cited.",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "'This is usually the single biggest fix' and 'worth checking before assuming you need better tech' frame claims as hypotheses to verify, not established facts",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": true,
+      "evidence": "quarterly service is inherently thin density...if customers can book 'next available slot' instead of...zone, every reschedule...fragments the routes; 'Zone-day discipline' as the biggest fix",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 4,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.4286
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

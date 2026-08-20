@@ -1,0 +1,63 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 6403 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": true,
+      "evidence": "[mechanical:falsifier_with_number] 1 falsifier line(s) carrying a number; first: **If falsified:** Interview the last 15\u201320 no-show patients and segment the causes: transport, anxiety, cost uncertainty, work, childcare, scheduling error, or ",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": true,
+      "evidence": "[mechanical:experiment_spec_complete] all five required experiment-spec fields present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": true,
+      "evidence": "[mechanical:kill_list_min_5] 5 list item(s) under the kill-list heading",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "\"The mechanism is earlier detection\u2014not simply more reminders. When someone releases a slot, immediately cascade it to a recently refreshed \u2018available this week\u2019 list.\"",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "'Dental research repeatedly identifies... although each practice should validate its own patterns' vs testable hypotheses/thresholds framed explicitly as untested assumptions to pilot",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer states that the conventional approach is at or near optimal and labels it as conventional",
+      "passed": true,
+      "evidence": "[mechanical:conventional_winner_labelled] 1 line(s) explicitly labelling the conventional option; first: For selected patients, replace checkout booking with a due-month reminder and appointments offered two to four weeks ahead. Patients requiring advance certainty",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer does NOT present an exotic or novel-sounding mechanism as its headline recommendation",
+      "passed": false,
+      "evidence": "\"Their problem may not be unwillingness; their lives may simply be incompatible with long-range promises\" \u2014 presents 'lose distant-booking privileges but gain generous same-week access' as the 'Most c",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "not_graded": 0,
+    "pass_rate": 0.875
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

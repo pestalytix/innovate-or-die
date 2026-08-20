@@ -1,0 +1,58 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 4901 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No row states a causal mechanism (e.g., pressure-leak flow relationship); actions are described operationally with confirm/refute evidence, not mechanistic reasoning.",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "explicit Confirm/Refute pairs throughout table, e.g. 'Confirm: discrepancy narrows... Refute: independently checked source and customer totals still show a similar gap'",
+      "grader": "llm"
+    },
+    {
+      "text": "Every proposed approach respects the stated constraint of no new capital expenditure",
+      "passed": true,
+      "evidence": "Table header 'No-capex approach' plus intro line 'With capital committed, focus on operational controls, existing data, and maintenance practices' \u2014 all 10 listed approaches use only existing meters/s",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 4,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.4286
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

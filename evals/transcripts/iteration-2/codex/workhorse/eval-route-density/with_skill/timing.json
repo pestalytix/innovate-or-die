@@ -1,0 +1,22 @@
+{
+  "total_tokens": 17948,
+  "duration_ms": 53736,
+  "requested_model": "gpt-5.6-terra",
+  "resolved_model": "gpt-5.6-terra",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": null,
+  "provider": "codex",
+  "all_models": [
+    "gpt-5.6-terra"
+  ],
+  "activated": true,
+  "activation_method": "heuristic:markers",
+  "tools": null,
+  "num_turns": null,
+  "effort": "default (deployed condition)",
+  "parse_confidence": null,
+  "marker_count": 4,
+  "skill_version": "2.0.1",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb); not recorded at run time"
+}

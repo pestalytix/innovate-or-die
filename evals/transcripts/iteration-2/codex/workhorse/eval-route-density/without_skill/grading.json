@@ -1,0 +1,91 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 2969 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No named causal mechanism (e.g., 'triangle inequality', 'clustering theory') is cited \u2014 only heuristics like 'floating work creates invisible drive time' and 'outlier accounts damage nearby days.'",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": false,
+      "evidence": "No hedging or sourcing language distinguishing established facts (e.g., the 40% driving figure given by user) from the answer's own inferences/recommendations, which are presented as assertions throug",
+      "grader": "llm-majority-3",
+      "vote_split": "1/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint",
+      "passed": true,
+      "evidence": "the underlying problem is usually the *service model and territory design*, not just route optimization... A tech's Tuesday should be one compact micro-territory",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    },
+    {
+      "text": "Each top opportunity names a specific first action the reader could take within a week",
+      "passed": false,
+      "evidence": "Bullets describe levers to 'investigate' or 'consider' (e.g. 'Consider an arrival day model') without a concrete first action within a week; only vague closing suggestion of a 'four-week analysis'",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation",
+      "passed": true,
+      "evidence": "Set an operational target such as \"X stops, Y production hours, and no more than Z drive minutes per zone-day\" plus the four-week analysis metrics list",
+      "grader": "llm-majority-3",
+      "vote_split": "2/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer does not substitute breadth of exploration for a decidable recommendation",
+      "passed": false,
+      "evidence": "Answer offers eight parallel 'biggest levers to investigate' and a 4-week analysis plan, but never commits to a single decidable recommendation.",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 7,
+    "total": 10,
+    "not_graded": 0,
+    "pass_rate": 0.3
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "llm_votes_per_assertion": 3,
+  "unstable_assertions": [
+    "The answer distinguishes facts and evidence from assumptions and speculation",
+    "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
+  ],
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

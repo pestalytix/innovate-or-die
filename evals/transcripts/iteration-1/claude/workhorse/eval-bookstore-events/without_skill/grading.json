@@ -1,0 +1,58 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": false,
+      "evidence": "[mechanical:delivers_answer] 4 question-final line(s), 1469 chars, recommendation markers ABSENT",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No named causal mechanism (e.g., halo effect, mere-exposure) is stated \u2014 'halo sales' is mentioned as a metric to check, not an explained mechanism.",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "\"Do you actually know if event attendees become repeat customers, or is that just an assumption?\"",
+      "grader": "llm"
+    },
+    {
+      "text": "The answer reframes what the events produce rather than treating it as a keep-or-drop binary",
+      "passed": true,
+      "evidence": "separate the two problems... events at an indie bookstore usually aren't really about ticket/wine-sale margins, they're customer acquisition and community anchoring",
+      "grader": "llm"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 5,
+    "total": 7,
+    "not_graded": 0,
+    "pass_rate": 0.2857
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

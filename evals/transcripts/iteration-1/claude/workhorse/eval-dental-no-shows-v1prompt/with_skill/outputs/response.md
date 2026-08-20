@@ -1,0 +1,19 @@
+Since they're already doing single-touch SMS at 48h, here's what's most likely to move the needle, ranked by confidence:
+
+**High confidence**
+
+- **Two-way, interactive reminders (confirm/cancel/reschedule by reply) instead of one-way blasts.** This is the single highest-leverage change and it's well-supported in outpatient scheduling research (medical and dental). Two effects stack: (1) the act of confirming acts as a small commitment device — patients who explicitly reply "yes" show up more than patients who receive a passive reminder — and (2) patients who would've silently no-showed instead cancel, which lets the front desk backfill the slot from a waitlist. If their current SMS platform doesn't support reply parsing, this is usually a config change, not a new vendor.
+- **A second reminder closer to the appointment (e.g., same-morning or 24h) in addition to the 48h one.** Single reminders lose potency well before the appointment; the marginal reminder closest to the visit has outsized effect because it fights same-day forgetting/conflicts rather than just initial scheduling awareness. Cheap to add if the SMS system already exists.
+- **Shortening scheduling lead time where possible.** Lead time between booking and appointment is one of the most consistently replicated predictors of no-shows across outpatient settings — the longer the gap, the higher the no-show rate. For recall hygiene visits booked 6 months out, this is harder to control directly, but it argues strongly for the two reminders above rather than relying on distance-shrinking.
+
+**Medium confidence**
+
+- **Risk-stratify and add a live phone call for high-risk appointments** (new patients, patients with a prior no-show on file, certain slots like Monday-morning or Friday-afternoon hygiene). Phone calls outperform texts for no-show reduction in several studies, but they're staff-time expensive, so applying them only to the subset of appointments with elevated risk is the efficient version. Requires them to actually have no-show history tagged in the PMS — worth checking whether that data exists before proposing this.
+- **No-show/late-cancellation fee policy, ideally paired with a card-on-file requirement at booking.** Effective in reducing no-shows in several dental-specific studies, but it's a patient-relations lever, not just an operational one — mishandled it can suppress new-patient bookings or trigger churn. I'd sequence this after the reminder changes above, not first, since it's harder to reverse once patients feel it's punitive.
+
+**Lower confidence / situational**
+
+- **Personalizing reminder content** (patient's name, provider's name, "we saved your spot") — plausible modest effect, evidence is thinner and more mixed than the items above.
+- **Overbooking hygiene columns** — this doesn't reduce the no-show rate at all, it just hedges against the revenue/chair-time loss. Useful as a stopgap while the above changes take effect, not a fix.
+
+**What I'd actually do first:** turn on two-way confirm/cancel replies on the existing 48h text and add a same-day or 24h second touch — both are low-cost, high-confidence, and don't require new policy or patient-facing friction. Then pull no-show data by patient-risk-factor and day/time slot before deciding whether phone calls or a fee policy are worth the operational cost — I'm giving directional confidence based on general outpatient-scheduling literature, not this practice's actual patterns, so a few weeks of their own no-show data (which slots, which patient segments) should confirm or redirect where the medium-confidence items get applied.

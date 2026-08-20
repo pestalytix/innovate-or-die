@@ -1,0 +1,94 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 4119 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": true,
+      "evidence": "Mechanism: shortens the gap between intention and appointment... patients either recommit or reveal their likely absence while there is time to replace them",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "\"Assumption: these are mostly routine recall visits booked far in advance. If they are largely acute or treatment-linked visits, use a different design.\"",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    },
+    {
+      "text": "The answer states that the conventional approach is at or near optimal and labels it as conventional",
+      "passed": false,
+      "evidence": "[mechanical:conventional_winner_labelled] no explicit labelling of a conventional winner",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer does NOT present an exotic or novel-sounding mechanism as its headline recommendation",
+      "passed": false,
+      "evidence": "\u201cMost contrarian hypothesis: **the practice should deliberately stop holding its scarcest prime-time hygiene slots for patients who have not actively claimed them.**\u201d framed as a headline-style bolded",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "Each top opportunity names a specific first action the reader could take within a week",
+      "passed": false,
+      "evidence": "Recommendation 1 says invite patients '2\u20134 weeks before they are due' and recommendation 2 says 'About 7 days out' \u2014 these describe future process design, not a specific action the reader takes within",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation",
+      "passed": true,
+      "evidence": "7-day three-choice message; personal follow-up for no response; release unclaimed slots 72 hours out; send openings to the standby list \u2014 with explicit metrics and thresholds (\u22648%, 30-day completion w",
+      "grader": "llm-majority-3",
+      "vote_split": "2/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer does not substitute breadth of exploration for a decidable recommendation",
+      "passed": true,
+      "evidence": "Section headed 'Cheapest high-information test' gives a specific hypothesis (14% to 8%), a 150/150 randomized experiment design, measurable thresholds, and a named 'strongest fix' up front rather than",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 6,
+    "total": 11,
+    "not_graded": 0,
+    "pass_rate": 0.4545
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "llm_votes_per_assertion": 3,
+  "unstable_assertions": [
+    "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
+  ],
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}

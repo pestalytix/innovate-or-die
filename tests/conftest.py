@@ -52,3 +52,8 @@ def judge():
 @pytest.fixture(scope="session")
 def report():
     return _load("report_under_test", "evals/runners/report.py")
+
+
+@pytest.fixture(scope="session")
+def redact():
+    return _load("redact_under_test", "evals/runners/redact_transcripts.py")

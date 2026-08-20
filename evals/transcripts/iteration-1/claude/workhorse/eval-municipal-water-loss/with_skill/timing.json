@@ -1,0 +1,24 @@
+{
+  "total_tokens": 41813,
+  "duration_ms": 46446,
+  "requested_model": "claude-sonnet-5",
+  "resolved_model": "claude-sonnet-5",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": 0.12350900000000001,
+  "provider": "claude",
+  "all_models": [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-5"
+  ],
+  "activated": false,
+  "activation_method": "observed:Skill-tool-call",
+  "tools": {},
+  "num_turns": 1,
+  "effort": "default (deployed condition)",
+  "parse_confidence": null,
+  "marker_count": null,
+  "error": "SKILL DID NOT ACTIVATE -- with_skill arm ran as a baseline; exclude from headline delta",
+  "skill_version": "2.0.1",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

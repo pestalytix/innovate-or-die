@@ -1,0 +1,21 @@
+The best bet is not another generic reminder. It is a shorter booking horizon combined with active confirmation and targeted human follow-up.
+
+| Option | Likely effect from a 14% baseline | Confidence | Assessment |
+|---|---:|---|---|
+| Shorten the hygiene booking horizon | Potentially largest sustained reduction | Moderate-high | Long lead time and prior no-shows are the most consistent predictors of nonattendance. Instead of firmly booking every recall six months ahead, record the due date and finalize the appointment 2–6 weeks beforehand—at least for unreliable patients. Advanced-access studies generally show fewer no-shows, though evidence is mostly nondental. [Systematic review](https://pmc.ncbi.nlm.nih.gov/articles/PMC11231932/), [dental study](https://pubmed.ncbi.nlm.nih.gov/33197040/) |
+| Require two-way confirmation, with staff calling high-risk or unconfirmed patients | About 2–4 percentage points is a reasonable test target | Moderate-high | Send a confirm/cancel/reschedule message 7 days ahead, retain the 48-hour reminder, and have staff call only patients who remain unconfirmed or have prior misses. A randomized trial found targeted calls reduced no-shows by 22% relatively—which would translate from 14% to roughly 11% if replicated. Multiple notifications also outperform a single notification. [Targeted-call trial](https://pmc.ncbi.nlm.nih.gov/articles/PMC5130951/), [meta-analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC5093388/) |
+| Make cancellation/rescheduling one tap | Small direct reduction, larger operational benefit | High for converting no-shows into cancellations; moderate for attendance | The SMS should contain a direct reply or link—not merely the office number. This may not make everyone attend, but it gives the practice time to refill the chair. Evidence reviews consistently identify low-friction cancellation as important. [Evidence synthesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC4831598/) |
+| Change the SMS wording | Possibly 1–3 points, but uncertain in dentistry | Moderate-low | Use commitment language: “We are reserving 60 minutes with your hygienist. Reply C to confirm, R to reschedule.” A large hospital RCT reduced missed visits from 11.1% to 8.4% by making the consequence of nonattendance concrete, but that result may not transfer directly to private dental hygiene. [RCT](https://pmc.ncbi.nlm.nih.gov/articles/PMC4569397/) |
+| Deposits or consistently enforced no-show fees | Could be meaningful for repeat offenders | Low-moderate | Plausible and endorsed as an option by the ADA, but strong controlled evidence that fees reduce dental no-shows is limited. They can also alienate patients, worsen access, and be restricted by payer or state rules. Use selectively after repeated misses, not practice-wide as the first intervention. [ADA guidance](https://www.ada.org/resources/practice/practice-management/cancellations) |
+| Transportation, scheduling, or childcare assistance | Large for affected patients; little effect otherwise | Moderate | Ask patients who miss why. If barriers cluster around work schedules, transportation, or childcare, offer early/late slots, same-week rescheduling, or targeted assistance. Apply this only after local data confirms the barrier. |
+| Double-booking or a short-call waitlist | Does not reduce no-shows | High | These protect utilization rather than change attendance. A waitlist is sensible; blanket double-booking risks delays when both patients arrive. |
+
+My recommendation is a 90-day test:
+
+1. Add a one-tap confirmation message seven days before the visit.
+2. Keep the existing 48-hour SMS.
+3. Call only patients who remain unconfirmed or have missed before.
+4. For repeat no-shows, stop making firm six-month appointments; contact them nearer the due date.
+5. Track no-shows separately from timely cancellations and measure completed hygiene visits per patients due, so shortening the booking horizon does not merely make the reported rate look better.
+
+I would be moderately confident this package can move the practice from 14% to roughly 9–11%. I would have low confidence in any promise below that without examining appointment lead time, prior-miss concentration, confirmation responses, and stated reasons for missed visits.

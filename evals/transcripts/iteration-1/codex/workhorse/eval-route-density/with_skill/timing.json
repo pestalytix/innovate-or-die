@@ -1,0 +1,20 @@
+{
+  "total_tokens": 8058,
+  "duration_ms": 16435,
+  "requested_model": "gpt-5.6-terra",
+  "resolved_model": "gpt-5.6-terra",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": null,
+  "provider": "codex",
+  "all_models": [
+    "gpt-5.6-terra"
+  ],
+  "activated": true,
+  "activation_method": "inferred:stage0-question-batch (reclassified 2026-08-19 after observation)",
+  "inferred_marker_count": 0,
+  "failure_mode": "stage0-stall",
+  "reclassification_note": "Asked a batch of clarifying questions and stopped -- this IS Stage 0 behaviour, so the skill activated. The failure is the Stage 0 single-shot defect (ADR-002 candidate), NOT activation reliability.",
+  "skill_version": "2.0.0",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

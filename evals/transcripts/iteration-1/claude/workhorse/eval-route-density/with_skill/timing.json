@@ -1,0 +1,27 @@
+{
+  "total_tokens": 767382,
+  "duration_ms": 978868,
+  "requested_model": "claude-sonnet-5",
+  "resolved_model": "claude-sonnet-5",
+  "model_mismatch": false,
+  "tier": "workhorse",
+  "cost_usd": 2.1532655999999997,
+  "provider": "claude",
+  "all_models": [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-5"
+  ],
+  "activated": true,
+  "activation_method": "observed:Skill-tool-call",
+  "tools": {
+    "Skill": 1,
+    "Read": 12,
+    "Agent": 3
+  },
+  "num_turns": 13,
+  "effort": "default (deployed condition)",
+  "parse_confidence": null,
+  "marker_count": null,
+  "skill_version": "2.0.1",
+  "skill_version_method": "derived from run time vs the v2.0.1 commit (fc1bffb)"
+}

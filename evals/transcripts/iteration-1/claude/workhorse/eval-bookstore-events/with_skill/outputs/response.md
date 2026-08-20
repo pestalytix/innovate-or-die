@@ -1,0 +1,5 @@
+I'd look at cutting costs and shifting the format before cutting the program entirely — the direct event P&L is usually the wrong metric, since author events mostly function as customer acquisition and community/press generators rather than profit centers themselves. Concretely: push publishers harder for co-op marketing dollars/author travel support (many will pay if you ask), require ticket purchase = book purchase to guarantee unit sales, and cut event frequency/scale (fewer, higher-draw events) to reduce the staff time burden without losing the halo effect entirely.
+
+The tradeoff: if you drop events cold, you likely lose foot traffic, email list growth, and local press/goodwill that indirectly support sales elsewhere — but if that halo effect isn't actually showing up in your numbers (repeat customers, mailing list conversions), then cutting may be the right call and the "cost" is just sentimental.
+
+Want me to dig into this more rigorously — e.g. stress-test the assumption that events need to break even at all, or find non-obvious formats other indies use to make events cheaper/self-funding?

@@ -363,3 +363,11 @@ is approached. The banner costs the user one line of output.
   `evals-workspace/` grading records, 2026-08-20: 0/19 control-arm structural
   passes; 12/17, 10/17, 4/17 on activated treatment runs.
 - `evals/runners/run_evals.py` — the `heuristic:markers` Codex path this replaces.
+
+## Amendments
+
+2026-08-20 — The Codex `activation_method` label was changed from
+`observed:banner` to `inferred:banner` (commit `d4c7269`) because output-side
+detection is inference, not observation. References to `observed:banner` above
+reflect the label at time of writing. See
+[NOTE-activation-variance.md](NOTE-activation-variance.md).

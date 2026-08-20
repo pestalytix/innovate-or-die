@@ -1,0 +1,88 @@
+{
+  "assertion_results": [
+    {
+      "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+      "passed": true,
+      "evidence": "[mechanical:delivers_answer] 0 question-final line(s), 4631 chars, recommendation markers present",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+      "passed": false,
+      "evidence": "[mechanical:falsifier_with_number] no line matching a falsifier pattern also contains a number",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+      "passed": false,
+      "evidence": "[mechanical:experiment_spec_complete] missing: hypothesis, critical assumption, success threshold, failure threshold, learned either way",
+      "grader": "mechanical"
+    },
+    {
+      "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+      "passed": false,
+      "evidence": "[mechanical:kill_list_min_5] no section heading matching 'kill list'",
+      "grader": "mechanical"
+    },
+    {
+      "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture",
+      "passed": false,
+      "evidence": "No named causal mechanism (e.g., specific psychological/economic theory) is cited; claims like 'may churn before value appears' are asserted, not mechanistically grounded.",
+      "grader": "llm-majority-3",
+      "vote_split": "1/3 pass",
+      "unstable": true,
+      "note": "split vote -- assertion is not reliably gradeable by LLM; mechanization/rewording candidate"
+    },
+    {
+      "text": "The answer distinguishes facts and evidence from assumptions and speculation",
+      "passed": true,
+      "evidence": "\"consider\", \"may\", \"such as\" markers throughout (e.g. \"Consider an implementation-inclusive annual plan...\") flag speculative recommendations vs. stated framing as hypotheses, not verified facts",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    },
+    {
+      "text": "At least one option changes pricing, incentive structure, or system architecture rather than the onboarding flow",
+      "passed": true,
+      "evidence": "\"Redesign pricing to align with realized value... Consider an implementation-inclusive annual plan, a ramped first-quarter price, per-project pricing, usage/value-based pricing\"",
+      "grader": "llm-majority-3",
+      "vote_split": "3/3 pass"
+    },
+    {
+      "text": "Each top opportunity names a specific first action the reader could take within a week",
+      "passed": false,
+      "evidence": "No bullet specifies a concrete first action with a one-week timeframe; the closest is the closing 'practical near-term sequence' which is generic and untimed.",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation",
+      "passed": false,
+      "evidence": "recommendations are strategic framings ('Redesign pricing to align with realized value', 'Segment the business model') without specific dollar amounts, thresholds, tools, or step-by-step operator acti",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    },
+    {
+      "text": "The answer does not substitute breadth of exploration for a decidable recommendation",
+      "passed": false,
+      "evidence": "Answer lists ~12 broad strategies (pricing, segmentation, managed service, product boundary, champion resilience, etc.) with no single prioritized recommendation or decision",
+      "grader": "llm-majority-3",
+      "vote_split": "0/3 pass"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 7,
+    "total": 10,
+    "not_graded": 0,
+    "pass_rate": 0.3
+  },
+  "grader_model_requested": "claude-sonnet-5",
+  "budget_basis": "cost_usd (token metric misprices small calls)",
+  "llm_votes_per_assertion": 3,
+  "unstable_assertions": [
+    "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+  ],
+  "grader_model_resolved": [
+    "claude-sonnet-5"
+  ]
+}
