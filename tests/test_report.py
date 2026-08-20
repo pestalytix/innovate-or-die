@@ -300,3 +300,15 @@ def test_an_unexpectedly_activated_control_is_not_described_as_non_activated(
     para = next(x for x in L if "envelope probe (MODEL_POLICY" in x)
     assert "non-activated, as a control should be" not in para
     assert "activated=True" in para
+
+
+def test_the_banner_does_not_claim_codex_is_clean(report):
+    """Codex exposes no event stream, so the scan could only read delivered
+    answers. "No Codex run shows this" invites the inference that Codex is
+    clean; what is true is that absence there cannot be observed."""
+    L = []
+    report.banners(Args(1, "claude"), L, "2.0.1")
+    banner = next(line for line in L if ANCHOR in line)
+    assert "unobservable rather than established" in banner
+    assert "No other run in any tier, and no Codex run, shows this" not in banner, (
+        "the wording that read as an established Codex absence")

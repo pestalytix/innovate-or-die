@@ -110,7 +110,9 @@ def banners(args, L, skill_version: str | None = None):
               "unaffected. The blind judge read the delivered answers, so the "
               "`eval-route-density` verdict should be read knowing the control's "
               "answer carries a host-derived offer the treatment's does not. No "
-              "other run in any tier, and no Codex run, shows this. Evidence: "
+              "other Claude run in any tier shows this. No Codex run shows it "
+              "either, but Codex exposes no event stream, so absence there is "
+              "unobservable rather than established. Evidence: "
               "[`evals/transcripts/README.md`]"
               "(../transcripts/README.md#known-confound-uncontrolled-host-context-in-the-flagship-pair).", ""]
     if args.iteration == 1:
