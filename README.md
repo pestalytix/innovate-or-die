@@ -1,12 +1,94 @@
 # Innovate or Die
 
-A search procedure for hard, open-ended problems. It generates candidate ideas,
-attacks them in a separate context, revises what survives, and turns the
-strongest hypotheses into experiments you could actually run this week.
+Ask an AI assistant for ideas and you tend to get the advice everyone else
+gets. This is a skill — a set of instructions you add to your AI assistant —
+that makes it search harder: it generates a large pile of ideas, has a second
+copy of the AI attack that pile in a separate session, keeps only what survives,
+and hands you one cheap experiment you could run this week. It is also built to
+tell you plainly when the boring, conventional answer is the right one. The goal
+is not novelty for its own sake; it is finding the valuable thing everyone
+walked past.
 
-The point is not novelty. The point is **overlooked value** — and if the honest
-finding is that the conventional approach is near-optimal, the protocol is built
-to say so and label it as such.
+## What you'll get back
+
+- **The best idea first**, with the reason it should work — not just what to do,
+  but why it would pay off.
+- **The ideas it threw away, and why each one died.** This is more useful than it
+  sounds: the objection to an idea you were about to try is worth having before
+  you spend the money on it.
+- **One experiment**, chosen to be the cheapest way to learn the most, with a
+  clear number that counts as pass and a clear number that counts as fail.
+- **What it might still be missing** — the assumptions it could not check and the
+  facts it had to take on faith.
+
+## Get started
+
+Pick the row for the app you use. Some rows install this as a *plugin* — an
+add-on package the app loads for you. A repo is this project's folder on GitHub;
+`git clone` copies it to your computer. Custom GPTs (ChatGPT), Gems (Gemini),
+Agent Builder (Microsoft 365), and Agent Skills are each platform's way of adding
+custom behavior to its AI.
+
+| App | What to do |
+|---|---|
+| **Claude Code** | Run `/plugin marketplace add pestalytix/innovate-or-die`, then `/plugin install innovate-or-die@pestalytix`. |
+| **Codex** | Clone this repo — the skill is already at `.agents/skills/innovate-or-die/` and gets picked up automatically. |
+| **GitHub Copilot** | Clone this repo the same way — the skill is already at `.github/skills/innovate-or-die/` and gets picked up automatically. |
+| **Codex CLI**, as a plugin | Install this repo as a plugin; the file `.codex-plugin/plugin.json` tells it to look in `skills/`. |
+| **Any app that accepts Agent Skills** | Copy the folder `skills/innovate-or-die/` into wherever that app keeps its skills. |
+| **VS Code / Visual Studio** | Copy `adapters/copilot/agents/*.agent.md` into `.github/agents/` (or `~/.copilot/agents`), and start with the one named `innovate-or-die`. |
+| **ChatGPT**, as a Custom GPT | Paste `adapters/web/chatgpt-gpt-instructions.md` into the Instructions box, and upload `chatgpt-gpt-knowledge.md` as Knowledge. |
+| **Gemini**, as a Gem | Paste `adapters/web/gemini-gem-instructions.md` into the Gem's instructions, and attach `gemini-gem-knowledge.md`. |
+| **Microsoft 365 Copilot**, in Agent Builder | Paste `adapters/web/m365-copilot-instructions.md` into Instructions (that field holds 8,000 characters), and add `m365-copilot-knowledge.md` as a knowledge source. |
+| **Any app that can't take file attachments** | Paste the whole of `adapters/web/<target>-fallback.md` (pick the file matching your app) into the chat — the weakest option, and [there is a catch](#what-you-get-on-each-app-fidelity-levels). |
+
+Then ask it something hard, or just say `innovate or die`.
+
+## Good to know
+
+**Sometimes it doesn't switch on, and won't tell you.** The safest habit is to
+name it in your request instead of hoping the app notices the topic matches:
+
+```
+Use the innovate-or-die skill on this: we run residential pest control in three
+towns and windshield time is eating us alive. what are we missing?
+```
+
+To check whether it actually ran: if the answer comes back with no list of
+rejected ideas and no experiment with a pass/fail number, it didn't run. There is
+no error message when this happens — a run where the skill sat out looks exactly
+like an ordinary answer. In our published testing, the skill was installed for 7
+runs on Claude Code and **actually switched on in 3 of them** (that is a raw
+count, not a rate — the sample is far too small to be one), while it started
+reliably every time in Codex. We do not know why: three explanations were
+proposed and all three turned out to be wrong. The write-up is in [docs/NOTE-activation-variance.md](docs/NOTE-activation-variance.md).
+
+**It is slow and it eats your usage allowance**, because it genuinely does more
+work — it generates dozens of ideas and discards them down to a few before it
+answers you. That cost is the trade. Formatting rules keep the output from
+sprawling, and nothing in the design rewards long answers.
+
+**It doesn't know your prices, your local rules, or your regulations.** When an
+idea depends on a number or a law it wasn't given, it is instructed to say so and
+name what you need to look up, rather than invent a plausible figure. Look those
+up before you act on anything.
+
+**It's the wrong tool for two jobs.** If you already have your options and just
+need to pick one, that's a decision, not a search. If you have the plan and need
+it carried out, that's execution. This does neither.
+
+## Does it actually work?
+
+We tested it by running the same set of problems twice — once with the skill,
+once without, same question and same AI both times — and we did it on two
+different companies' AI systems. Usually the version with the skill came out
+measurably better; occasionally it came out no better at all while costing far
+more (in one case, 19 times the cost for no gain we could measure). We publish
+those unflattering results alongside the good ones — [see for yourself](#evaluation).
+
+---
+
+# For developers and evaluators
 
 ## What it does
 
@@ -27,38 +109,21 @@ Six stages, four roles, one bounded correction loop:
 The quotas are the point. Enforcement by exhortation demonstrably fails; the
 numbers are what force a real search.
 
-## Install
+## What you get on each app (fidelity levels)
 
-| Surface | How |
-|---|---|
-| **Claude Code** (plugin) | `/plugin marketplace add pestalytix/innovate-or-die` then `/plugin install innovate-or-die@pestalytix` |
-| **Any Agent Skills host** | Copy `skills/innovate-or-die/` into the host's skills directory |
-| **Codex CLI** (plugin) | Install this repo as a plugin — `.codex-plugin/plugin.json` points at `skills/` |
-| **Codex** (repo-local) | Already present at `.agents/skills/innovate-or-die/` — clone and it is discovered |
-| **GitHub Copilot** (repo-local) | Already present at `.github/skills/innovate-or-die/` — clone and it is discovered |
-| **VS Code / Visual Studio** | Copy `adapters/copilot/agents/*.agent.md` into `.github/agents/` (or `~/.copilot/agents`). Start with the `innovate-or-die` orchestrator |
-| **ChatGPT Custom GPT** | Paste `adapters/web/chatgpt-gpt-instructions.md` into Instructions; upload `chatgpt-gpt-knowledge.md` as Knowledge |
-| **Gemini Gem** | Paste `adapters/web/gemini-gem-instructions.md` into the Gem instructions; attach `gemini-gem-knowledge.md` |
-| **M365 Copilot Agent Builder** | Paste `adapters/web/m365-copilot-instructions.md` into Instructions (8,000-char field); add `m365-copilot-knowledge.md` as a knowledge source |
-| **Any host without attachments** | Paste `adapters/web/<target>-fallback.md` whole — see rung four below |
+Keeping the roles apart is the design choice everything else rests on: an author
+who knows the filter optimizes for the filter. Hosts differ in how much real
+separation they can provide, so fidelity degrades in four known steps.
 
-Then ask it something hard, or say `innovate or die`.
-
-## Fidelity ladder
-
-Role separation is the load-bearing design choice: an author that knows the
-filter optimizes for the filter. Hosts differ in how much real isolation they
-can provide, so fidelity degrades in four known steps.
-
-**Rung 1 — Agentic hosts with subagents.** Claude Code, Codex, Copilot coding
+**Level 1 — Agentic hosts with subagents.** Claude Code, Codex, Copilot coding
 agent. The innovator and critic run in genuinely separate contexts. Full fidelity.
 
-**Rung 2 — Copilot `.agent.md` profiles.** One profile per role plus an
-orchestrator. Isolation is real but *manual*: you open a fresh chat per role and
-hand forward only what the next role is entitled to see. Fidelity depends on you
-following that.
+**Level 2 — Copilot `.agent.md` profiles.** One profile per role plus an
+orchestrator. The separation is real but *manual*: you open a fresh chat per role
+and hand forward only what the next role is entitled to see. Fidelity depends on
+you following that.
 
-**Rung 3 — Web loader + knowledge file.** ChatGPT GPTs, Gems, Agent Builder. One
+**Level 3 — Web loader + knowledge file.** ChatGPT GPTs, Gems, Agent Builder. One
 context, staged reading: the instructions file carries the principles and
 workflow, the role briefs live in an attached knowledge file read stage by stage.
 Two caveats — there is no true isolation, only discipline; and knowledge-file
@@ -68,52 +133,25 @@ Gemini Gem (2026-08-19) returned all eight Innovator quotas intact and exact, wi
 no fragmentation of enumerated lines. ChatGPT GPTs and M365 Agent Builder use
 different retrieval implementations and remain untested.
 
-**Rung 4 — Single-paste fallback.** Everything inlined in one document, for hosts
+**Level 4 — Single-paste fallback.** Everything inlined in one document, for hosts
 that take no attachment. The whole protocol — including what the critic checks
 for — is in context from the first token, which is the anchoring failure the
 design exists to defeat. It also exceeds every known instruction-field cap
 (~19,800 chars), so it may be truncated. Shipped because a documented degraded
 path beats an undocumented one, not because it is recommended.
 
-## Limitations
-
-- **The skill does not always activate.** In the published baseline, **3 of 7
-  `with_skill` runs activated on Claude Code** (raw counts — the sample is far too small
-  for a rate). A non-activated run looks exactly like a normal answer: there is no error
-  and no indication the skill was skipped. Activation was reliable on Codex in the same
-  baseline. **The mechanism is not understood** — three hypotheses were proposed and all
-  three falsified; see [docs/NOTE-activation-variance.md](docs/NOTE-activation-variance.md).
-
-  **Workaround — invoke it explicitly** rather than relying on description matching:
-
-  ```
-  Use the innovate-or-die skill on this: we run residential pest control in three
-  towns and windshield time is eating us alive. what are we missing?
-  ```
-
-  If the answer comes back without a kill list and a falsifiable experiment, the skill
-  did not run.
-
-- **Role separation is not evidence.** The evaluator is a quality gate, not proof
-  of correctness. A protocol that scores itself well can still be wrong.
-- **It is token-expensive by construction.** Quotas guarantee volume. Terse-format
-  rules keep it bounded, and the evaluator does not reward length.
-- **It does not verify facts you do not give it.** Where a load-bearing claim
-  rests on a regulation, cost figure, or market size it does not have, the
-  protocol is instructed to say so and name what must be looked up rather than
-  invent a number. Check those before acting.
-- **Wrong tool for settled questions.** Choosing among already-defined options is
-  decision analysis; executing a plan is a delivery workflow. Neither is this.
-- **Two web caps are unverified.** The ChatGPT Custom GPT and Gemini Gem
-  instruction limits have no first-party source. See `docs/COMPATIBILITY.md`.
+Two of those caps are themselves unverified: the ChatGPT Custom GPT and Gemini Gem
+instruction limits have no first-party source. See `docs/COMPATIBILITY.md`.
 
 ## Evaluation
 
 This skill is evaluated against itself: every test case runs twice, once with the skill
-and once without, same prompt and model, and the **delta** is the result. Iteration-1 is
-the v2.0.0 two-provider baseline; iteration-2 re-measures the Codex workhorse tier under
+and once without (the `with_skill` and `without_skill` arms), same prompt and model, and
+the **delta** is the result. The activation counts quoted above are over `with_skill` runs.
+Iteration-1 is the v2.0.0 two-provider baseline; iteration-2 re-measures the Codex workhorse tier under
 v2.0.1 after the [ADR-002](docs/ADR-002-stage0-single-turn.md) Stage 0 fix, with N=3
-majority-vote grading introduced after grader nondeterminism was measured.
+majority-vote grading — each judgment made three times, majority wins, because AI graders
+vary — introduced after grader nondeterminism was measured.
 
 | Results | |
 |---|---|
@@ -126,6 +164,10 @@ majority-vote grading introduced after grader nondeterminism was measured.
 
 The results are deliberately unflattering where the evidence is unflattering — including
 one case where the skill cost 19x the tokens for no measurable gain.
+
+Note what this does *not* establish: **role separation is not evidence.** The evaluator is
+a quality gate, not proof of correctness. A protocol that scores itself well can still be
+wrong.
 
 ## How this repo is built
 
