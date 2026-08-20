@@ -2,13 +2,17 @@
 
 **Date:** 2026-08-19 · **Iteration:** 1 · **Provider:** claude
 
-**Resolved model(s):** claude-sonnet-5 — this is the resolved id reported by the run, not a requested alias.
+**Resolved model(s):** claude-sonnet-5 — the resolved id reported by the run, not a requested alias.
 
 Paired design: every case ran twice, with and without the skill, same prompt, same model, clean context. The delta is the result.
 
-> **Version span.** Iteration-1 spans **two protocol versions**: runs before the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each arm below is labelled. Cross-version comparisons within this iteration are confounded and are flagged where they occur.
+> **Version span.** Iteration-1 spans **two protocol versions**: runs before the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each arm below is labelled. Cross-version comparisons within this iteration are confounded and flagged where they occur.
 
-> **Statistical modesty.** Five cases, **one run per case, per arm**. Every number here is **directional only** — no repeated trials, so no variance estimate and no significance. `stddev` across cases measures case-to-case spread, not run-to-run stability. Treat differences of a few points as indistinguishable from noise, and treat win/loss tallies as anecdote. The qualitative verdicts and the named findings carry more weight than any mean in this document.
+> **Statistical modesty.** Five cases, **one run per case, per arm**. Every number here is **directional only** — no repeated trials of the runs themselves, so no variance estimate and no significance. `stddev` across cases measures case-to-case spread, not run-to-run stability. Treat differences of a few points as indistinguishable from noise, and win/loss tallies as anecdote. The qualitative verdicts and named findings carry more weight than any mean here.
+
+> **Post-baseline annotation.** LLM-graded assertions were later measured nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this file are **single draws**, not replicated measurements. This file is the v2.0.0 record: annotated, never re-graded.
+
+> **Reproducibility.** `evals-workspace/` holds the raw transcripts and is **local-only (gitignored)**. `evals/evals.json` plus `evals/runners/` regenerate it; this file is the durable record.
 
 ## Headline
 
@@ -25,24 +29,24 @@ Paired design: every case ran twice, with and without the skill, same prompt, sa
 | **deployed** | 0.1429 | 4 | every case, misses and stalls included -- what an installing user experiences |
 | **per-activation** | 0.2142 | 2 | cases where the skill fired; activated-but-failed runs included |
 
-Excluded from per-activation: `eval-municipal-water-loss, eval-bookstore-events`.
+Excluded from per-activation: `eval-municipal-water-loss, eval-bookstore-events` — the skill did not fire, so those arms are baseline runs.
 
 Per case (deployed): `eval-route-density` +0.000, `eval-municipal-water-loss` +0.000, `eval-bookstore-events` +0.143, `eval-saas-onboarding-churn` +0.428
 
-**Judge model:** requested `claude-sonnet-5`, resolved `claude-sonnet-5`.
+### What the judge actually said
+
+Judge model: requested `claude-sonnet-5`, resolved `claude-sonnet-5`.
 
 > **Limitation.** A Claude-family judge scores both providers. Blind pairwise cancels arm bias WITHIN a provider; cross-provider comparisons carry possible same-family leniency toward Claude outputs.
 
-### What the judge actually said
-
-The verdict *text* is the finding here. Read the reasoning, not the tally.
+The verdict *text* is the finding. Read the reasoning, not the tally.
 
 - **eval-route-density** → *with_skill* — A names specific causal levers (density/cadence/incentives) with falsifiable pilot designs and numeric thresholds; B lists plausible diagnostic questions but no mechanism depth or testable claims.
 - **eval-municipal-water-loss** → *tie* — Same M36 framework and levers; A is more quantified (N1 exponent, MNF %, accuracy thresholds), B is slightly broader and flags DMA as the one item bordering on capital.
 - **eval-bookstore-events** → *without_skill* — A asks sharper diagnostic questions (repeat-customer assumption, which events lose money) that make the next step more concrete and falsifiable.
 - **eval-saas-onboarding-churn** → *with_skill* — A names specific causal mechanisms, ranks ideas by evidence strength, and gives a falsifiable experiment with thresholds; B lists plausible levers without mechanisms or falsifiers.
 
-(Tally, for completeness only: with_skill 2, without_skill 1, tie 1. **At n=5 with one run per case this count is noise and carries no claim.** The judge saw answers as 'A'/'B' with presentation order alternating per case, so position bias cannot align with arm.)
+(Tally for completeness only: with_skill 2, without_skill 1, other 1. **At n=5 with one run per case this count is noise and carries no claim.** Answers were shown as 'A'/'B' with presentation order alternating per case, so position bias cannot align with arm.)
 
 ## Per case
 
@@ -54,19 +58,19 @@ The verdict *text* is the finding here. Read the reasoning, not the tally.
 
 ### eval-dental-no-shows — healthcare operations, precise  ·  **control: conventional is near-optimal**
 
-- `with_skill`: 4/8 assertions · 40,042 tok · 24s · v2.0.1 · **SKILL DID NOT ACTIVATE -- with_skill arm ran as a baseline; exclude from headline delta**
+- `with_skill`: 4/8 assertions · 40,042 tok · 24s · v2.0.1 · **skill did NOT activate**
 - `without_skill`: no run recorded
 
 
 ### eval-municipal-water-loss — public infrastructure, precise
 
-- `with_skill`: 3/7 assertions · 41,813 tok · 46s · v2.0.1 · **SKILL DID NOT ACTIVATE -- with_skill arm ran as a baseline; exclude from headline delta**
+- `with_skill`: 3/7 assertions · 41,813 tok · 46s · v2.0.1 · **skill did NOT activate**
 - `without_skill`: 3/7 assertions · 42,548 tok · 66s · v2.0.1
 - judge: **tie** — Same M36 framework and levers; A is more quantified (N1 exponent, MNF %, accuracy thresholds), B is slightly broader and flags DMA as the one item bordering on capital.
 
 ### eval-bookstore-events — small retail, casual
 
-- `with_skill`: 3/7 assertions · 38,894 tok · 12s · v2.0.1 · **SKILL DID NOT ACTIVATE -- with_skill arm ran as a baseline; exclude from headline delta**
+- `with_skill`: 3/7 assertions · 38,894 tok · 12s · v2.0.1 · **skill did NOT activate**
 - `without_skill`: 2/7 assertions · 38,323 tok · 11s · v2.0.1
 - judge: **without_skill** — A asks sharper diagnostic questions (repeat-customer assumption, which events lose money) that make the next step more concrete and falsifiable.
 
@@ -75,6 +79,94 @@ The verdict *text* is the finding here. Read the reasoning, not the tally.
 - `with_skill`: 6/7 assertions · 610,878 tok · 802s · v2.0.1
 - `without_skill`: 3/7 assertions · 40,194 tok · 37s · v2.0.1
 - judge: **with_skill** — A names specific causal mechanisms, ranks ideas by evidence strength, and gives a falsifiable experiment with thresholds; B lists plausible levers without mechanisms or falsifiers.
+
+## Opus envelope probe (flagship, n=1, not aggregated)
+
+The 10-run flagship tier was replaced by a single envelope probe (MODEL_POLICY scope amendment). One case, `with_skill` only, `claude-opus-5`, **default effort — the deployed condition on a Max plan**, so the result carries the upward-compatibility claim. **It completed**, so the medium-effort mitigation arm was not run.
+
+| | value |
+|---|---|
+| resolved model | `claude-opus-5` |
+| skill version | **v2.0.1** |
+| effort | default (deployed condition) |
+| tokens | 1,137,884 |
+| duration | 1,472s (24.5 min) |
+| turns | 15 |
+| cost | $4.84 |
+| activation | observed:Skill-tool-call |
+| tools | `{"Skill": 1, "Read": 12, "Bash": 1, "Agent": 3, "ToolSearch": 2, "WebSearch": 4, "Write": 2}` |
+
+`Agent`x3 is three isolated subagents — ADR-001 D1's isolation executing as designed. `WebSearch`x4 is the protocol gathering external evidence where load-bearing facts were missing, which `principles.md` requires and which no other run in the baseline did. This is the protocol at full fidelity: 24.5 minutes and $4.84 for one question.
+
+### Cost variance caveat — the same prompt, three runs
+
+| run | skill version | tokens | duration | turns |
+|---|---|---|---|---|
+| sonnet, before the pause (inferred activation) | v2.0.0 | 523,224 | 713s | — |
+| sonnet, repeat (observed) | v2.0.1 | 767,382 | 978s | 13 |
+| **opus, default effort (observed)** | **v2.0.1** | **1,137,884** | **1472s** | 15 |
+
+**Version confound.** The two sonnet runs are *not* a clean repeat measurement: the first ran v2.0.0 and the second v2.0.1, so the token difference confounds run-to-run variance with the ADR-002 change. Only the sonnet-v2.0.1 vs opus-v2.0.1 pair is a clean same-version comparison. An earlier opus attempt on this prompt also timed out at 1800s where this one finished in 1,472s. **No single cost figure here should be read as representative**; the tier ordering is consistent, the magnitudes are not.
+
+**Resolved post-baseline:** a `gpt-5.6-terra` re-run of `eval-route-density` under v2.0.1 supplied the first clean same-provider cross-version pair — see `2026-08-19-adr002-regression.md`.
+
+## Activation ledger
+
+Raw counts, deliberately not rates — n is far too small for a percentage to mean anything. **3 of 7 `with_skill` runs activated; 2 of 5 by observed method.**
+
+| case | register | version | method | activated |
+|---|---|---|---|---|
+| `eval-route-density` | casual | v2.0.0 | inferred | **YES** |
+| `eval-route-density (repeat)` | casual | v2.0.1 | **observed** | **YES** |
+| `eval-dental-no-shows v1` | precise | v2.0.0 | inferred | no |
+| `eval-dental-no-shows v2` | precise | v2.0.1 | **observed** | no |
+| `eval-municipal-water-loss` | precise | v2.0.1 | **observed** | no |
+| `eval-bookstore-events` | casual | v2.0.1 | **observed** | no |
+| `eval-saas-onboarding-churn` | precise | v2.0.1 | **observed** | **YES** |
+
+A non-activated `with_skill` run shows `turns: 1`, `tools: {}`, and costs within a few percent of its own control — it *is* a baseline run. Such runs are included in the **deployed** delta and excluded from **per-activation**.
+
+**Mechanism unknown.** Three hypotheses were proposed and all three falsified: the **exclusion-clause** explanation (killed by the v2 dental rewrite, which made the prediction and failed it), **conversational register** (pre-registered, then falsified in *both* directions by bookstore and saas), and **near-literal trigger-phrase overlap** (killed by saas, which contains no trigger phrase and activated). Full record with falsifying observations: `docs/NOTE-activation-variance.md`. No surviving hypothesis.
+
+`eval-dental-no-shows` has no `without_skill` arm on this tier: the restart predicate dropped it after its v2 `with_skill` run failed to activate, so this tier is **4-case**, not 5.
+
+## The route-density result
+
+`eval-route-density` scored **3/7 with_skill and 3/7 without_skill — delta 0.00** — despite activating, spawning subagents, and spending **767,382 tokens against the control's 40,099 (19x)**.
+
+Graded twice: a mechanical-only pass showed 0.00 and the **full LLM pass reproduced 0.00 exactly**. So "did the mechanical set simply miss it?" is answered **no** — the complete assertion set, including mechanism quality, fact/assumption separation and the case-specific inherited-constraint check, finds no measurable difference.
+
+**Interpretation (testable in iteration-2).** The control arm itself scored 3/7 — where the base model natively produces protocol-shaped output, the marginal delta collapses. The delta measures the **gap between base behaviour and the protocol, per problem**, not the protocol in isolation. A problem the model already handles in a protocol-like way leaves the skill nothing to add, at full cost.
+
+The blind judge scored this case *for* `with_skill` on Claude, having scored it for the *control* on Codex flagship — the methods disagree on direction while agreeing there is no large assertion-level gap.
+
+Whether the 0.00 generalises is unknown: `eval-saas-onboarding-churn`, same model and tier, scored **6/7 vs 3/7 (+0.428)** and its control also scored 3/7. Case-to-case variance dominates any tier mean here, which is why the per-case tables matter more than the headline numbers.
+
+## Budget and metering
+
+Eval runs were gated on a **token cap** (3,000,000 new Claude tokens). Two figures were tracked and they differ:
+
+| Figure | Value | Counts |
+|---|---|---|
+| Driver-counted | 1,990,576 | the unattended driver's own runs |
+| **True cumulative** | **2,846,382** | adds a standalone positive-control run (767,382) and a metering probe (88,424) launched outside the driver |
+
+The discrepancy is not an error in either number — the driver could only see runs it started. The **true** figure was the enforced one.
+
+### The token metric misprices small calls
+
+One cold grading call measured **88,424 tokens, of which 85,071 was `cacheCreation`** — the harness caching its own system prompt and tool definitions, charged per invocation and near-independent of payload. Actual response text across all grading and judge calls was ~41,000 tokens, about 1.5% of the projected cost. Under that metric 31 short classification calls would 'cost' more than the entire opus envelope probe (2.65M vs 1.14M) — a run that took 15 turns, spawned 3 subagents and ran 4 web searches. Grading was therefore moved to a **cost basis**.
+
+### Measured: batching changes the price by 6x
+
+| | cold call | serial batch (27 calls) |
+|---|---|---|
+| cost per call | $0.5201 | **$0.0846** |
+| tokens per call | 88,424 | **42,549** |
+
+Run back-to-back, consecutive calls hit `cacheRead` instead of re-creating the cache. Cached share of the token sum stayed at **95.9%**: batching changes *which* cache field is charged, not the fact that ~96% of the token sum is scaffolding rather than work. Iteration-1 grading + judge totalled **$2.73** against a $25.00 ceiling.
+
+> **Neither metric is a verified proxy for subscription weekly-quota weighting.** `cost_usd` is an assumption, labelled as such. How either figure maps to quota consumption is unknown and was not measured.
 
 ## benchmark.json (verbatim)
 
@@ -155,11 +247,9 @@ The verdict *text* is the finding here. Read the reasoning, not the tally.
 ## Reproducing
 
 ```bash
-python3 evals/runners/run_evals.py --provider claude --model <alias> --iteration 1
-python3 evals/runners/grade.py     --provider claude --iteration 1
-python3 evals/runners/judge.py     --provider claude --iteration 1
-python3 evals/runners/aggregate.py --provider claude --iteration 1
-python3 evals/runners/report.py    --provider claude --iteration 1
+python3 evals/runners/run_evals.py --provider claude --tier workhorse --model <alias> --iteration 1
+python3 evals/runners/grade.py     --provider claude --tier workhorse --iteration 1
+python3 evals/runners/judge.py     --provider claude --tier workhorse --iteration 1
+python3 evals/runners/aggregate.py --provider claude --tier workhorse --iteration 1
+python3 evals/runners/report.py    --provider claude --tier workhorse --iteration 1
 ```
-
-Raw transcripts live in `evals-workspace/`, which is gitignored; `evals/evals.json` plus these runners regenerate them.

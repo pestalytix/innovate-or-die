@@ -1,6 +1,6 @@
 # ADR-001 — Merge innovate-or-die v1 and innovation-mode into core protocol v2.0.0
 
-**Date:** 2026-08-19 · **Status:** Draft, pending Ken sign-off · **Supersedes:** both source protocols
+**Date:** 2026-08-19 · **Status:** Accepted 2026-08-19 · **Supersedes:** both source protocols
 
 ## Context
 

@@ -23,9 +23,10 @@ Counts, deliberately not rates: **3 of 7 `with_skill` runs activated; 2 of 5 by
 observed method.** n is far too small for a percentage to carry meaning.
 
 **Repeatability.** `eval-route-density` was re-run under the current harness as a
-repeatability test: it had activated pre-pause, and it activated again (observed).
+repeatability test: it had activated before the mid-baseline pause (a
+quota-management stop; see the results files), and it activated again (observed).
 Same prompt, activation reproduced — so activation is not per-prompt nondeterministic
-in this case, and the pre-pause inferred data point is corroborated by an observed
+in this case, and the earlier inferred data point is corroborated by an observed
 one. Cost varied substantially between the two runs on the identical prompt
 (523,224 -> 767,382 tokens, +47%), so run-to-run *cost* is far less stable than
 run-to-run *activation*.

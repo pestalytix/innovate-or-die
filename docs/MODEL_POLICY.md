@@ -1,9 +1,8 @@
 # MODEL_POLICY
 
-Which models the evals pin, and why. Referenced by Phase D of the handoff.
+Which models the evals pin, and why.
 
-**Status:** established 2026-08-19. Supersedes nothing — the handoff referenced a
-`MODEL_POLICY` that had never been written; this is it.
+**Status:** established 2026-08-19.
 
 ## Two tiers, workhorse primary
 
@@ -74,7 +73,7 @@ protocol changes are a new ADR and a semver bump.
 There is no non-interactive login subcommand. Auth requires either an interactive
 `gemini` session completing OAuth (the Google Code Assist path, which is how a
 Gemini subscription authenticates) or an API key in the environment. Both are the
-operator's to perform.
+author's to perform.
 
 ### Tier pins — PROVISIONAL, not yet confirmed against the live CLI
 

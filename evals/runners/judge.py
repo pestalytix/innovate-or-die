@@ -85,6 +85,8 @@ def main() -> int:
     ap.add_argument("--iteration", type=int, default=1)
     ap.add_argument("--provider", required=True)
     ap.add_argument("--tier", required=True, choices=["workhorse", "flagship"])
+    ap.add_argument("--votes", type=int, default=1,
+                    help="independent judge passes per pair; verdict is the MAJORITY")
     ap.add_argument("--judge-model", default="claude-sonnet-5",
                     help="MODEL_POLICY: judge pinned to the workhorse tier")
     args = ap.parse_args()
@@ -102,26 +104,36 @@ def main() -> int:
         # alternate which arm is presented first so position bias != arm bias
         first, second = (("with_skill", "without_skill") if i % 2 == 0
                          else ("without_skill", "with_skill"))
-        p = subprocess.run(
+        ballots = []
+        for _v in range(max(1, args.votes)):
+          p = subprocess.run(
             ["claude", "-p", PROMPT.format(prompt=c["prompt"],
                                            a=paths[first].read_text()[:40000],
                                            b=paths[second].read_text()[:40000]),
              "--model", args.judge_model, "--output-format", "json"],
             capture_output=True, text=True, timeout=900)
-        try:
+          try:
             outj = json.loads(p.stdout)
             _account(outj)
             mu = outj.get("modelUsage", {}) or {}
             fam = "-".join(args.judge_model.split("-")[:2])
             resolved_judge.update(k for k in mu if k.startswith(fam))
             raw = outj.get("result", "")
-            d = json.loads(re.search(r"\{.*\}", raw, re.S).group(0))
-        except Exception as e:
-            print(f"  judge error on {c['slug']}: {e}"); continue
+            ballots.append(json.loads(re.search(r"\{.*\}", raw, re.S).group(0)))
+          except Exception as e:
+            print(f"  judge error on {c['slug']}: {e}")
+        if not ballots:
+            continue
+        from collections import Counter
+        tally = Counter(b.get("winner") for b in ballots)
+        top, n_top = tally.most_common(1)[0]
+        d = next(b for b in ballots if b.get("winner") == top)
         # unblind only now
         mapping = {"A": first, "B": second}
         winner = mapping.get(d.get("winner"), "tie")
         rec = {"slug": c["slug"], "presented_first": first,
+               "vote_split": dict(tally), "votes": len(ballots),
+               "unanimous": n_top == len(ballots),
                "scores": {mapping[k]: v for k, v in d.items() if k in ("A", "B")},
                "winner_arm": winner, "reason": d.get("reason", "")}
         out.append(rec)

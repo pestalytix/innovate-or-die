@@ -2,7 +2,7 @@
 
 Every fact below was verified against a live source on the date shown, not
 recalled. Re-verify before trusting any row older than a frontier release or a
-host UI change (see the maintenance policy in the handoff).
+host UI change.
 
 **Verification method matters.** Where a vendor doc and a shipped validator
 disagree, the validator wins and the row says so.
@@ -57,7 +57,8 @@ values: name 15 chars, description 757 chars — both well inside the limits.
 > `sourceDetails` object. Building to the docs produced two hard validation
 > errors and two unknown-field warnings. The shipped validator plus the
 > official marketplace manifest are the real schema. This is exactly the failure
-> the handoff's "do not trust manifest schemas from memory" rule guards against
+> this project's rule — verify manifest schemas against current docs and the
+> shipping validator, never from memory — guards against
 > — and it turns out the vendor's own docs need the same distrust.
 
 ---
@@ -86,7 +87,7 @@ Copilot*
 
 All three of `.github/skills/`, `.claude/skills/`, and `.agents/skills/` are
 valid repository-level skill discovery directories, each skill in its own
-subdirectory. This confirms the handoff's target layout: the generated copies
+subdirectory. This confirms the repo's target layout: the generated copies
 under `.agents/skills/` and `.github/skills/` are discovered natively.
 
 ---
@@ -121,8 +122,8 @@ fresh-chat-per-role sequence the orchestrator currently instructs by hand.
 | Target | Limit | Confidence | Source |
 |---|---|---|---|
 | M365 Copilot Agent Builder — Instructions | **8,000** | **Verified** | Microsoft Learn, *Build agents with Agent Builder*, doc dated 2026-05-26. Same table: Name 30 chars, Description 1,000 chars |
-| ChatGPT Custom GPT — Instructions | **8,000** | **Verified** | **Paste test, Ken, 2026-08-19.** 8,000-char limit shown in the GPT builder UI; the 7,874-char instructions file was accepted |
-| Gemini Gem — Instructions | **≥ ~7.9k, exact cap unknown** | **Working budget** | **Paste test, Ken, 2026-08-19.** The Gem accepted the full instructions file (7,874 chars), so the cap is at least that. Google publishes no limit and the UI shows none; upper bound untested. Build keeps 8,000 as the working budget |
+| ChatGPT Custom GPT — Instructions | **8,000** | **Verified** | **Paste test by the author, 2026-08-19.** 8,000-char limit shown in the GPT builder UI; the 7,874-char instructions file was accepted |
+| Gemini Gem — Instructions | **≥ ~7.9k, exact cap unknown** | **Working budget** | **Paste test by the author, 2026-08-19.** The Gem accepted the full instructions file (7,874 chars), so the cap is at least that. Google publishes no limit and the UI shows none; upper bound untested. Build keeps 8,000 as the working budget |
 | ChatGPT custom instructions (not GPTs) | 5,000 paid / 1,500 free | Verified, secondary | Raised from 1,500 on 2026-07-15. Not used by this project — recorded to prevent confusion with the Custom GPT field |
 
 **Method note.** The two previously-unverified caps were settled by paste test
@@ -148,6 +149,17 @@ lens bank, experiment spec, uploaded as an attachment/knowledge source), and
 `-fallback.md` (everything inlined, knowingly over budget, for hosts that take
 no attachment).
 
+**Retrieval verified on one host.** Knowledge-file retrieval was live-tested on a
+**Gemini Gem, 2026-08-19**, method: verbatim quota-extraction probe — the model was
+asked to return the Innovator section's quotas verbatim. **All four top-level quotas
+and all four sub-quotas returned intact and exact, including `>=` symbols, with no
+fragmentation of enumerated lines.** That is the specific failure this caveat was
+written to anticipate, and it did not occur on that host.
+
+**One host is not all hosts.** ChatGPT Custom GPTs and M365 Agent Builder remain
+untested; each uses a different retrieval implementation. The caveat below stands for
+untested hosts and is now evidence-backed rather than hypothetical for Gemini.
+
 **Knowledge-file access is retrieval-mediated on some hosts.** A knowledge or
 file-search attachment is not guaranteed to be loaded verbatim into context the
 way an instructions field is: the host may chunk it, embed it, and return only
@@ -164,6 +176,12 @@ this protocol:
   on retrieval, accepting the over-budget truncation risk instead. Which failure
   is worse is host-specific and untested — this is a known open question, not a
   settled recommendation.
+
+**Low-priority build item (logged, not scheduled):** the knowledge file carries
+repo-relative reference paths (e.g. `../references/lenses.md`) inherited from `core/`.
+These are meaningless on web hosts, where there is no filesystem — cosmetic only, since
+the referenced content is inlined in the same file, but the build could strip or rewrite
+them for web targets.
 
 The three-rung fidelity ladder in the README should state this: agentic hosts
 with real subagent isolation are rung one; Copilot `.agent.md` profiles with

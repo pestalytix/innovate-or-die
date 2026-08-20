@@ -187,12 +187,19 @@
     }
   ],
   "_assertions_authored": "2026-08-19, after iteration-1 codex/workhorse outputs. delivers_answer and conventional_winner_labelled were added in response to observed failures, not written in advance.",
-  "_iteration_2_assertions_pending": {
-    "note": "Authored 2026-08-19 after observing the iteration-1 judge divergence: flagship-tier runs scored HIGHER on protocol-compliance assertions but LOWER on blind pairwise holistic quality, with the judge repeatedly preferring the control arm as more concrete and implementable. Per Gate D ruling 2 this is NOT an ADR-002 protocol fix -- it becomes a measurable assertion in iteration-2 so the hypothesis is tested rather than assumed.",
+  "iteration_2_additional_assertions": {
+    "provenance": "Authored 2026-08-19 after observing the iteration-1 judge divergence: flagship-tier runs scored HIGHER on protocol-compliance assertions but LOWER on blind pairwise holistic quality, with the judge repeatedly preferring the control arm as more concrete and implementable. Per Gate D ruling 2 this is NOT an ADR-002 protocol fix -- it becomes a measurable assertion in iteration-2 so the hypothesis is tested rather than assumed.",
+    "applies_from_iteration": 2,
     "assertions": [
-      "Each top opportunity names a specific first action the reader could take within a week",
-      "The answer's recommendations are concrete enough to hand to an operator without further interpretation",
-      "The answer does not substitute breadth of exploration for a decidable recommendation"
+      {
+        "text": "Each top opportunity names a specific first action the reader could take within a week"
+      },
+      {
+        "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
+      },
+      {
+        "text": "The answer does not substitute breadth of exploration for a decidable recommendation"
+      }
     ]
   }
 }

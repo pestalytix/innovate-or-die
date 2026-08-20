@@ -157,11 +157,19 @@ def main() -> int:
     ap.add_argument("--tier", required=True, choices=["workhorse", "flagship"])
     ap.add_argument("--grader-model", default="claude-sonnet-5",
                     help="MODEL_POLICY: grader pinned to the workhorse tier")
+    ap.add_argument("--votes", type=int, default=1,
+                    help="independent LLM grading passes per assertion; the grade is the "
+                         "per-assertion MAJORITY. Splits are recorded as unstable.")
     ap.add_argument("--mechanical-only", action="store_true",
                     help="skip LLM-graded assertions (zero Claude quota)")
     args = ap.parse_args()
 
-    cases = json.loads((ROOT / "evals/evals.json").read_text())["evals"]
+    spec = json.loads((ROOT / "evals/evals.json").read_text())
+    cases = spec["evals"]
+    extra = spec.get("iteration_2_additional_assertions", {})
+    if args.iteration >= extra.get("applies_from_iteration", 99):
+        for c in cases:                       # authored-after-observation, iter-2 on
+            c["assertions"] = c["assertions"] + extra["assertions"]
     base = ROOT / "evals-workspace" / f"iteration-{args.iteration}" / args.provider / args.tier
 
     for c in cases:
@@ -184,9 +192,20 @@ def main() -> int:
                                     "evidence": "NOT GRADED -- LLM grading skipped",
                                     "grader": "skipped"})
                 else:
-                    ok, ev = grade_llm(a["text"], text, args.grader_model)
-                    results.append({"text": a["text"], "passed": ok, "evidence": ev,
-                                    "grader": "llm"})
+                    votes = [grade_llm(a["text"], text, args.grader_model)
+                             for _ in range(max(1, args.votes))]
+                    yes = sum(1 for ok, _ in votes if ok)
+                    ok = yes > len(votes) / 2
+                    unstable = 0 < yes < len(votes)
+                    ev = next((e for o, e in votes if o == ok), votes[0][1])
+                    rec = {"text": a["text"], "passed": ok, "evidence": ev,
+                           "grader": f"llm-majority-{len(votes)}",
+                           "vote_split": f"{yes}/{len(votes)} pass"}
+                    if unstable:
+                        rec["unstable"] = True
+                        rec["note"] = ("split vote -- assertion is not reliably gradeable "
+                                       "by LLM; mechanization/rewording candidate")
+                    results.append(rec)
             scored = [r for r in results if r["passed"] is not None]
             passed = sum(bool(r["passed"]) for r in scored)
             (d / "grading.json").write_text(json.dumps({
@@ -196,6 +215,8 @@ def main() -> int:
                             "pass_rate": round(passed / len(scored), 4) if scored else None},
                 "grader_model_requested": args.grader_model,
                 "budget_basis": "cost_usd (token metric misprices small calls)",
+                "llm_votes_per_assertion": args.votes,
+                "unstable_assertions": [r["text"] for r in results if r.get("unstable")],
                 "grader_model_resolved": sorted(RESOLVED_GRADER) or None,
             }, indent=2) + "\n", encoding="utf-8")
             print(f"{c['slug']:34s} {arm:15s} {passed}/{len(scored)}"
