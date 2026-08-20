@@ -11,3 +11,6 @@ evals-workspace/
 # session ephemera and raw review inputs stay local; distilled records are
 # committed (docs/notes/ for kept notes, docs/ for ADRs and COMPATIBILITY)
 docs/notes/local/
+
+# chat-session handoffs stay local; never published
+docs/handoffs/
