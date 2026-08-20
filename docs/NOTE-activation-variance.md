@@ -12,8 +12,13 @@ what the mechanism is *not* is the only durable result so far.
 > methods: an observed `Skill` tool call in the Claude event stream, or — on Codex,
 > which exposes no tool-call stream — a seven-regex marker vote. From v2.1.0 the
 > delivery opens with `⟦innovate-or-die v<version>⟧`, so activation is an exact
-> string match, and the Codex leg records `observed:banner` instead of
-> `heuristic:markers`. **Counts before and after that line were produced by
+> string match, and the Codex leg records a banner label instead of
+> `heuristic:markers`. **Label changed after external review #2:** the Codex leg
+> emits `inferred:banner`, not `observed:banner` — a banner is output-side
+> evidence, the same kind the Perplexity rows below already refuse to call
+> `observed`. Codex `timing.json` files written before this change retain the old
+> `observed:banner` string and have **not** been rewritten; they are the record of
+> what the harness emitted at the time. **Counts before and after that line were produced by
 > different instruments and must be labelled as such rather than pooled.** The
 > banner also makes the OBSERVE-AND-ABORT survey below workable on any host that
 > streams tokens, not only on hosts that emit tool-call events — which is what

@@ -49,10 +49,6 @@ def _conventional_labelled(t: str):
                         f"{hits[0].strip()[:160]}" if hits else
                         "no explicit labelling of a conventional winner")
 
-def _thirty_candidates(t: str):
-    n = len(re.findall(r"^\s*(?:\d+[.)]|[-*+])\s+\S", t, re.M))
-    return n >= 20, f"{n} enumerated items in the visible answer (scaffolding is hidden by design)"
-
 def _delivers_answer(t: str):
     """Stage 0 permits up to three clarifying questions but says to proceed
     regardless. A single-shot run that asks and stops has failed the protocol,
@@ -93,7 +89,6 @@ CHECKS = {
     "kill_list_min_5": _kill_list_5,
     "experiment_spec_complete": _experiment_spec,
     "conventional_winner_labelled": _conventional_labelled,
-    "enumerated_options": _thirty_candidates,
 }
 
 LLM_PROMPT = """You are grading one assertion against a model's answer.

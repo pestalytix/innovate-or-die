@@ -73,3 +73,50 @@ def test_unparseable_winner_field_does_not_elect_an_arm(judge):
     winner, _m, _t, _n = judge.decide([{"winner": None}, {"winner": None},
                                        {"winner": "A"}], MAPPING)
     assert winner == "tie"
+
+
+# ------------------------------------------- per-ballot presentation order
+
+def test_ballot_order_is_stable_across_processes(judge):
+    """The seed must not come from the builtin `hash()`: string hashing is salted
+    per interpreter, so a `hash()`-derived order would differ on every run and the
+    recorded `presented_first` would not reproduce."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    runner = Path(judge.__file__)
+    prog = (f"import importlib.util as u;"
+            f"s=u.spec_from_file_location('j',r'{runner}');"
+            f"m=u.module_from_spec(s);s.loader.exec_module(m);"
+            f"print([m.ballot_order('claude','workhorse',3,'eval-x',v)[0] for v in range(8)])")
+    runs = {subprocess.run([sys.executable, "-c", prog], capture_output=True,
+                           text=True, check=True,
+                           env={"PYTHONHASHSEED": seed}).stdout.strip()
+            for seed in ("0", "1", "random")}
+    assert len(runs) == 1, f"order changed with PYTHONHASHSEED: {runs}"
+
+
+def test_ballot_order_varies_within_a_case(judge):
+    """Index alternation gave one fixed order per case. The draw is per BALLOT, so
+    the vote_index has to move it."""
+    orders = {judge.ballot_order("claude", "workhorse", 3, "eval-route-density", v)[0]
+              for v in range(8)}
+    assert orders == {"with_skill", "without_skill"}
+
+
+def test_ballot_order_is_a_permutation_of_both_arms(judge):
+    for v in range(20):
+        first, second = judge.ballot_order("codex", "workhorse", 3, f"case-{v}", v)
+        assert {first, second} == set(judge.ARMS)
+        assert first != second
+
+
+def test_arm_identity_lets_decide_tally_already_unblinded_ballots(judge):
+    """Per-ballot order means each ballot carries its own A/B mapping, so main()
+    unblinds first and tallies over arms. `decide` must handle that form."""
+    ballots = [{"winner": "with_skill"}, {"winner": "with_skill"},
+               {"winner": "without_skill"}]
+    winner, has_majority, tally, n_top = judge.decide(ballots, judge.ARM_IDENTITY)
+    assert (winner, has_majority, n_top) == ("with_skill", True, 2)
+    assert dict(tally) == {"with_skill": 2, "without_skill": 1}

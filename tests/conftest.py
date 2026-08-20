@@ -47,3 +47,8 @@ def aggregate():
 @pytest.fixture(scope="session")
 def judge():
     return _load("judge_under_test", "evals/runners/judge.py")
+
+
+@pytest.fixture(scope="session")
+def report():
+    return _load("report_under_test", "evals/runners/report.py")

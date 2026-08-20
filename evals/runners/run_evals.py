@@ -12,7 +12,7 @@ The RESOLVED model is read back out of the run and recorded per run; the
 requested alias is recorded separately and never used to name results.
 """
 from __future__ import annotations
-import argparse, json, re, shutil, subprocess, sys, tempfile, time
+import argparse, hashlib, json, random, re, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -225,6 +225,13 @@ def run_codex(prompt: str, cwd: Path, model: str, effort: str | None = None) -> 
     # Codex exposes no tool-call stream. Before v2.1.0 activation here was a
     # seven-regex marker vote -- fuzzy in both directions. The banner replaces it
     # with an exact string match (ADR-004).
+    #
+    # The label is `inferred:banner`, not `observed:banner`. The match is exact,
+    # but what it observes is the OUTPUT, not the dispatch: this project's
+    # distinction is between a seen tool call and an output marker, and the
+    # Perplexity leg (NOTE-activation-variance) already refused `observed` for
+    # exactly this reason. Codex was calling the same evidence by the stronger
+    # name.
     body = p.stdout.strip()
     banner, banner_version = read_banner(body)
     markers = sum(bool(re.search(k, body, re.I)) for k in
@@ -238,7 +245,7 @@ def run_codex(prompt: str, cwd: Path, model: str, effort: str | None = None) -> 
             "total_tokens": tokens, "duration_ms": dur, "cost_usd": None,
             "all_models": [resolved], "activated": bool(banner) or markers >= 2,
             "banner": banner, "banner_version": banner_version,
-            "activation_method": ("observed:banner" if banner else
+            "activation_method": ("inferred:banner" if banner else
                                   "heuristic:markers (no banner)"),
             "marker_count": markers}
 
@@ -296,6 +303,29 @@ def run_gemini(prompt: str, cwd: Path, model: str, effort: str | None = None) ->
                                  else "PARTIAL -- verify field names against a real run")}
 
 
+# ------------------------------------------------------------- arm ordering
+# with_skill ran first in every pair, always. Anything that drifts with wall
+# time -- provider-side load, rate limiting, cache warmth, a model rollout
+# mid-batch -- therefore hit the two arms asymmetrically and the same way every
+# time, which is a confound the paired design does not remove. Ordering is now
+# drawn per case from a seeded RNG, so that drift is noise across cases instead
+# of a fixed offset on one arm.
+ARMS = ("with_skill", "without_skill")
+
+
+def arm_order(provider: str, tier: str, iteration: int, slug: str) -> tuple[str, str]:
+    """Deterministic-but-unbiased arm order for one case.
+
+    sha256, not the builtin `hash()`: string hashing is salted per interpreter
+    process, so a `hash()`-derived seed would not reproduce and the recorded
+    `arm_order_index` could not be checked against a re-run.
+    """
+    key = f"{provider}|{tier}|{iteration}|{slug}"
+    seed = int.from_bytes(hashlib.sha256(key.encode("utf-8")).digest()[:8], "big")
+    rng = random.Random(seed)
+    return ARMS if rng.getrandbits(1) else (ARMS[1], ARMS[0])
+
+
 RUNNERS = {"claude": run_claude, "codex": run_codex, "gemini": run_gemini}
 
 
@@ -327,7 +357,11 @@ def main() -> int:
             / args.provider / args.tier)
 
     for c in cases:
-        for arm in (("with_skill", "without_skill") if not args.arm else (args.arm,)):
+        # The order is drawn for the full pair even when --arm selects only one,
+        # so a one-arm re-run records the same arm_order_index the paired run
+        # would have given it.
+        order = arm_order(args.provider, args.tier, args.iteration, c["slug"])
+        for arm in (order if not args.arm else (args.arm,)):
             out = base / c["slug"] / arm
             (out / "outputs").mkdir(parents=True, exist_ok=True)
             if (out / "timing.json").exists():
@@ -350,6 +384,7 @@ def main() -> int:
             rec = {"total_tokens": r["total_tokens"], "duration_ms": r["duration_ms"],
                    "requested_model": args.model, "resolved_model": r["resolved_model"],
                    "model_mismatch": mismatch, "tier": args.tier,
+                   "arm_order_index": order.index(arm),
                    "cost_usd": r.get("cost_usd"), "provider": args.provider,
                    "all_models": r.get("all_models"),
                    "activated": r.get("activated"),

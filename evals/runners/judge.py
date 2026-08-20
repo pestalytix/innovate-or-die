@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 """Blind pairwise judge: score two answers without knowing which arm is which.
 
-Arm labels are replaced with "Answer A"/"Answer B" and the order is flipped on
-alternating cases so position bias cannot align with arm. The mapping is written
-out only after the verdict is recorded.
+Arm labels are replaced with "Answer A"/"Answer B" and the presentation order is
+drawn independently FOR EVERY BALLOT from a seeded RNG keyed on
+(provider, tier, iteration, slug, vote_index).
+
+Index alternation -- used through iteration 2 -- pinned one fixed order per case,
+which removes the crudest confound but is not randomization: the arm-to-position
+map was a deterministic function of case order, so any position effect landed on
+the same arm every time that case was judged. Randomizing per ballot means a
+residual alignment between position and arm is chance, not design. It is not
+eliminated; at these ballot counts it is simply no longer systematic.
+
+The order each ballot actually saw is recorded in that ballot's `presented_first`,
+and the case-level `presented_first` carries ballot 0's value. The mapping is
+written out only after the verdict is recorded.
 """
 from __future__ import annotations
-import argparse, json, re, subprocess, sys
+import argparse, hashlib, json, random, re, subprocess, sys
 from collections import Counter
 from pathlib import Path
 
@@ -50,6 +61,33 @@ def _cost_report(label: str) -> dict:
 
 
 
+ARMS = ("with_skill", "without_skill")
+# `decide()` tallies whatever labels it is handed. Ballots are unblinded to ARMS
+# before tallying now (each ballot had its own A/B mapping), so the mapping it
+# applies afterwards is the identity.
+ARM_IDENTITY = {"with_skill": "with_skill", "without_skill": "without_skill",
+                "tie": "tie"}
+
+
+def order_seed(provider: str, tier: str, iteration: int, slug: str,
+               vote_index: int) -> int:
+    """Stable seed for one ballot's presentation order.
+
+    sha256, not the builtin `hash()`: string hashing is salted per interpreter
+    process, so a `hash()`-derived seed would give a different order on every
+    invocation and the recorded seed inputs would not reproduce the run.
+    """
+    key = f"{provider}|{tier}|{iteration}|{slug}|{vote_index}"
+    return int.from_bytes(hashlib.sha256(key.encode("utf-8")).digest()[:8], "big")
+
+
+def ballot_order(provider: str, tier: str, iteration: int, slug: str,
+                 vote_index: int) -> tuple[str, str]:
+    """(presented_first, presented_second) for one ballot."""
+    rng = random.Random(order_seed(provider, tier, iteration, slug, vote_index))
+    return ARMS if rng.getrandbits(1) else (ARMS[1], ARMS[0])
+
+
 PROMPT = """You are judging two answers to the same problem. You do not know how either was produced.
 
 PROBLEM:
@@ -90,7 +128,10 @@ def decide(ballots: list[dict], mapping: dict[str, str]) -> tuple[str, bool, Cou
     tie for the same reason.
 
     Returns (winner_arm, has_majority, tally, top_count). `tally` counts the
-    BLIND labels (A/B/tie); the arm mapping is applied only to the result.
+    labels as handed in and `mapping` is applied only to the result, so this
+    works either way round: blind A/B labels with an A/B->arm mapping, or
+    already-unblinded arm labels with ARM_IDENTITY. main() uses the second form
+    because per-ballot randomization gives each ballot its own A/B mapping.
     """
     tally = Counter(b.get("winner") for b in ballots)
     top, n_top = tally.most_common(1)[0]
@@ -114,16 +155,17 @@ def main() -> int:
     base = ROOT / "evals-workspace" / f"iteration-{args.iteration}" / args.provider / args.tier
     out = []
 
-    for i, c in enumerate(cases):
+    for c in cases:
         paths = {a: base / c["slug"] / a / "outputs" / "response.md"
-                 for a in ("with_skill", "without_skill")}
+                 for a in ARMS}
         if not all(p.exists() for p in paths.values()):
             print(f"skip (missing output): {c['slug']}"); continue
-        # alternate which arm is presented first so position bias != arm bias
-        first, second = (("with_skill", "without_skill") if i % 2 == 0
-                         else ("without_skill", "with_skill"))
+        # Presentation order is drawn per BALLOT, not per case, so each ballot
+        # carries its own A/B->arm mapping and must be unblinded with its own.
         ballots = []
         for _v in range(max(1, args.votes)):
+          first, second = ballot_order(args.provider, args.tier, args.iteration,
+                                       c["slug"], _v)
           p = subprocess.run(
             ["claude", "-p", PROMPT.format(prompt=c["prompt"],
                                            a=paths[first].read_text()[:40000],
@@ -137,28 +179,36 @@ def main() -> int:
             fam = "-".join(args.judge_model.split("-")[:2])
             resolved_judge.update(k for k in mu if k.startswith(fam))
             raw = outj.get("result", "")
-            ballots.append(json.loads(re.search(r"\{.*\}", raw, re.S).group(0)))
+            ballots.append((first, second,
+                            json.loads(re.search(r"\{.*\}", raw, re.S).group(0))))
           except Exception as e:
             print(f"  judge error on {c['slug']}: {e}")
         if not ballots:
             continue
-        # unblind only now
-        mapping = {"A": first, "B": second}
-        winner, has_majority, tally, n_top = decide(ballots, mapping)
+        # unblind only now -- each ballot with the mapping it was actually shown
         # Every ballot is evidence. Keeping one "representative" ballot threw
         # away the disagreement that makes a split verdict worth reading.
-        unblinded = [{"winner_arm": mapping.get(b.get("winner"), "tie"),
-                      "scores": {mapping[k]: v for k, v in b.items() if k in ("A", "B")},
-                      "reason": b.get("reason", "")} for b in ballots]
+        unblinded = []
+        for first, second, b in ballots:
+            m = {"A": first, "B": second}
+            unblinded.append({"winner_arm": m.get(b.get("winner"), "tie"),
+                              "scores": {m[k]: v for k, v in b.items()
+                                         if k in ("A", "B")},
+                              "reason": b.get("reason", ""),
+                              "presented_first": first})
+        # Tally over ARMS, not over A/B: with per-ballot order an A/B tally sums
+        # positions across different mappings and means nothing.
+        winner, has_majority, tally, n_top = decide(
+            [{"winner": bb["winner_arm"]} for bb in unblinded], ARM_IDENTITY)
         dims = ("non_obviousness", "mechanism", "testability", "honesty", "usefulness")
         scores_mean = {}
-        for arm in (first, second):
+        for arm in ARMS:
             vals = [bb["scores"][arm] for bb in unblinded if arm in bb["scores"]]
             if vals:
                 scores_mean[arm] = {d_: round(sum(v.get(d_, 0) for v in vals) / len(vals), 2)
                                     for d_ in dims}
         agreeing = [bb["reason"] for bb in unblinded if bb["winner_arm"] == winner]
-        rec = {"slug": c["slug"], "presented_first": first,
+        rec = {"slug": c["slug"], "presented_first": unblinded[0]["presented_first"],
                "vote_split": dict(tally), "votes": len(ballots),
                "unanimous": n_top == len(ballots),
                "majority": has_majority,

@@ -73,8 +73,9 @@ rejected ideas and no experiment with a pass/fail number means it didn't run.
 There is no error message either way; a run where the skill sat out otherwise
 looks exactly like an ordinary answer. In our published testing, the skill was installed for 7
 runs on Claude Code and **actually switched on in 3 of them** (that is a raw
-count, not a rate — the sample is far too small to be one), while it started
-reliably every time in Codex. We do not know why: three explanations were
+count, not a rate — the sample is far too small to be one), while on Codex every one of
+the 5 v2.1.0 runs emitted the activation banner — though Codex exposes no
+tool-call stream, so there is no independent ground truth there. We do not know why: three explanations were
 proposed and all three turned out to be wrong. The write-up is in [docs/NOTE-activation-variance.md](docs/NOTE-activation-variance.md).
 
 **It is slow and it eats your usage allowance**, because it genuinely does more

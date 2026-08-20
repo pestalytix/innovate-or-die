@@ -28,13 +28,26 @@ def load(p: Path):
 
 # ----------------------------------------------------------------- sections
 
-def banners(args, L):
+def tier_skill_versions(base) -> set[str]:
+    """Every distinct `skill_version` recorded under a tier.
+
+    Read from the runs themselves rather than assumed. The banner below asserts
+    that one protocol version produced every number in the file; asserting it
+    from a literal meant the sentence stayed true-looking across a version bump
+    while silently becoming false. A run with no recorded version counts as
+    UNKNOWN so it shows up in the refusal instead of vanishing from the set.
+    """
+    return {str(json.loads(t.read_text()).get("skill_version") or "UNKNOWN")
+            for t in sorted(base.rglob("timing.json"))}
+
+
+def banners(args, L, skill_version: str | None = None):
     L += ["> **Version span.** Iteration-1 spans **two protocol versions**: runs before "
           "the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each arm "
           "below is labelled. Cross-version comparisons within this iteration are "
           "confounded and flagged where they occur." if args.iteration == 1 else
-          "> **Single protocol version.** Every run in this iteration used **v2.0.1** "
-          "(post ADR-002 Stage 0 fix), so within-iteration comparisons are clean.", ""]
+          f"> **Single protocol version.** Every run in this iteration used "
+          f"**v{skill_version}**, so within-iteration comparisons are clean.", ""]
     L += ["> **Statistical modesty.** Five cases, **one run per case, per arm**. Every "
           "number here is **directional only** — no repeated trials of the runs "
           "themselves, so no variance estimate and no significance. `stddev` across cases "
@@ -71,6 +84,24 @@ def banners(args, L):
     L += ["> **Reproducibility.** `evals-workspace/` holds the raw transcripts and is "
           "**local-only (gitignored)**. `evals/evals.json` plus `evals/runners/` "
           "regenerate it; this file is the durable record.", ""]
+
+
+def paired_design_line(bench, n_cases: int) -> str:
+    """State the pairing that actually held, not the one the design intended.
+
+    "every case ran twice" was unconditional prose sitting directly above tables
+    computed over matched pairs only. Whenever a pair was dropped the header
+    contradicted the exclusions listed later in the same file.
+    """
+    pr = bench.get("pairing")
+    if not pr:
+        return "Paired design; pairing metadata absent in this benchmark.json."
+    used, excluded = pr.get("pairs_used") or [], pr.get("excluded_pairs") or []
+    if len(used) == n_cases and not excluded:
+        return ("Paired design: every case ran twice, with and without the skill, "
+                "same prompt, same model, clean context. The delta is the result.")
+    return (f"Paired design: {len(used)} of {n_cases} cases have a matched valid "
+            "pair (see exclusions under Two deltas).")
 
 
 def scope_section(args, L):
@@ -152,8 +183,10 @@ def judge_section(jdoc, L):
     o = sum(1 for v in verdicts if v["winner_arm"] == "without_skill")
     L += ["", f"(Tally for completeness only: with_skill {w}, without_skill {o}, other "
           f"{len(verdicts)-w-o}. **At n=5 with one run per case this count is noise and "
-          "carries no claim.** Answers were shown as 'A'/'B' with presentation order "
-          "alternating per case, so position bias cannot align with arm.)", ""]
+          "carries no claim.** Answers were shown as 'A'/'B' with presentation "
+          "order drawn independently per ballot from a seeded RNG, so any residual "
+          "alignment between position and arm is chance rather than design; the "
+          "order each ballot saw is recorded in `presented_first`.)", ""]
 
 
 def opus_section(L):
@@ -363,7 +396,8 @@ def required_sections(args) -> list[str]:
            "## Reproducing", "**Statistical modesty.**", "**Reproducibility.**",
            "## What this measures", "**Protocol compliance and cost, not independent"]
     if args.iteration == 1:
-        req += ["**Post-baseline annotation.**", "## Budget and metering"]
+        req += ["**Version span.**", "**Post-baseline annotation.**",
+                "## Budget and metering"]
         if args.provider == "claude":
             req += ["## Opus envelope probe", "## Activation ledger",
                     "## The route-density result"]
@@ -372,7 +406,10 @@ def required_sections(args) -> list[str]:
         if args.provider == "codex" and args.tier == "workhorse":
             req += ["**ADR-002 regression measured post-baseline**"]
     else:
-        req += ["**Grading method.**", "## Cost"]
+        # The version banner is now derived from the runs, so the gate checks the
+        # sentence is present; main() refuses to write at all unless the tier
+        # resolved to exactly one version.
+        req += ["**Single protocol version.**", "**Grading method.**", "## Cost"]
     return req
 
 
@@ -396,6 +433,22 @@ def main() -> int:
     if not bench:
         print(f"no benchmark.json at {base}", file=sys.stderr); return 1
     cases = json.loads((ROOT / "evals/evals.json").read_text())["evals"]
+
+    # Iteration-1's banner is a historical record of a two-version span and stays
+    # as written. Every later iteration claims a SINGLE version, so that claim is
+    # resolved from the runs and the run is refused if it does not hold -- before
+    # anything is written, so a mixed-version tier produces no file rather than a
+    # file asserting something false.
+    tier_version = None
+    if args.iteration != 1:
+        versions = tier_skill_versions(base)
+        if len(versions) != 1:
+            print(f"REFUSING TO EMIT: iteration {args.iteration} "
+                  f"{args.provider}/{args.tier} does not have exactly one skill "
+                  f"version across its runs; found {sorted(versions)}",
+                  file=sys.stderr)
+            return 1
+        tier_version = next(iter(versions))
     jdoc = load(base / "judge.json")
     jmap = {j["slug"]: j for j in (jdoc.get("verdicts", []) if isinstance(jdoc, dict) else (jdoc or []))}
     models = [m for m in bench["resolved_models"] if m not in ("UNKNOWN", "TIMEOUT")]
@@ -407,15 +460,14 @@ def main() -> int:
          f"**Provider:** {args.provider}", "",
          f"**Resolved model(s):** {', '.join(bench['resolved_models'])} — the resolved id "
          "reported by the run, not a requested alias.", "",
-         "Paired design: every case ran twice, with and without the skill, same prompt, "
-         "same model, clean context. The delta is the result.", ""]
+         paired_design_line(bench, len(cases)), ""]
     if prov.get("repo_commit"):
         L += [f"**Provenance:** repo `{prov['repo_commit'][:12]}`"
               + ("**(dirty tree)**" if prov.get("repo_dirty") else "")
               + f" · skill **v{prov.get('skill_version','?')}** "
               f"({prov.get('skill_version_method','?')}) · "
               f"`{prov.get('cli_name')}` {prov.get('cli_version')}", ""]
-    banners(args, L)
+    banners(args, L, tier_version)
     scope_section(args, L)
 
     L += ["## Headline", "", "| Metric | with_skill | without_skill | delta |",

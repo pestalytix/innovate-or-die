@@ -35,8 +35,17 @@ list is not a plan.
   single draw with no variance estimate. Run-to-run variance must be measured
   before any delta is called real; grader variance is already known to be
   nonzero.
-- **Arm-order and position randomization.** Presentation order currently alternates
-  by case index, which removes the crudest confound but is not randomization.
+- **Arm-order and position randomization.** Judge presentation order randomized
+  per ballot from iteration 3 onward. Iterations 1–2 used index alternation;
+  their recorded `presented_first` values stand. Run arm order — which of
+  `with_skill` / `without_skill` executes first — is likewise randomized per case
+  from iteration 3 onward and recorded as `arm_order_index` in `timing.json`;
+  through iteration 2 `with_skill` always ran first, so anything drifting with
+  wall time loaded onto that arm identically in every pair. Both draws are seeded
+  and reproducible, which is what makes them auditable rather than merely
+  unpredictable. This does not close the item: randomization removes a
+  systematic offset, it does not estimate the residual, and at these ballot and
+  case counts an order can still come out lopsided by chance.
 - **Compliance and quality scored separately**, by different instruments, and
   reported as two numbers that are never summed. A compliance score is a
   legitimate thing to report — it just is not a quality score.
