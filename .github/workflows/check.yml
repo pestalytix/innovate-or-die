@@ -12,3 +12,17 @@ jobs:
           python-version: '3.x'
       - name: Generated trees match core/
         run: python3 build/assemble.py --check
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      # pytest is the only dependency in the project, and it is a test-time one:
+      # build/ and evals/runners/ stay stdlib-only so they run anywhere.
+      - name: Install pytest
+        run: pip install pytest
+      - name: Harness unit tests
+        run: python -m pytest -q

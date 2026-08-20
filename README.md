@@ -29,6 +29,11 @@ add-on package the app loads for you. A repo is this project's folder on GitHub;
 Agent Builder (Microsoft 365), and Agent Skills are each platform's way of adding
 custom behavior to its AI.
 
+**If you're not sure, use Claude Code — it's two commands**, and it's the setup
+this was designed for: the roles genuinely run in separate sessions there. Then
+read the first point under [Good to know](#good-to-know), because on Claude Code
+it doesn't always switch on by itself.
+
 | App | What to do |
 |---|---|
 | **Claude Code** | Run `/plugin marketplace add pestalytix/innovate-or-die`, then `/plugin install innovate-or-die@pestalytix`. |
@@ -167,6 +172,9 @@ vary — introduced after grader nondeterminism was measured.
 | [Grader variance](evals/results/2026-08-19-grader-variance.md) | why grades are replicated |
 | [Judge validity](evals/results/2026-08-20-judge-validity-dental.md) | the judge rewarded novelty on the control case |
 
+The same table, generated from the files themselves and kept next to them, is at
+[evals/results/README.md](evals/results/README.md).
+
 Note what this does *not* establish: **role separation is not evidence.** The evaluator is
 a quality gate, not proof of correctness. A protocol that scores itself well can still be
 wrong.
@@ -180,7 +188,13 @@ wrong.
 python3 build/assemble.py            # regenerate
 python3 build/assemble.py --dry-run  # show what would change
 python3 build/assemble.py --check    # CI drift guard
+pip install pytest && python3 -m pytest   # harness unit tests
 ```
+
+CI runs the last two on every push. The tests cover the generator's two refusal
+mechanisms (a substitution that will not silently no-op, a reference check that
+will not let an unresolvable path ship) and the eval harness's two corrected
+correctness bugs (matched-pair aggregation, strict-majority judging).
 
 Generated trees are committed, because installers read the repo layout. **Do not
 hand-edit anything outside `core/`** — CI regenerates and diffs on every push, so

@@ -5,6 +5,43 @@ All notable changes to the core protocol. Format follows
 versioned with [semver](https://semver.org/). Protocol changes require an ADR
 and a version bump.
 
+## [Unreleased]
+
+Harness and tooling only. **No protocol change and no version bump** — `core/`
+is untouched, so every generated artifact is byte-identical apart from the
+Copilot orchestrator profile. Disposition of a GitHub Copilot review of the
+public repo at `fc3325e` (`docs/copilot-github-review.md`), wave 1 of 2.
+
+### Added
+- **A `pytest` suite over the harness** (`tests/`), plus a CI job that runs it.
+  It guards the two correctness bugs fixed in 2.0.2 — unmatched-arm aggregation
+  and non-majority judge verdicts — which until now were fixed by inspection with
+  nothing to stop them coming back. Also covers `_sub()`'s refusal to no-op,
+  `check_references()`, the size guardrails, and a `LICENSE` ↔ `skill-meta.json`
+  license match.
+- **A hard 30,000-char ceiling on the single-paste fallback.** Being over every
+  instruction-field cap is the fallback's accepted condition; being over the
+  ceiling is a size nobody decided on. Currently 24,860. Raising it requires an
+  ADR.
+- **A slack warning on the web instruction caps.** Under 200 chars of headroom
+  the build now says so by name. It currently fires at 33 chars on all three
+  targets — see the wave-2 ADR draft.
+- **A generated index at `evals/results/README.md`**, built from the results
+  files and the root README's results table, with a guard that fails the build if
+  those two sets disagree in either direction.
+- **A "you did it wrong if…" checklist in the Copilot orchestrator profile.**
+  That path is the only one where the role isolation is the human's to maintain,
+  which makes it the easiest to run wrong while believing it ran right.
+- **A default install path in the README** above the matrix, for readers who do
+  not want to compare eleven rows first.
+
+### Fixed
+- **`check_references()` could not see `../`-style references.** Its pattern
+  required the first character to be alphanumeric, so `../references/lenses.md`
+  — the exact form `core/` uses — passed unchecked into single-file surfaces,
+  the one place it can never resolve. Found by the new test suite on its first
+  run. No shipped artifact was affected; the hole was open, not exercised.
+
 ## [2.0.2] — 2026-08-20
 
 Patch. Disposition of an external adversarial review of the public repo at

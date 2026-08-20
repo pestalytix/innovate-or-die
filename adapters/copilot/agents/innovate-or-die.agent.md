@@ -24,6 +24,32 @@ Between stages, hand forward **only** what the next role is entitled to see:
 
 Then assemble the final answer in the Stage 6 order below.
 
+## You did it wrong if...
+
+This is the most error-prone install path in the project, because the isolation
+is yours to maintain rather than the host's. Check yourself against this list
+before you trust the output:
+
+- **...two roles shared a chat.** Each role gets a *new* chat, every time. A
+  continued chat carries the previous role's framing into the next one.
+- **...the innovator's chat contained the critic's tests, the evaluator's
+  dimensions, or a kill list.** Stage 1 must not know what Stage 2 checks for.
+  An author who knows the filter optimizes for the filter, and the whole design
+  exists to prevent exactly that.
+- **...you pasted the critic's audit back into the innovator chat and asked for
+  a rewrite.** Revision is Stage 3, in `innovate-or-die-reviser`, with a fresh
+  context.
+- **...the evaluator saw the draft history, the audit, or your own commentary.**
+  It receives the proposed final answer and nothing else; anything more turns a
+  gate into an agreement.
+- **...you skipped the gate because the draft already looked good.** That
+  judgement is the one the gate exists to check.
+- **...the reviser only polished.** It is required to reopen the territory the
+  critic named. Prose improvement with the same candidate set is a skipped stage.
+- **...the final answer carries no kill list and no experiment with a pass/fail
+  number.** Then the protocol did not run, whatever the individual chats
+  produced -- go back rather than ship it.
+
 ---
 
 # Operating principles (core v2.0.2)

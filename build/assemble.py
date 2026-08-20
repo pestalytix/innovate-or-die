@@ -244,6 +244,32 @@ Between stages, hand forward **only** what the next role is entitled to see:
 
 Then assemble the final answer in the Stage 6 order below.
 
+## You did it wrong if...
+
+This is the most error-prone install path in the project, because the isolation
+is yours to maintain rather than the host's. Check yourself against this list
+before you trust the output:
+
+- **...two roles shared a chat.** Each role gets a *new* chat, every time. A
+  continued chat carries the previous role's framing into the next one.
+- **...the innovator's chat contained the critic's tests, the evaluator's
+  dimensions, or a kill list.** Stage 1 must not know what Stage 2 checks for.
+  An author who knows the filter optimizes for the filter, and the whole design
+  exists to prevent exactly that.
+- **...you pasted the critic's audit back into the innovator chat and asked for
+  a rewrite.** Revision is Stage 3, in `innovate-or-die-reviser`, with a fresh
+  context.
+- **...the evaluator saw the draft history, the audit, or your own commentary.**
+  It receives the proposed final answer and nothing else; anything more turns a
+  gate into an agreement.
+- **...you skipped the gate because the draft already looked good.** That
+  judgement is the one the gate exists to check.
+- **...the reviser only polished.** It is required to reopen the territory the
+  critic named. Prose improvement with the same candidate set is a skipped stage.
+- **...the final answer carries no kill list and no experiment with a pass/fail
+  number.** Then the protocol did not run, whatever the individual chats
+  produced -- go back rather than ship it.
+
 ---
 
 {c['principles']}
@@ -263,6 +289,21 @@ Then assemble the final answer in the Stage 6 order below.
 #   <t>-knowledge.md     roles in execution order + lenses + experiment spec
 #   <t>-fallback.md      the whole thing in one file, for hosts without
 #                        attachments -- knowingly over budget, the degraded rung
+
+# The single-paste fallback is over every instruction-field cap BY DESIGN -- it
+# is the degraded rung, and that is stated wherever it ships. But "knowingly
+# over" is not "unbounded": it grows with every protocol version, and past some
+# size it stops being a degraded path and becomes one no host will take at all.
+# A hard ceiling forces that call to be made deliberately -- raise it in an ADR,
+# with a reason -- instead of drifting past it one commit at a time.
+FALLBACK_CEILING = 30_000
+
+# An instructions file that fits with almost nothing to spare is not safe, it is
+# lucky: the next core edit larger than the headroom turns a passing build into a
+# hard failure, and on Gemini it would breach a budget that is only a working
+# assumption. Warn while there is still room to act.
+INSTRUCTIONS_SLACK = 200
+
 WEB_TARGETS = {
     # (label, budget, status) -- status is a human string, not a bool, because
     # "verified hard cap" and "accepted our file but true cap unknown" are
@@ -453,7 +494,11 @@ REF_EXP_DOC = [(EXPSPEC_ANCHOR, "per the **Experiment spec** section of this doc
 
 # A markdown-quoted filename. Deliberately narrow: it matches the form core/
 # actually uses, so a prose mention of "a .md file" does not trip the check.
-_REF_RE = re.compile(r"`([A-Za-z0-9_][A-Za-z0-9_./-]*\.md)`")
+# The leading dot matters -- core/ writes relative references as
+# `../references/lenses.md`, and a first-character class that excluded `.` let
+# exactly that form through unchecked into single-file surfaces, which is the
+# one place it can never resolve.
+_REF_RE = re.compile(r"`([A-Za-z0-9_.][A-Za-z0-9_./-]*\.md)`")
 
 # Surfaces that ship as ONE file. Nothing relative can resolve from them.
 _SINGLE_FILE_PREFIXES = ("adapters/web/", "adapters/copilot/agents/")
@@ -530,17 +575,112 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
                 f"adapters/web/{target}-instructions.md: {len(instructions):,} chars exceeds "
                 f"the {budget:,}-char cap for {label}{flag} -- over by {len(instructions)-budget:,}")
         else:
+            headroom = budget - len(instructions)
             problems.append(
                 f"adapters/web/{target}-instructions.md: {len(instructions):,} chars, "
-                f"{budget - len(instructions):,} under the {budget:,} cap for {label}{flag}")
+                f"{headroom:,} under the {budget:,} cap for {label}{flag}")
+            if headroom < INSTRUCTIONS_SLACK:
+                problems.append(
+                    f"adapters/web/{target}-instructions.md: SLACK -- only {headroom:,} chars "
+                    f"of headroom against {label}{flag}, under the {INSTRUCTIONS_SLACK:,}-char "
+                    "slack target. The next core edit larger than that fails the build outright: "
+                    "trim in the same commit, or re-verify the cap (docs/COMPATIBILITY.md).")
         problems.append(
             f"adapters/web/{target}-fallback.md: {len(fallback):,} chars, knowingly over the "
             f"{budget:,}-char cap -- degraded no-attachment rung, not the primary install path")
+
+    if len(fallback) > FALLBACK_CEILING:
+        # Not a warning. Over-cap is the fallback's accepted condition; over the
+        # CEILING is a size nobody decided on.
+        fatal.append(
+            f"adapters/web/*-fallback.md: {len(fallback):,} chars exceeds the "
+            f"{FALLBACK_CEILING:,}-char hard ceiling by {len(fallback)-FALLBACK_CEILING:,}. "
+            "The fallback is over every instruction cap by design, but its growth is not "
+            "open-ended -- shrink it, or raise FALLBACK_CEILING in an ADR that says why "
+            "the larger paste is still worth shipping.")
 
     drift = readme_fallback_drift(len(fallback))
     if drift:
         problems.append(drift)
     return out
+
+
+# ---------------------------------------------------------- evals results index
+# The only generated artifact whose source is not core/. It is generated from
+# the results directory plus the root README's results table, which is the
+# point: an index hand-maintained beside the files it indexes goes stale the
+# first time someone adds a file and forgets, and a second hand-written summary
+# of each result would immediately disagree with the first. So the files supply
+# their own titles and dates, the README supplies the one-line labels it already
+# carries, and the guard fails the build if those two sets do not match exactly
+# -- in either direction.
+
+EVALS_RESULTS_DIR = "evals/results"
+EVALS_INDEX = f"{EVALS_RESULTS_DIR}/README.md"
+
+# `| [label](evals/results/file.md) | what it records |` in the root README.
+_README_ROW = re.compile(
+    r"\|\s*\[[^\]]+\]\(" + EVALS_RESULTS_DIR + r"/([^)]+\.md)\)\s*\|\s*([^|]*?)\s*\|")
+_FILENAME_DATE = re.compile(r"^(20\d\d-\d\d-\d\d)-")
+
+
+def _plain(t: str) -> str:
+    """Strip markdown emphasis and code spans from text lifted into the index.
+
+    Two reasons, both load-bearing: a truncated bold span emits broken markdown,
+    and a backticked `*.md` filename surviving into the index would trip
+    check_references() against a directory it does not model.
+    """
+    return " ".join(re.sub(r"[`*_]", "", t).split())
+
+
+def evals_results_index(fatal: list[str]) -> dict[str, str]:
+    d = ROOT / EVALS_RESULTS_DIR
+    readme_path = ROOT / "README.md"
+    if not d.is_dir() or not readme_path.exists():
+        return {}
+
+    labels = {m.group(1): _plain(m.group(2))
+              for m in _README_ROW.finditer(readme_path.read_text(encoding="utf-8"))}
+    on_disk = {f.name for f in d.glob("*.md")} - {"README.md"}
+
+    for name in sorted(set(labels) - on_disk):
+        fatal.append(f"README.md links {EVALS_RESULTS_DIR}/{name} in its results table, "
+                     "but no such file exists")
+    rows = []
+    for name in sorted(on_disk):
+        text = (d / name).read_text(encoding="utf-8")
+        title = next((l[2:].strip() for l in text.splitlines()[:5] if l.startswith("# ")), "")
+        date = _FILENAME_DATE.match(name)
+        label = labels.get(name)
+        # Each of these is a way the index would silently thin out rather than
+        # fail: an untitled file, a file named outside the date convention, or a
+        # result nobody has described in the README.
+        missing = [n for n, v in (("an H1 title", title),
+                                  ("a leading ISO date in its filename", date),
+                                  ("a row in the root README results table", label)) if not v]
+        if missing:
+            fatal.append(f"{EVALS_RESULTS_DIR}/{name}: cannot be indexed -- missing "
+                         + " and ".join(missing))
+            continue
+        rows.append((date.group(1), name, _plain(title), label))
+    if not rows:
+        return {}
+    rows.sort(reverse=True)
+
+    head = [_HEADER, "# Eval results",
+            "Every eval write-up in this directory, newest first. **Generated** by "
+            "`build/assemble.py` from these files and the results table in the root "
+            "README -- add a result, give it a row there, and it appears here. Do not "
+            "hand-edit.",
+            "Each file states its own method and its own limits, and they differ: read "
+            "those before quoting any number. Across all of them the eval measures "
+            "protocol compliance and cost, not decision quality.",
+            "The date is the date in the filename -- when the runs happened. Several "
+            "files were written or annotated later, and say so."]
+    table = ["| Date | Result | What it records |", "|---|---|---|"]
+    table += [f"| {date} | [{title}]({name}) | {label} |" for date, name, title, label in rows]
+    return {EVALS_INDEX: "\n\n".join(head) + "\n\n" + "\n".join(table) + "\n"}
 
 
 # --------------------------------------------------------------- tree assembly
@@ -566,6 +706,7 @@ def generate() -> tuple[dict[str, str], list[str], list[str]]:
         files[f"adapters/copilot/agents/{fname}"] = content
     for fname, content in web_variants(c, problems, fatal).items():
         files[f"adapters/web/{fname}"] = content
+    files.update(evals_results_index(fatal))
 
     check_references(files, fatal)
     for rel, content in sorted(files.items()):

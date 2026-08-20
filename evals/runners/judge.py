@@ -7,6 +7,7 @@ out only after the verdict is recorded.
 """
 from __future__ import annotations
 import argparse, json, re, subprocess, sys
+from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,6 +81,23 @@ Reply with ONLY JSON:
   "reason": "<one sentence, max 200 chars>"}}"""
 
 
+def decide(ballots: list[dict], mapping: dict[str, str]) -> tuple[str, bool, Counter, int]:
+    """Resolve a set of ballots to a winning ARM, unblinding only at the end.
+
+    A/B/tie is a THREE-way split, so the most common vote is not necessarily a
+    majority: 1-1-1 would otherwise award a win on a single ballot. Require
+    strictly more than half; anything less is a tie. An even split (2-2) is a
+    tie for the same reason.
+
+    Returns (winner_arm, has_majority, tally, top_count). `tally` counts the
+    BLIND labels (A/B/tie); the arm mapping is applied only to the result.
+    """
+    tally = Counter(b.get("winner") for b in ballots)
+    top, n_top = tally.most_common(1)[0]
+    has_majority = n_top * 2 > len(ballots)
+    return (mapping.get(top, "tie") if has_majority else "tie"), has_majority, tally, n_top
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration", type=int, default=1)
@@ -124,16 +142,9 @@ def main() -> int:
             print(f"  judge error on {c['slug']}: {e}")
         if not ballots:
             continue
-        from collections import Counter
-        tally = Counter(b.get("winner") for b in ballots)
-        top, n_top = tally.most_common(1)[0]
-        # A/B/tie is a THREE-way split, so the most common vote is not
-        # necessarily a majority: 1-1-1 would otherwise award a win on a single
-        # ballot. Require strictly more than half; anything less is a tie.
-        has_majority = n_top * 2 > len(ballots)
         # unblind only now
         mapping = {"A": first, "B": second}
-        winner = mapping.get(top, "tie") if has_majority else "tie"
+        winner, has_majority, tally, n_top = decide(ballots, mapping)
         # Every ballot is evidence. Keeping one "representative" ballot threw
         # away the disagreement that makes a split verdict worth reading.
         unblinded = [{"winner_arm": mapping.get(b.get("winner"), "tie"),
