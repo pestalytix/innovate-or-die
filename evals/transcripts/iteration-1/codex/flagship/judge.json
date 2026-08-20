@@ -1,0 +1,119 @@
+{
+  "judge_model_requested": "claude-sonnet-5",
+  "judge_model_resolved": [
+    "claude-sonnet-5"
+  ],
+  "limitation": "A Claude-family judge scores both providers. Blind pairwise cancels arm bias WITHIN a provider; cross-provider comparisons carry possible same-family leniency toward Claude outputs.",
+  "verdicts": [
+    {
+      "slug": "eval-route-density",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 3
+        },
+        "without_skill": {
+          "non_obviousness": 4,
+          "mechanism": 5,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 5
+        }
+      },
+      "winner_arm": "without_skill",
+      "reason": "B names the same reframe (calendar/geography over turn-by-turn) but with concrete zone/scheduling mechanics a dispatcher could implement next week; A is more exploratory and abstract."
+    },
+    {
+      "slug": "eval-dental-no-shows",
+      "presented_first": "without_skill",
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B reframes as perishable-capacity/early-info problem with sharper falsification thresholds and a kill list; A is a solid but conventional confirm-and-recover playbook."
+    },
+    {
+      "slug": "eval-municipal-water-loss",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 3
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 5,
+          "usefulness": 5
+        }
+      },
+      "winner_arm": "without_skill",
+      "reason": "B covers more distinct mechanisms with equally concrete falsifiers and a clear 90-day action plan; A is more elaborate but narrower and less immediately actionable."
+    },
+    {
+      "slug": "eval-bookstore-events",
+      "presented_first": "without_skill",
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 5
+        },
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B's opportunity-cost hurdle rate and separable-benefit reframe are sharper mechanisms with explicit falsification thresholds; A is more immediately actionable but less mechanistically novel."
+    },
+    {
+      "slug": "eval-saas-onboarding-churn",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 3,
+          "honesty": 3,
+          "usefulness": 5
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A names a dominant-mechanism hypothesis with predefined advance/stop thresholds per pilot; B lists more options but with fewer falsifiable gates."
+    }
+  ]
+}

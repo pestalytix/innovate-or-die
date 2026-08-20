@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy the publishable slice of `evals-workspace/` into `evals/transcripts/` and
+r"""Copy the publishable slice of `evals-workspace/` into `evals/transcripts/` and
 redact it.
 
     python3 evals/runners/redact_transcripts.py --copy-from evals-workspace
@@ -23,6 +23,19 @@ READBACK ASSERTION: after writing, every file is re-read FROM DISK and rescanned
 with the same patterns. Any surviving match exits 1. The write is never trusted
 -- the same discipline `report.py` applies to its completeness gate, and for the
 same reason: a silent no-op replace is indistinguishable from a successful one.
+
+STRUCTURAL PARSE GUARD: every `.json` file and every `.jsonl` line that parsed
+BEFORE redaction must still parse after. If not, the affected files are restored
+from their pre-write contents and the run exits 1. This guard is independent of
+the patterns, which is the point: it caught a value class of `\S+` that consumed
+a JSON string's closing quote and every field after it, turning a redaction into
+silent data destruction that both text-level scans reported as success. Any
+future rule that eats structure fails here rather than in a reader's hands.
+
+--dry-run RUNS EVERY CHECK -- patterns, misses, parse guard, and a readback
+simulation against the candidate text -- and returns the SAME exit status as a
+real run. It differs only in not writing. A dry run that cannot fail is not a
+rehearsal.
 
 ## The `sk-` boundary guard
 
@@ -64,7 +77,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # Allowlist -- see module docstring. Anything not named here is not published.
 COPY_NAMES = {"response.md", "timing.json", "grading.json",
-              "stream.jsonl", "stderr.txt"}
+              "stream.jsonl", "stderr.txt", "judge.json"}
 
 REDACTED_USER = "/Users/REDACTED"
 SECRET = "[REDACTED-SECRET]"
@@ -83,8 +96,13 @@ PATH_PATTERNS: list[tuple[re.Pattern, str]] = [
 SECRET_PATTERNS: list[tuple[re.Pattern, str]] = [
     # Token-boundary guarded -- see the docstring. Covers sk-, sk-ant-, sk-proj-.
     (re.compile(r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{8,}"), SECRET),
-    (re.compile(r"Bearer\s+[A-Za-z0-9._~+/=-]{8,}"), SECRET),
-    (re.compile(r"[A-Za-z0-9_]*_API_KEY\s*=\s*\S+"), SECRET),
+    # The value classes exclude quotes, commas, braces and whitespace. `\S+`
+    # here consumed everything to end of line: in JSON that swallowed the
+    # closing quote and every following field, so a redaction destroyed the
+    # record it was cleaning. The structural guard below now catches that
+    # class of bug regardless of the pattern; this stops causing it.
+    (re.compile(r"Bearer\s+[A-Za-z0-9_\-./+=]{8,}"), SECRET),
+    (re.compile(r"[A-Za-z0-9_]*_API_KEY\s*=\s*[A-Za-z0-9_\-./+=]+"), SECRET),
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), EMAIL),
 ]
 
@@ -217,6 +235,48 @@ def out_of_scope_hits(text: str) -> list[tuple[str, int, str]]:
     return hits
 
 
+# ------------------------------------------------------- structural parse guard
+# A redaction that produces invalid JSON has destroyed evidence, and neither the
+# residual scan nor the miss scan can see it: both operate on text. This guard is
+# structural and pattern-independent -- it asserts that anything which parsed
+# before still parses after, so a future rule that eats a closing quote fails the
+# run instead of silently truncating a record.
+
+def parse_shape(path: Path, text: str) -> object | None:
+    """What parsed BEFORE redaction. `None` for files this guard does not model.
+
+    A whole-file bool for `.json`; the set of line numbers that parsed for
+    `.jsonl`. Lines that did not parse to begin with are not this guard's
+    business -- it checks for regressions, not for pre-existing malformity.
+    """
+    if path.suffix == ".json":
+        try:
+            json.loads(text); return True
+        except ValueError:
+            return False
+    if path.suffix == ".jsonl":
+        ok = set()
+        for i, line in enumerate(text.splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                json.loads(line); ok.add(i)
+            except ValueError:
+                pass
+        return ok
+    return None
+
+
+def parse_regressions(path: Path, before: object | None, text: str) -> list[str]:
+    """Locations that parsed before and do not parse now."""
+    if before is None:
+        return []
+    after = parse_shape(path, text)
+    if path.suffix == ".json":
+        return [] if after or not before else [f"{_rel(path)}: whole file"]
+    return [f"{_rel(path)}:{i}" for i in sorted(set(before) - set(after))]
+
+
 def copy_tree(src: Path, dst: Path, dry_run: bool) -> int:
     """Mirror the allowlisted files from src into dst, preserving relative paths."""
     n = 0
@@ -243,7 +303,8 @@ def main() -> int:
                     help="mirror the allowlisted files from this tree first "
                          "(e.g. evals-workspace)")
     ap.add_argument("--dry-run", action="store_true",
-                    help="report what would change; write nothing")
+                    help="run every check and return the same exit status as a "
+                         "real run; differ only in not writing")
     args = ap.parse_args()
 
     dst = ROOT / args.root
@@ -256,12 +317,17 @@ def main() -> int:
         print(f"no such tree: {dst}", file=sys.stderr); return 1
 
     files = sorted(f for f in dst.rglob("*") if f.is_file() and f.name in COPY_NAMES)
-    total, changed_files, misses = 0, 0, []
+    total, changed_files, misses, broke, written = 0, 0, [], [], []
+
     for f in files:
         original = f.read_text(encoding="utf-8", errors="surrogateescape")
+        before = parse_shape(f, original)
         text, counts = redact(original, f.name)
         n = sum(counts.values())
         misses += [(f, *h) for h in out_of_scope_hits(text)]
+        # Structural guard, evaluated on the candidate text -- BEFORE it is
+        # written, so --dry-run reaches exactly the same verdict as a real run.
+        broke += [(f, loc) for loc in parse_regressions(f, before, text)]
         if n:
             changed_files += 1
             total += n
@@ -271,27 +337,45 @@ def main() -> int:
         if args.dry_run or text == original:
             continue
         f.write_text(text, encoding="utf-8", errors="surrogateescape")
+        written.append((f, original))
 
     verb = "would change" if args.dry_run else "changed"
     print(f"{verb} {changed_files}/{len(files)} files, {total} replacements")
 
-    if args.dry_run:
-        return 0
+    # A redaction that produced invalid JSON destroyed evidence. Roll the
+    # affected files back to their pre-write contents and fail.
+    if broke:
+        for f, original in written:
+            f.write_text(original, encoding="utf-8", errors="surrogateescape")
+        print(f"\nPARSE GUARD FAILED: redaction broke {len(broke)} location(s) "
+              f"that parsed beforehand"
+              + ("" if args.dry_run else
+                 f"; restored {len(written)} file(s) from the pre-write copy"),
+              file=sys.stderr)
+        for f, loc in broke[:20]:
+            print(f"  {loc}", file=sys.stderr)
+        return 1
 
-    # Readback assertion: re-read from disk, never trust the write.
+    # Readback assertion: re-read from disk on a real run, never trust the write.
+    # Under --dry-run the same scan runs against the candidate text, so the
+    # simulated verdict matches what a real run would produce.
     failed = []
     for f in files:
-        for pattern, match in residual(f.read_text(encoding="utf-8",
-                                                   errors="surrogateescape"),
-                                       f.name):
-            failed.append((f, pattern, match))
+        text = (redact(f.read_text(encoding="utf-8", errors="surrogateescape"),
+                       f.name)[0] if args.dry_run else
+                f.read_text(encoding="utf-8", errors="surrogateescape"))
+        failed += [(f, pattern, match) for pattern, match in residual(text, f.name)]
     if failed:
-        print(f"\nREADBACK FAILED: {len(failed)} pattern(s) still match after "
-              "writing:", file=sys.stderr)
+        print(f"\nREADBACK {'SIMULATION ' if args.dry_run else ''}FAILED: "
+              f"{len(failed)} pattern(s) still match after "
+              f"{'a simulated write' if args.dry_run else 'writing'}:",
+              file=sys.stderr)
         for f, pattern, match in failed[:20]:
             print(f"  {_rel(f)}: /{pattern}/ -> {match!r}", file=sys.stderr)
         return 1
-    print(f"readback OK: 0 of {len(RULES)} patterns match across {len(files)} files")
+    print(f"parse guard OK: no location that parsed before fails after")
+    print(f"readback{' (simulated)' if args.dry_run else ''} OK: 0 of {len(RULES)} "
+          f"patterns match across {len(files)} files")
 
     if misses:
         print(f"\nMISSES: {len(misses)} known-secret shape(s) this script does "

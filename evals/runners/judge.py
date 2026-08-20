@@ -23,6 +23,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+
+def _sh(*cmd: str) -> str | None:
+    """First line of a command's output, or None. Used for harness provenance."""
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        out = (p.stdout or p.stderr).strip()
+        return out.splitlines()[0] if out else None
+    except Exception:
+        return None
+
+
 # ---- cost-basis budget (Gate D ruling: token metric counts cached scaffolding) ----
 COST_CEILING = 25.00
 _cost = {"usd": 0.0, "calls": 0, "cacheRead": 0, "cacheCreation": 0,
@@ -223,7 +234,14 @@ def main() -> int:
               f"{'' if has_majority else '  (NO MAJORITY -> tie)'}")
 
     (base / "judge.json").write_text(json.dumps(
-        {"judge_model_requested": args.judge_model,
+        {# Method provenance travels WITH the artifact. A reader -- including
+         # report.py -- must not have to infer how a run was judged from its
+         # iteration number: iteration is a label, not a record of method, and
+         # a re-run of an old iteration under a new harness would be described
+         # wrongly by any rule keyed on it.
+         "presentation_method": "per-ballot-seeded-sha256",
+         "harness_commit": _sh("git", "-C", str(ROOT), "rev-parse", "HEAD"),
+         "judge_model_requested": args.judge_model,
          "judge_model_resolved": sorted(resolved_judge) or None,
          "limitation": ("A Claude-family judge scores both providers. Blind pairwise "
                         "cancels arm bias WITHIN a provider; cross-provider comparisons "

@@ -122,6 +122,18 @@ def test_a_run_missing_its_version_shows_up_as_unknown(build, capsys):
     assert "UNKNOWN" in capsys.readouterr().err
 
 
+def test_all_runs_unknown_is_a_refusal_not_a_single_version(build, capsys):
+    """`{"UNKNOWN"}` is one ELEMENT and zero versions. Emitting "every run used
+    vUNKNOWN" would be a provenance claim made out of missing provenance."""
+    rc, text, written = build(versions=[None, None])
+    assert rc == 1, "a tier with no resolvable version must not emit"
+    assert written == [] and text is None
+    err = capsys.readouterr().err
+    assert "REFUSING TO EMIT" in err
+    assert "UNKNOWN" in err
+    assert "could not resolve a single real skill version" in err
+
+
 def test_the_derived_banner_is_in_the_completeness_manifest(report):
     class A:
         iteration, provider, tier = 2, "testprov", "workhorse"
@@ -212,31 +224,112 @@ def test_the_banner_names_both_affected_arms(report):
     assert "transcripts/README.md#" in banner, "must link the evidence"
 
 
-# --------------------------------------- the judge sentence describes what ran
+# ------------------------- method prose derives from fields, not iteration number
 
-def test_judge_prose_matches_the_method_that_actually_ran(report):
-    """Per-ballot randomization landed in iteration 3. Regenerating an older file
-    must not retro-fit the new method onto a run that used index alternation."""
-    jdoc = {"verdicts": [{"slug": "s", "winner_arm": "with_skill", "reason": "r"}],
-            "judge_model_requested": "m", "judge_model_resolved": ["m"],
-            "limitation": "l"}
-    old, new = [], []
-    report.judge_section(jdoc, old, 1)
-    report.judge_section(jdoc, new, 3)
-    old_txt, new_txt = "\n".join(old), "\n".join(new)
-    assert "alternating per case" in old_txt
-    assert "per ballot" not in old_txt.split("Randomized per ballot")[0]
-    assert "drawn independently per ballot" in new_txt
-    assert "alternating per case" not in new_txt
+JDOC = {"verdicts": [{"slug": "s", "winner_arm": "with_skill", "reason": "r"}],
+        "judge_model_requested": "m", "judge_model_resolved": ["m"],
+        "limitation": "l"}
 
 
-def test_iteration_2_still_reports_alternation(report):
-    jdoc = {"verdicts": [{"slug": "s", "winner_arm": "tie", "reason": "r"}],
-            "judge_model_requested": "m", "judge_model_resolved": ["m"],
-            "limitation": "l"}
+def jdoc(**over):
+    d = dict(JDOC); d.update(over); return d
+
+
+def test_recorded_presentation_method_is_described(report):
     L = []
-    report.judge_section(jdoc, L, 2)
-    assert "alternating per case" in "\n".join(L)
+    report.judge_section(jdoc(presentation_method="per-ballot-seeded-sha256"), L)
+    txt = "\n".join(L)
+    assert "drawn independently per ballot" in txt
+    assert "predates" not in txt
+
+
+def test_absent_presentation_method_says_so_and_names_the_commit(report):
+    """The field is the provenance. Without it the file must say the run predates
+    it, not silently inherit whatever the harness does today."""
+    L = []
+    report.judge_section(jdoc(), L)
+    txt = "\n".join(L)
+    assert "index alternation" in txt
+    assert "predates the `presentation_method` field" in txt
+    assert "d4c7269" in txt
+    assert "drawn independently per ballot" not in txt
+
+
+def test_an_unrecognised_method_is_reported_verbatim_not_guessed(report):
+    """Mapping an unknown value to the nearest known one would reintroduce the
+    original bug in a subtler form."""
+    L = []
+    report.judge_section(jdoc(presentation_method="latin-square-v2"), L)
+    txt = "\n".join(L)
+    assert "`latin-square-v2`" in txt
+    assert "no description for" in txt
+    assert "index alternation" not in txt
+
+
+def test_harness_commit_is_reported_when_recorded(report):
+    L = []
+    report.judge_section(jdoc(presentation_method="per-ballot-seeded-sha256",
+                              harness_commit="d4c7269d4b4b9356a85863cc"), L)
+    assert "d4c7269d4b4b" in "\n".join(L)
+
+
+def test_iteration_number_does_not_change_the_method_prose(report):
+    """The whole point: iteration is a label, not provenance. Same jdoc must
+    produce the same sentence regardless of which iteration is being reported."""
+    outs = []
+    for _ in range(2):
+        L = []
+        report.judge_section(jdoc(presentation_method="per-ballot-seeded-sha256"), L)
+        outs.append("\n".join(L))
+    assert outs[0] == outs[1]
+    import inspect
+    assert "iteration" not in inspect.signature(report.judge_section).parameters
+
+
+# ---- arm order, same rule, read from timing.json ----
+
+def _tier(tmp_path, *methods):
+    base = tmp_path / "ws"
+    for i, m in enumerate(methods):
+        d = base / f"case-{i}/with_skill"
+        d.mkdir(parents=True)
+        rec = {"total_tokens": 1, "duration_ms": 1}
+        if m is not None:
+            rec["arm_order_method"] = m
+        (d / "timing.json").write_text(json.dumps(rec))
+    return base
+
+
+def test_recorded_arm_order_method_is_described(report, tmp_path):
+    line = report.arm_order_line(_tier(tmp_path, "per-case-seeded-sha256",
+                                       "per-case-seeded-sha256"))
+    assert "drawn per case from a seeded RNG" in line
+    assert "arm_order_index" in line
+
+
+def test_absent_arm_order_method_says_with_skill_ran_first(report, tmp_path):
+    line = report.arm_order_line(_tier(tmp_path, None, None))
+    assert "`with_skill` ran first in every pair" in line
+    assert "predates the `arm_order_method` field" in line
+    assert "d4c7269" in line
+
+
+def test_a_tier_with_no_runs_at_all_falls_back_to_the_absent_wording(report, tmp_path):
+    (tmp_path / "empty").mkdir()
+    assert "predates" in report.arm_order_line(tmp_path / "empty")
+
+
+def test_mixed_arm_order_methods_are_reported_as_mixed(report, tmp_path):
+    """Two methods in one tier is not describable by either. Say so."""
+    line = report.arm_order_line(_tier(tmp_path, "per-case-seeded-sha256",
+                                       "round-robin-v9"))
+    assert "mixed methods" in line
+    assert "per-case-seeded-sha256" in line and "round-robin-v9" in line
+
+
+def test_run_order_banner_is_in_the_completeness_manifest(report):
+    assert "**Run order.**" in report.required_sections(Args(1, "claude"))
+    assert "**Run order.**" in report.required_sections(Args(2, "codex"))
 
 
 # ------------------------------------ the flagship probe names its control run

@@ -1,0 +1,155 @@
+{
+  "judge_model_requested": "claude-sonnet-5",
+  "judge_model_resolved": [
+    "claude-sonnet-5"
+  ],
+  "limitation": "A Claude-family judge scores both providers. Blind pairwise cancels arm bias WITHIN a provider; cross-provider comparisons carry possible same-family leniency toward Claude outputs.",
+  "verdicts": [
+    {
+      "slug": "eval-route-density",
+      "presented_first": "with_skill",
+      "vote_split": {
+        "A": 3
+      },
+      "votes": 3,
+      "unanimous": true,
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 3,
+          "usefulness": 3
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A names the same levers as B but adds a falsifiable experiment with thresholds and a kill list, making it actionable and honest about assumptions."
+    },
+    {
+      "slug": "eval-dental-no-shows",
+      "presented_first": "without_skill",
+      "vote_split": {
+        "B": 3
+      },
+      "votes": 3,
+      "unanimous": true,
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 4,
+          "usefulness": 5
+        },
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B reframes the causal problem (commitment/activation vs reminders) with named mechanisms and a falsifiable A/B test; A is a solid but conventional checklist."
+    },
+    {
+      "slug": "eval-municipal-water-loss",
+      "presented_first": "with_skill",
+      "vote_split": {
+        "tie": 3
+      },
+      "votes": 3,
+      "unanimous": true,
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "tie",
+      "reason": "Both decompose NRW into real/apparent/unbilled loss with matched confirm/refute pairs and concrete pilots; near-identical rigor, B adds citations, A's contrarian framing is slightly sharper."
+    },
+    {
+      "slug": "eval-bookstore-events",
+      "presented_first": "without_skill",
+      "vote_split": {
+        "B": 3
+      },
+      "votes": 3,
+      "unanimous": true,
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 3,
+          "usefulness": 3
+        },
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 5
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B names a specific mechanism (prepaid membership converts uncertain foot traffic into guaranteed revenue) and attaches a falsifiable experiment with numeric thresholds; A stays at the generic classify-and-track level."
+    },
+    {
+      "slug": "eval-saas-onboarding-churn",
+      "presented_first": "with_skill",
+      "vote_split": {
+        "A": 3
+      },
+      "votes": 3,
+      "unanimous": true,
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 5,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 3,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A commits to a falsifiable outcome-gated launch experiment with named mechanisms and failure modes; B is a broader but more conventional checklist without a real test."
+    }
+  ],
+  "budget": {
+    "label": "judge",
+    "calls": 15,
+    "cost_usd": 1.482,
+    "token_sum": 665167,
+    "cacheRead": 413400,
+    "cacheCreation": 201751,
+    "cached_share_of_tokens": 0.9248,
+    "input": 42885,
+    "output": 7131
+  }
+}

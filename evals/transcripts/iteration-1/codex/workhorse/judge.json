@@ -1,0 +1,119 @@
+{
+  "judge_model_requested": "claude-sonnet-5",
+  "judge_model_resolved": [
+    "claude-sonnet-5"
+  ],
+  "limitation": "A Claude-family judge scores both providers. Blind pairwise cancels arm bias WITHIN a provider; cross-provider comparisons carry possible same-family leniency toward Claude outputs.",
+  "verdicts": [
+    {
+      "slug": "eval-route-density",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 4,
+          "usefulness": 2
+        },
+        "without_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 5
+        }
+      },
+      "winner_arm": "without_skill",
+      "reason": "B names the same core reframe as A but adds concrete mechanisms, a target metric, and specific actionable levers; A stops at questions plus one thesis."
+    },
+    {
+      "slug": "eval-dental-no-shows",
+      "presented_first": "without_skill",
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 4,
+          "usefulness": 5
+        },
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 5,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B reframes the problem with a named psychological mechanism and a falsifiable A/B design with explicit thresholds; A is a solid but conventional confirm-and-escalate playbook."
+    },
+    {
+      "slug": "eval-municipal-water-loss",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 3,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A adds a concrete falsifiable pilot experiment, an explicit contrarian hypothesis, and an avoid-list; B is a solid but more generic checklist."
+    },
+    {
+      "slug": "eval-bookstore-events",
+      "presented_first": "without_skill",
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 3,
+          "usefulness": 4
+        },
+        "with_skill": {
+          "non_obviousness": 4,
+          "mechanism": 4,
+          "testability": 5,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "B names a specific falsifiable experiment with success/failure thresholds and a real reframe (payer should change); A is solid but stays generic."
+    },
+    {
+      "slug": "eval-saas-onboarding-churn",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 5,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 3,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A names causal mechanisms, gives numeric kill/success thresholds, and separates fact from assumption; B is a competent but default SaaS churn playbook."
+    }
+  ]
+}

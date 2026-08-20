@@ -60,13 +60,17 @@ list is not a plan.
   single draw with no variance estimate. Run-to-run variance must be measured
   before any delta is called real; grader variance is already known to be
   nonzero.
-- **Arm-order and position randomization.** Judge presentation order randomized
-  per ballot from iteration 3 onward. Iterations 1–2 used index alternation;
-  their recorded `presented_first` values stand. Run arm order — which of
-  `with_skill` / `without_skill` executes first — is likewise randomized per case
-  from iteration 3 onward and recorded as `arm_order_index` in `timing.json`;
-  through iteration 2 `with_skill` always ran first, so anything drifting with
-  wall time loaded onto that arm identically in every pair. Both draws are seeded
+- **Arm-order and position randomization.** Judge presentation order is
+  randomized per ballot **from harness commit `d4c7269` onward**, recorded as
+  `presentation_method` in `judge.json`. Runs judged before it used index
+  alternation and carry no such field; their recorded `presented_first` values
+  stand. Run arm order — which of `with_skill` / `without_skill` executes first —
+  is likewise randomized per case from `d4c7269` onward and recorded as
+  `arm_order_index` plus `arm_order_method` in `timing.json`. **Every existing
+  run, iteration-3 runs included, predates `d4c7269` and carries no
+  `arm_order_index`:** `with_skill` ran first in all of them, so anything
+  drifting with wall time loaded onto that arm identically in every pair.
+  Commits, not iteration numbers — an iteration is a label the operator chose. Both draws are seeded
   and reproducible, which is what makes them auditable rather than merely
   unpredictable. This does not close the item: randomization removes a
   systematic offset, it does not estimate the residual, and at these ballot and
@@ -86,29 +90,34 @@ list is not a plan.
   is the question the skill's premise actually rests on and the hardest to
   operationalize.
 
-## Reporting methodology — method statements are version-gated
+## Reporting methodology — method prose derives from recorded fields
 
 `evals/runners/report.py` is the only writer of results files, and a results file
 is regenerated whenever anything about it changes. Each regeneration re-emits
 every sentence from the generator as it stands that day. So **any sentence
 describing a method — grading, judging, presentation or arm ordering, activation
-detection — must be gated on the iteration or protocol version from which that
-method applies.**
+detection — must be derived from a field the run itself recorded.**
 
-An ungated method sentence does not go stale; it is silently rewritten. A file
-recording a 2026-08-19 run comes to assert a method introduced on 2026-08-20, the
-numbers stay honest while the prose describing how they were produced becomes
-false, and the completeness gate cannot catch it because the section is present
-and the sentence is well-formed.
+Ungated prose is silently rewritten: a file recording a 2026-08-19 run comes to
+assert a method introduced later, the numbers stay honest while the prose
+describing how they were produced becomes false, and the completeness gate cannot
+catch it because the section is present and the sentence is well-formed.
 
-This was not hypothetical. Regenerating the iteration-1 Claude file for an
-unrelated annotation had begun writing *"presentation order drawn independently
-per ballot from a seeded RNG"* over a judge run that used index alternation;
-`judge_section()` now takes the iteration and selects the sentence, and the rule
-is stated in full in that module's docstring.
+Gating on the iteration number does not fix this, it only hides it. `iteration
+>= 3` encodes "iteration 3 is when the harness changed" — a fact about history,
+not about the artifact in hand. Re-run iteration 1 under today's harness and the
+rule describes it wrongly; replay iteration 3 from artifacts the old harness
+produced and it describes those wrongly too. **The iteration number is a label
+the operator chose, not a record of what the code did.**
 
-The test for a new method sentence is not *"is this true?"* but *"is this true of
-every run this generator can be pointed at?"*
+The method therefore travels with the artifact: `judge.json` carries
+`presentation_method` and `harness_commit`, and each `timing.json` carries
+`arm_order_method` beside `arm_order_index`. A missing field produces an explicit
+"predates this field" sentence naming the harness commit; an unrecognised value
+is reported verbatim rather than mapped to the nearest known one.
+
+The test for a new method sentence is not *"is this true?"* but *"which recorded
+field is this read from?"*
 
 ## What may be claimed until then
 

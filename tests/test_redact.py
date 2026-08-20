@@ -14,6 +14,7 @@ Two things this has to get right, and they pull against each other:
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -55,15 +56,16 @@ def test_every_declared_pattern_is_replaced(redact):
     assert "sk-ant-api03-AAAAAAAABBBBBBBBCCCCCCCC" not in out
     assert "sk-proj-ZZZZZZZZYYYYYYYYXXXXXXXX" not in out
     assert "Bearer" not in out
-    assert "ANTHROPIC_API_KEY=" not in out
+    assert "secretvaluehere" not in out
     assert "ken@pestalytix.com" not in out
     assert "[REDACTED-EMAIL]" in out
     assert out.count("[REDACTED-SECRET]") == 5, out
-    # 10, not 9: the `*_API_KEY=` line is hit twice by design. The `sk-` rule
-    # runs first and replaces the value, then the `_API_KEY=` rule collapses
-    # `ANTHROPIC_API_KEY=[REDACTED-SECRET]` to a single token. Layered rules,
-    # one surviving token -- which is why the token count is 5, not 6.
-    assert sum(counts.values()) == 10, counts
+    # The VARIABLE NAME survives; only its value is redacted. That is the point
+    # of the constrained value class: `[` is not in it, so once the `sk-` rule
+    # has replaced the value the `_API_KEY=` rule correctly declines to eat the
+    # `[REDACTED-SECRET]` token and everything after it.
+    assert "ANTHROPIC_API_KEY=[REDACTED-SECRET]" in out
+    assert sum(counts.values()) == 9, counts
 
 
 def test_nothing_survives_the_residual_scan(redact):
@@ -195,23 +197,25 @@ def test_a_clean_corpus_reports_no_misses(redact):
 
 # -------------------------------------------------------------- the copy allowlist
 
-def test_copy_takes_only_the_five_artifact_kinds(tmp_path, redact):
+def test_copy_takes_only_the_allowlisted_artifact_kinds(tmp_path, redact):
     src = write_tree(tmp_path / "src", {
         "iteration-1/p/t/case/with_skill/outputs/response.md": "a",
         "iteration-1/p/t/case/with_skill/timing.json": "{}",
         "iteration-1/p/t/case/with_skill/grading.json": "{}",
         "iteration-1/p/t/case/with_skill/trace/stream.jsonl": "{}",
         "iteration-1/p/t/case/with_skill/trace/stderr.txt": "",
+        "iteration-1/judge.json": '{"verdicts":[]}',
         "iteration-1/p/t/case/with_skill/SCRATCH.md": "do not publish",
         "iteration-1/benchmark.json": "do not publish",
-        "iteration-1/judge.json": "do not publish",
     })
     dst = tmp_path / "dst"
     n = redact.copy_tree(src, dst, dry_run=False)
-    assert n == 5
+    assert n == len(redact.COPY_NAMES) == 6
     copied = {p.name for p in dst.rglob("*") if p.is_file()}
     assert copied == redact.COPY_NAMES
-    assert not (dst / "iteration-1/benchmark.json").exists()
+    assert (dst / "iteration-1/judge.json").exists(), "judge.json is published"
+    assert not (dst / "iteration-1/benchmark.json").exists(), (
+        "benchmark.json is reproduced verbatim inside each results file")
     assert not (dst / "iteration-1/p/t/case/with_skill/SCRATCH.md").exists()
 
 
@@ -346,3 +350,115 @@ def test_end_to_end_strips_a_stream_and_passes_readback(run):
     assert all(d[k] == "[REDACTED-HOST-ENV]" for k in STRIPPED)
     assert d["tools"] == INIT["tools"]
     assert "risk-tiered" in got[rel], "the evidence is not collateral damage"
+
+
+# ---------------------------------------------- structural parse guard (ITEM 1)
+
+REVIEWER = '{"env":"OPENAI_API_KEY=sk-abcdefghijklmnop","keep":"evidence"}'
+
+
+def test_the_reviewers_input_redacts_to_valid_json_with_evidence_intact(redact):
+    """`\\S+` consumed the closing quote and every field after it, so redacting
+    this record destroyed it while both text-level scans reported success."""
+    out, _ = redact.redact(REVIEWER)
+    d = json.loads(out)                      # must not raise
+    assert d["keep"] == "evidence", "the evidence field must survive redaction"
+    assert "sk-abcdefghijklmnop" not in out
+    assert "[REDACTED-SECRET]" in out
+    assert redact.residual(out) == []
+
+
+@pytest.mark.parametrize("src", [
+    '{"a":"Bearer abcdefghijklmnop","b":"keep"}',
+    '{"a":"FOO_API_KEY=abcdefgh","b":"keep"}',
+    '{"a":"x sk-abcdefghijklmnop y","b":"keep"}',
+])
+def test_value_classes_never_cross_a_json_boundary(redact, src):
+    d = json.loads(redact.redact(src)[0])
+    assert d["b"] == "keep"
+
+
+def test_parse_guard_catches_a_rule_that_breaks_json(redact, tmp_path, monkeypatch):
+    """The guard is pattern-independent: inject a deliberately greedy rule and it
+    must fail the run even though residual() and the miss scan both pass."""
+    rel = "it/p/t/c/with_skill/timing.json"
+    root = tmp_path
+    f = root / "evals/transcripts" / rel
+    f.parent.mkdir(parents=True)
+    f.write_text('{"cwd":"/Users/someone/x","keep":"evidence"}')
+    greedy = (re.compile(r"/Users/[^\n]+"), "/Users/REDACTED")
+    monkeypatch.setattr(redact, "RULES", [greedy])
+    monkeypatch.setattr(redact, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
+    assert redact.main() == 1
+    # and the file is restored, not left truncated
+    assert json.loads(f.read_text())["keep"] == "evidence"
+
+
+def test_parse_guard_reports_the_location(redact, tmp_path, monkeypatch, capsys):
+    rel = "it/p/t/c/with_skill/trace/stream.jsonl"
+    f = tmp_path / "evals/transcripts" / rel
+    f.parent.mkdir(parents=True)
+    f.write_text('{"a":1}\n{"cwd":"/Users/someone/x","keep":2}\n')
+    monkeypatch.setattr(redact, "RULES", [(re.compile(r"/Users/[^\n]+"), "/Users/R")])
+    monkeypatch.setattr(redact, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
+    assert redact.main() == 1
+    err = capsys.readouterr().err
+    assert "PARSE GUARD FAILED" in err
+    assert f"{rel}:2" in err, "must name the failing line, not just the file"
+
+
+def test_a_line_that_never_parsed_is_not_a_regression(redact, tmp_path, monkeypatch):
+    """The guard checks for regressions, not pre-existing malformity."""
+    f = tmp_path / "evals/transcripts/it/p/t/c/with_skill/trace/stream.jsonl"
+    f.parent.mkdir(parents=True)
+    f.write_text('NOT JSON AT ALL\n{"cwd":"/Users/someone/x"}\n')
+    monkeypatch.setattr(redact, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
+    assert redact.main() == 0
+
+
+# ------------------------------------------------- --dry-run is a real rehearsal
+
+def _tree(tmp_path, text, name="response.md"):
+    f = tmp_path / "evals/transcripts/it/p/t/c/with_skill/outputs" / name
+    f.parent.mkdir(parents=True)
+    f.write_text(text)
+    return f
+
+
+def test_dry_run_returns_the_same_status_as_a_real_run_for_misses(redact, tmp_path,
+                                                                 monkeypatch):
+    f = _tree(tmp_path, "leaked: AKIAIOSFODNN7EXAMPLE\n")
+    monkeypatch.setattr(redact, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py", "--dry-run"])
+    dry = redact.main()
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
+    real = redact.main()
+    assert dry == real == 2, "a dry run that cannot fail is not a rehearsal"
+    assert "AKIA" in f.read_text()
+
+
+def test_dry_run_catches_a_parse_regression_without_writing(redact, tmp_path,
+                                                            monkeypatch):
+    f = _tree(tmp_path, '{"cwd":"/Users/someone/x","keep":"evidence"}', "timing.json")
+    before = f.read_text()
+    monkeypatch.setattr(redact, "RULES", [(re.compile(r"/Users/[^\n]+"), "/Users/R")])
+    monkeypatch.setattr(redact, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py", "--dry-run"])
+    assert redact.main() == 1
+    assert f.read_text() == before, "--dry-run must not write"
+
+
+def test_dry_run_and_real_run_agree_on_a_clean_tree(redact, tmp_path, monkeypatch):
+    _tree(tmp_path, "risk-stratify the accounts\n")
+    monkeypatch.setattr(redact, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py", "--dry-run"])
+    dry = redact.main()
+    monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
+    assert dry == redact.main() == 0
+
+
+def test_judge_json_is_in_the_copy_allowlist(redact):
+    assert "judge.json" in redact.COPY_NAMES

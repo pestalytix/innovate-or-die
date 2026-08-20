@@ -385,6 +385,10 @@ def main() -> int:
                    "requested_model": args.model, "resolved_model": r["resolved_model"],
                    "model_mismatch": mismatch, "tier": args.tier,
                    "arm_order_index": order.index(arm),
+                   # Provenance beside the value: a bare index says nothing
+                   # about how it was chosen, and iteration number is a label
+                   # rather than a record of method.
+                   "arm_order_method": "per-case-seeded-sha256",
                    "cost_usd": r.get("cost_usd"), "provider": args.provider,
                    "all_models": r.get("all_models"),
                    "activated": r.get("activated"),

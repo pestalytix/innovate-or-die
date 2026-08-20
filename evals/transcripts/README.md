@@ -18,7 +18,7 @@ were not full tier runs:
 | `adr002-regression/` | the same case under v2.0.0 and v2.0.1 | `2026-08-19-adr002-regression.md` |
 | `grader-variance/` | repeated grading draws over one fixed set of answers | `2026-08-19-grader-variance.md` |
 
-Five artifact kinds are published, by **allowlist** — not by excluding known-bad
+Six artifact kinds are published, by **allowlist** — not by excluding known-bad
 names, which would publish whatever a future run happened to leave behind:
 
 - `outputs/response.md` — the answer the model actually returned
@@ -29,9 +29,24 @@ names, which would publish whatever a future run happened to leave behind:
   "the `Skill` tool was never called" checkable rather than asserted.
 - `trace/stderr.txt` — where one exists
 
-Deliberately **not** published: `benchmark.json` and `judge.json` (both are
-reproduced verbatim or in full inside the results files themselves),
-`cost-grading-*.json`, and the working notes.
+- `judge.json` — per tier: the blind judge's verdict, dimension scores and stated
+  reason for every case. The results files quote the winner and the reason; the
+  **scores** appear only here.
+
+  What each vintage actually holds, since it is not uniform:
+
+  | Tier | Judging | What the file records |
+  |---|---|---|
+  | `iteration-1/*` | N=1 | one ballot per case, with its five dimension scores per arm. Nothing was discarded — at N=1 there was nothing to discard. |
+  | `iteration-2/codex/workhorse` | N=3 majority | the vote tally (`vote_split`, `votes`, `unanimous`) and **one ballot's scores**. The other two ballots' scores were not retained: **per-ballot scores unavailable for this iteration.** Disagreement is visible as a split tally, not as individual ballots. |
+
+  The `ballots` array and `scores_mean` that `judge.py` writes today postdate
+  every judge run in this repo, so no published file carries them yet. Runs
+  judged from harness `d4c7269` onward will.
+
+Deliberately **not** published: `benchmark.json` (reproduced verbatim inside each
+results file, under "benchmark.json (verbatim)"), `cost-grading-*.json`, and the
+working notes.
 
 ## What was redacted, and how
 

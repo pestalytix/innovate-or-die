@@ -1,0 +1,108 @@
+{
+  "judge_model_requested": "claude-sonnet-5",
+  "judge_model_resolved": [
+    "claude-sonnet-5"
+  ],
+  "limitation": "A Claude-family judge scores both providers. Blind pairwise cancels arm bias WITHIN a provider; cross-provider comparisons carry possible same-family leniency toward Claude outputs.",
+  "verdicts": [
+    {
+      "slug": "eval-route-density",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 5,
+          "usefulness": 5
+        },
+        "without_skill": {
+          "non_obviousness": 2,
+          "mechanism": 3,
+          "testability": 1,
+          "honesty": 3,
+          "usefulness": 3
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A names specific causal levers (density/cadence/incentives) with falsifiable pilot designs and numeric thresholds; B lists plausible diagnostic questions but no mechanism depth or testable claims."
+    },
+    {
+      "slug": "eval-municipal-water-loss",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 2,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 4,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 3,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "tie",
+      "reason": "Same M36 framework and levers; A is more quantified (N1 exponent, MNF %, accuracy thresholds), B is slightly broader and flags DMA as the one item bordering on capital."
+    },
+    {
+      "slug": "eval-bookstore-events",
+      "presented_first": "without_skill",
+      "scores": {
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 4,
+          "testability": 4,
+          "honesty": 5,
+          "usefulness": 4
+        },
+        "with_skill": {
+          "non_obviousness": 3,
+          "mechanism": 4,
+          "testability": 3,
+          "honesty": 4,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "without_skill",
+      "reason": "A asks sharper diagnostic questions (repeat-customer assumption, which events lose money) that make the next step more concrete and falsifiable."
+    },
+    {
+      "slug": "eval-saas-onboarding-churn",
+      "presented_first": "with_skill",
+      "scores": {
+        "with_skill": {
+          "non_obviousness": 5,
+          "mechanism": 5,
+          "testability": 5,
+          "honesty": 5,
+          "usefulness": 4
+        },
+        "without_skill": {
+          "non_obviousness": 3,
+          "mechanism": 3,
+          "testability": 2,
+          "honesty": 3,
+          "usefulness": 4
+        }
+      },
+      "winner_arm": "with_skill",
+      "reason": "A names specific causal mechanisms, ranks ideas by evidence strength, and gives a falsifiable experiment with thresholds; B lists plausible levers without mechanisms or falsifiers."
+    }
+  ],
+  "budget": {
+    "label": "judge",
+    "calls": 4,
+    "cost_usd": 0.4497,
+    "token_sum": 182171,
+    "cacheRead": 110240,
+    "cacheCreation": 54281,
+    "cached_share_of_tokens": 0.9031,
+    "input": 12366,
+    "output": 5284
+  }
+}

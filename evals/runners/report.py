@@ -15,33 +15,42 @@ dropped while the write itself succeeded. Never trust a write; verify the artifa
 The workspace is gitignored, so the results file is the durable public record and
 must be self-sufficient.
 
-## Method statements are version-gated. Always.
+## Method prose derives from RECORDED FIELDS. Iteration number is not provenance.
 
 **Every sentence in this file that describes a METHOD -- how answers were graded,
 how the judge was run, how presentation or arm order was chosen, how activation
-was detected -- must be gated on the iteration or protocol version from which
-that method applies.** Never write the current method as unconditional prose.
+was detected -- must be derived from a field the run itself recorded.** Never
+write the current method as unconditional prose, and never infer it from the
+iteration number.
 
-The reason is specific to this generator being the only writer. A results file is
-regenerated whenever anything else about it changes: a corrected banner, a new
-annotation, a derived line that used to be a literal. Each regeneration re-emits
-every sentence from TODAY's source. So an ungated method sentence does not merely
-go stale -- it is silently rewritten, and a file recording a 2026-08-19 run comes
-to assert a method that did not exist until 2026-08-20. The numbers stay honest
-while the prose describing how they were produced quietly becomes false, and
-nothing in the completeness gate can catch it, because the section is present and
-the sentence is well-formed.
+Two failure modes, and the second is why the first fix was not enough.
 
-Worked example, `judge_section()`: presentation order was index alternation
-through iteration 2 and per-ballot randomization from iteration 3. The function
-takes `iteration` and selects the sentence accordingly. Regenerating the
-iteration-1 file for an unrelated reason had already begun writing "drawn
-independently per ballot from a seeded RNG" over a run that alternated by index;
-the gate is what stops that. `banners()` does the same for the version-span and
-grading-method text, and for annotations scoped to one lane.
+*Ungated prose is silently rewritten.* This generator is the only writer, and a
+results file is regenerated whenever anything about it changes. Each regeneration
+re-emits every sentence from TODAY's source, so an ungated method sentence does
+not merely go stale -- a file recording a 2026-08-19 run comes to assert a method
+introduced later. The numbers stay honest while the prose describing how they
+were produced becomes false, and the completeness gate cannot catch it, because
+the section is present and the sentence is well-formed.
 
-The test for a new method sentence is not "is this true?" but "is this true of
-every run this generator can be pointed at?" If not, gate it.
+*Iteration-gated prose is still a guess.* Gating on `iteration >= 3` encodes
+"iteration 3 was when the harness changed", which is a fact about history rather
+than about the artifact in hand. Re-run iteration 1 under today's harness and the
+rule describes it wrongly; replay iteration 3 from archived artifacts produced by
+the old harness and it describes those wrongly too. The iteration number is a
+label the operator chose, not a record of what the code did.
+
+So the method travels WITH the artifact. `judge.py` writes
+`presentation_method` and `harness_commit` into `judge.json`; `run_evals.py`
+writes `arm_order_method` beside `arm_order_index` in each `timing.json`.
+`judge_section()` and `arm_order_line()` read those fields through
+`method_prose()`, which has exactly three behaviours: a known value gets its
+description, a MISSING value gets an explicit "predates this field" sentence
+naming the harness commit, and an UNRECOGNISED value is reported verbatim rather
+than mapped to the nearest known one. Guessing would be the whole bug again.
+
+The test for a new method sentence is not "is this true?" but "which recorded
+field is this read from?" If the answer is "none", the field comes first.
 """
 from __future__ import annotations
 import argparse, datetime as dt, json, sys
@@ -69,7 +78,8 @@ def tier_skill_versions(base) -> set[str]:
             for t in sorted(base.rglob("timing.json"))}
 
 
-def banners(args, L, skill_version: str | None = None):
+def banners(args, L, skill_version: str | None = None,
+            arm_order: str | None = None):
     L += ["> **Version span.** Iteration-1 spans **two protocol versions**: runs before "
           "the ADR-002 Stage 0 fix are **v2.0.0**, runs after it are **v2.0.1**. Each arm "
           "below is labelled. Cross-version comparisons within this iteration are "
@@ -130,6 +140,8 @@ def banners(args, L, skill_version: str | None = None):
               "with per-assertion majority vote**; split (2-1) votes are recorded as "
               "`unstable` and listed below. Introduced after grader nondeterminism was "
               "measured — see `2026-08-19-grader-variance.md`.", ""]
+    L += [f"> **Run order.** {arm_order or ARM_ORDER_ABSENT + '.'} Derived from what "
+          "the runs recorded, not from the iteration number.", ""]
     L += ["> **Reproducibility.** The redacted raw transcripts behind this file are "
           "published under `evals/transcripts/` — per-run `response.md`, "
           "`timing.json`, `grading.json` and, where one exists, the raw "
@@ -218,7 +230,59 @@ def deltas_section(bench, L):
             L += ["", f"_{pr['note']}_", ""]
 
 
-def judge_section(jdoc, L, iteration: int = 1):
+# Each value is a STANDALONE SENTENCE, so the prose reads the same whether the
+# field was recorded, missing, or unrecognised.
+PRESENTATION_METHODS = {
+    "per-ballot-seeded-sha256":
+        "Presentation order was drawn independently per ballot from a seeded RNG "
+        "(sha256 of provider, tier, iteration, slug and vote index), so any "
+        "residual alignment between position and arm is chance rather than "
+        "design; the order each ballot saw is recorded in `presented_first`",
+}
+PRESENTATION_ABSENT = ("Presentation order: index alternation (predates the "
+                       "`presentation_method` field, harness < `d4c7269`)")
+
+ARM_ORDER_METHODS = {
+    "per-case-seeded-sha256":
+        "Arm order was drawn per case from a seeded RNG (sha256 of provider, "
+        "tier, iteration and slug) and recorded per run as `arm_order_index`",
+}
+ARM_ORDER_ABSENT = ("Arm order: `with_skill` ran first in every pair (predates "
+                    "the `arm_order_method` field, harness < `d4c7269`)")
+
+
+def method_prose(recorded: str | None, table: dict[str, str], absent: str,
+                 label: str = "method") -> str:
+    """Describe a method from what the run RECORDED, never from its iteration.
+
+    Iteration number is a label, not provenance: an old iteration re-run under a
+    new harness, or a new iteration replayed from archived artifacts, both defeat
+    any rule keyed on it. An unrecognised value is reported verbatim rather than
+    guessed at -- naming a method this generator does not know is honest; picking
+    the closest one it does know is not.
+    """
+    if not recorded:
+        return absent
+    return table.get(recorded, f"{label} recorded as `{recorded}`, which this "
+                               "generator has no description for")
+
+
+def arm_order_line(base) -> str:
+    """Arm-order prose for a tier, read from the runs' own timing.json."""
+    methods = {json.loads(t.read_text()).get("arm_order_method")
+               for t in sorted(base.rglob("timing.json"))}
+    methods.discard(None)
+    if not methods:
+        return ARM_ORDER_ABSENT + "."
+    if len(methods) > 1:
+        return ("Arm order: **mixed methods across this tier** — "
+                + ", ".join(f"`{m}`" for m in sorted(methods))
+                + ". The runs were not ordered by a single rule.")
+    return method_prose(next(iter(methods)), ARM_ORDER_METHODS, ARM_ORDER_ABSENT,
+                        "Arm order method") + "."
+
+
+def judge_section(jdoc, L):
     if not jdoc:
         return
     verdicts = jdoc.get("verdicts", jdoc if isinstance(jdoc, list) else [])
@@ -234,19 +298,15 @@ def judge_section(jdoc, L, iteration: int = 1):
         L.append(f"- **{v['slug']}** → *{v['winner_arm']}*{split} — {v['reason']}")
     w = sum(1 for v in verdicts if v["winner_arm"] == "with_skill")
     o = sum(1 for v in verdicts if v["winner_arm"] == "without_skill")
-    # Per-ballot randomization landed for iteration 3. Describing an iteration-1
-    # or -2 judge run with it would put a false method statement into a
-    # historical file the moment that file is regenerated for any other reason.
-    method = ("presentation order drawn independently per ballot from a seeded "
-              "RNG, so any residual alignment between position and arm is chance "
-              "rather than design; the order each ballot saw is recorded in "
-              "`presented_first`" if iteration >= 3 else
-              "presentation order alternating per case — index alternation, not "
-              "randomization: it removes the crudest confound but fixes one order "
-              "per case. Randomized per ballot from iteration 3 onward")
+    # Derived from the field the judge run recorded, not from its iteration.
+    recorded = jdoc.get("presentation_method") if isinstance(jdoc, dict) else None
+    method = method_prose(recorded, PRESENTATION_METHODS, PRESENTATION_ABSENT,
+                          "Presentation method")
+    commit = (jdoc.get("harness_commit") or "")[:12] if isinstance(jdoc, dict) else ""
     L += ["", f"(Tally for completeness only: with_skill {w}, without_skill {o}, other "
           f"{len(verdicts)-w-o}. **At n=5 with one run per case this count is noise and "
-          f"carries no claim.** Answers were shown as 'A'/'B' with {method}.)", ""]
+          f"carries no claim.** Answers were shown as 'A'/'B'. {method}."
+          + (f" Judged by harness `{commit}`." if commit else "") + ")", ""]
 
 
 def opus_section(L):
@@ -470,6 +530,7 @@ def unstable_section(args, L):
 def required_sections(args) -> list[str]:
     req = ["## Headline", "### Two deltas", "## Per case", "## benchmark.json (verbatim)",
            "## Reproducing", "**Statistical modesty.**", "**Reproducibility.**",
+           "**Run order.**",
            "## What this measures", "**Protocol compliance and cost, not independent"]
     if args.iteration == 1:
         req += ["**Version span.**", "**Post-baseline annotation.**",
@@ -519,10 +580,13 @@ def main() -> int:
     tier_version = None
     if args.iteration != 1:
         versions = tier_skill_versions(base)
-        if len(versions) != 1:
+        # `{"UNKNOWN"}` is exactly one ELEMENT and zero versions. Emitting
+        # "every run used vUNKNOWN" would be a claim about provenance made out
+        # of the absence of provenance, which is worse than refusing.
+        if len(versions) != 1 or versions == {"UNKNOWN"}:
             print(f"REFUSING TO EMIT: iteration {args.iteration} "
-                  f"{args.provider}/{args.tier} does not have exactly one skill "
-                  f"version across its runs; found {sorted(versions)}",
+                  f"{args.provider}/{args.tier} could not resolve a single real "
+                  f"skill version across its runs; found {sorted(versions)}",
                   file=sys.stderr)
             return 1
         tier_version = next(iter(versions))
@@ -544,7 +608,7 @@ def main() -> int:
               + f" · skill **v{prov.get('skill_version','?')}** "
               f"({prov.get('skill_version_method','?')}) · "
               f"`{prov.get('cli_name')}` {prov.get('cli_version')}", ""]
-    banners(args, L, tier_version)
+    banners(args, L, tier_version, arm_order_line(base))
     scope_section(args, L)
 
     L += ["## Headline", "", "| Metric | with_skill | without_skill | delta |",
@@ -560,7 +624,7 @@ def main() -> int:
           f"{cell('without_skill','tokens','{:,.0f}')} | "
           f"{bench['run_summary']['delta'].get('tokens','—')} |", ""]
     deltas_section(bench, L)
-    judge_section(jdoc, L, args.iteration)
+    judge_section(jdoc, L)
 
     L += ["## Per case", ""]
     for c in cases:

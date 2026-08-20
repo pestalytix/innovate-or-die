@@ -16,6 +16,8 @@ Paired design: 4 of 5 cases have a matched valid pair (see exclusions under Two 
 
 > **Post-baseline annotation.** LLM-graded assertions were later measured nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this file are **single draws**, not replicated measurements. This file is the v2.0.0 record: annotated, never re-graded.
 
+> **Run order.** Arm order: `with_skill` ran first in every pair (predates the `arm_order_method` field, harness < `d4c7269`). Derived from what the runs recorded, not from the iteration number.
+
 > **Reproducibility.** The redacted raw transcripts behind this file are published under `evals/transcripts/` — per-run `response.md`, `timing.json`, `grading.json` and, where one exists, the raw `trace/stream.jsonl`. `evals-workspace/` remains the **local-only (gitignored)** working tree; `evals/evals.json` plus `evals/runners/` regenerate it, and `evals/runners/redact_transcripts.py` derives the published copy from it.
 
 ## What this measures
@@ -68,7 +70,7 @@ The verdict *text* is the finding. Read the reasoning, not the tally.
 - **eval-bookstore-events** → *without_skill* — A asks sharper diagnostic questions (repeat-customer assumption, which events lose money) that make the next step more concrete and falsifiable.
 - **eval-saas-onboarding-churn** → *with_skill* — A names specific causal mechanisms, ranks ideas by evidence strength, and gives a falsifiable experiment with thresholds; B lists plausible levers without mechanisms or falsifiers.
 
-(Tally for completeness only: with_skill 2, without_skill 1, other 1. **At n=5 with one run per case this count is noise and carries no claim.** Answers were shown as 'A'/'B' with presentation order alternating per case — index alternation, not randomization: it removes the crudest confound but fixes one order per case. Randomized per ballot from iteration 3 onward.)
+(Tally for completeness only: with_skill 2, without_skill 1, other 1. **At n=5 with one run per case this count is noise and carries no claim.** Answers were shown as 'A'/'B'. Presentation order: index alternation (predates the `presentation_method` field, harness < `d4c7269`).)
 
 ## Per case
 
