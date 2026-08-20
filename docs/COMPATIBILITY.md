@@ -165,14 +165,20 @@ already matches the depth-3 walk and carries both required frontmatter keys, so
 
 ## Flattened web targets — instruction character budgets
 
-> **Headroom warning (2026-08-20).** The three `*-instructions.md` files compose
-> to **7,967 of the verified 8,000-char cap — about 33 characters spare.** Core
-> is effectively at its budget: **any future growth in `core/principles.md` or
-> `core/workflow.md` needs a compensating trim in the same commit**, or
-> `build/assemble.py --check` fails and nothing ships. ADR-003 is the worked
-> example — a +202-char amendment paid for by deduplicating text that
-> `principles.md` already carried. This is a real constraint on protocol
-> changes, not a formatting note.
+> **Headroom (updated 2026-08-20, core v2.1.0).** The three `*-instructions.md`
+> files compose to **7,699 of the verified 8,000-char cap — 301 characters
+> spare.** That is above the 200-char slack target `build/assemble.py` now warns
+> below, so the build is quiet again. It was 33 characters before ADR-004: the
+> activation banner cost 128 and was paid for by a 396-char dedup of the web
+> preamble against the workflow it duplicated.
+>
+> **The rule has not relaxed.** Growth in `core/principles.md` or
+> `core/workflow.md` still needs a compensating trim in the same commit once the
+> slack is gone, or `--check` fails and nothing ships. Two worked examples now
+> exist: ADR-003 (+202, paid from `principles.md` duplication) and ADR-004 (+128,
+> paid from the web preamble). What remains in reserve is measured: the workflow's
+> **Independence** section is a further 178 characters of duplication, deliberately
+> not spent. This is a real constraint on protocol changes, not a formatting note.
 
 
 **Verified 2026-08-19**
@@ -189,11 +195,6 @@ rather than documentation: paste the real generated file into the live builder,
 save, reload, and confirm what survived. Both accepted the 7,874-char file. The
 ChatGPT figure is a *hard cap* stated by the UI; the Gemini figure is a *lower
 bound* only — we know our file fits, not where the ceiling is.
-
-**Headroom warning.** At 7,874 chars the instructions file sits **126 chars** under
-the 8,000 budget. The v2.0.1 patch alone consumed 305 chars of the previous 431.
-Any further addition to `core/principles.md` or `core/workflow.md` will breach the
-ChatGPT hard cap and hard-fail `build/assemble.py --check`.
 
 **Resolved 2026-08-19.** Both caps were open blockers for Phase E; both are now
 settled by paste test (above). The only residual unknown is the Gemini *upper*

@@ -7,3 +7,7 @@ __pycache__/
 # eval run artifacts: raw transcripts stay local; distilled results are
 # committed under evals/results/
 evals-workspace/
+
+# session ephemera and raw review inputs stay local; distilled records are
+# committed (docs/notes/ for kept notes, docs/ for ADRs and COMPATIBILITY)
+docs/notes/local/

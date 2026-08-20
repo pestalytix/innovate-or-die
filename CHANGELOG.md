@@ -5,27 +5,63 @@ All notable changes to the core protocol. Format follows
 versioned with [semver](https://semver.org/). Protocol changes require an ADR
 and a version bump.
 
-## [Unreleased]
+## [2.1.0] — 2026-08-20
 
-Harness and tooling only. **No protocol change and no version bump** — `core/`
-is untouched, so every generated artifact is byte-identical apart from the
-Copilot orchestrator profile. Disposition of a GitHub Copilot review of the
-public repo at `fc3325e` (`docs/copilot-github-review.md`), wave 1 of 2.
+Minor. **The first change to the delivery structure since v2.0.0**, and the first
+non-patch bump: the protocol now opens its answer with a version-stamped
+activation banner ([ADR-004](docs/ADR-004-activation-banner.md)). Additive —
+items 1–7 of Stage 6 keep their numbers and meanings, so anything that read a
+v2.0.2 delivery still reads a v2.1.0 one with an extra line above it. Also
+carries the harness and tooling work from wave 1 of the GitHub Copilot review
+disposition (`docs/notes/copilot-github-review.md`).
 
-### Added
+### Added — protocol
+- **An activation banner as Stage 6 item 0.** The answer's first line is
+  `⟦innovate-or-die v<version>⟧`, substituted at build time from
+  `skill-meta.json`. A run where the skill silently did not fire was previously
+  indistinguishable from an ordinary answer — the README's advice was to infer it
+  from the absence of a kill list. Now presence is an exact string match, and it
+  names the version that produced the answer. It ships on every surface that
+  assembles a final answer (all three skill packages, the three web instructions
+  and fallback files, the Copilot orchestrator) and on none that does not (the
+  knowledge files, the per-role profiles).
+  **What it does not do:** make activation more likely. It makes a miss visible.
+  Presence proves the protocol ran; absence is a strong hint, not proof — a model
+  that ran it can still omit the line, which is why the README says so and why
+  the emission rate is now measured.
+
+### Changed
+- **Instruction budgets.** The banner costs 128 characters against 33 of
+  headroom, paid for by a 396-character dedup of the web preamble, which restated
+  two things the substituted workflow already says more specifically a few hundred
+  characters below. Web instructions files: 7,967 → **7,699 of the 8,000 cap, 301
+  spare** — above the slack target, so the build no longer warns. The trim is
+  generator-side, so the canonical skill package loses nothing. A further 178
+  characters of measured duplication are left unspent in reserve.
+- **Activation detection.** The Codex leg of the eval harness replaces its
+  seven-regex marker vote with the exact banner match (`observed:banner`), keeping
+  the markers as a secondary signal so a missing banner is not recorded as a
+  non-activation. The Claude leg keeps the `Skill` tool call as ground truth and
+  records the banner beside it — that pairing is what will measure the banner's own
+  false-negative rate rather than assume it.
+- Assertion blocks in `evals.json` may now restrict an assertion to one arm.
+  Arm-restricted results are excluded from `pass_rate` and from every paired
+  delta: the control arm can never emit a banner, so grading it in both arms
+  would have turned the protocol's own signature into a measured quality gain.
+
+### Added — harness and tooling (no protocol effect)
 - **A `pytest` suite over the harness** (`tests/`), plus a CI job that runs it.
   It guards the two correctness bugs fixed in 2.0.2 — unmatched-arm aggregation
   and non-majority judge verdicts — which until now were fixed by inspection with
   nothing to stop them coming back. Also covers `_sub()`'s refusal to no-op,
-  `check_references()`, the size guardrails, and a `LICENSE` ↔ `skill-meta.json`
-  license match.
+  `check_references()`, the size guardrails, the banner on every surface that
+  should carry it, and a `LICENSE` ↔ `skill-meta.json` license match.
 - **A hard 30,000-char ceiling on the single-paste fallback.** Being over every
   instruction-field cap is the fallback's accepted condition; being over the
-  ceiling is a size nobody decided on. Currently 24,860. Raising it requires an
+  ceiling is a size nobody decided on. Currently 24,988. Raising it requires an
   ADR.
-- **A slack warning on the web instruction caps.** Under 200 chars of headroom
-  the build now says so by name. It currently fires at 33 chars on all three
-  targets — see the wave-2 ADR draft.
+- **A slack warning on the web instruction caps** — under 200 chars of headroom
+  the build says so by name. It fired at 33; ADR-004 cleared it to 301.
 - **A generated index at `evals/results/README.md`**, built from the results
   files and the root README's results table, with a guard that fails the build if
   those two sets disagree in either direction.
@@ -41,6 +77,14 @@ public repo at `fc3325e` (`docs/copilot-github-review.md`), wave 1 of 2.
   — the exact form `core/` uses — passed unchecked into single-file surfaces,
   the one place it can never resolve. Found by the new test suite on its first
   run. No shipped artifact was affected; the hole was open, not exercised.
+
+### Docs
+- `docs/notes/` now holds session ephemera and raw review inputs; the ADRs and
+  `COMPATIBILITY.md` are no longer buried among them. `docs/notes/local/` is
+  gitignored for future working state.
+- `COMPATIBILITY.md`'s headroom section carried a superseded paragraph quoting
+  7,874 chars and 126 of headroom against a newer block saying 7,967 and 33. The
+  stale one is deleted rather than a third figure added.
 
 ## [2.0.2] — 2026-08-20
 

@@ -319,6 +319,13 @@ WEB_TARGETS = {
 
 _HEADER = "<!-- GENERATED from core/ by build/assemble.py -- do not hand-edit. -->"
 
+# Deliberately short. The two paragraphs that used to sit here -- where the role
+# briefs live, and that the reading order is load-bearing -- are both said again,
+# more specifically, a few hundred characters below by the substituted workflow
+# (WF_SPLIT `load` and `isolation`). They were written before the substitution
+# tables existed. ADR-004 removed them to pay for the activation banner: the
+# duplication cost 396 characters against a cap with 33 to spare. Do not restore
+# it without re-measuring -- `--check` is the gate, and it fails.
 PREAMBLE_SPLIT = _HEADER + """
 # Innovate or Die
 
@@ -327,13 +334,7 @@ host provides no context isolation, so fidelity depends on you enforcing it:
 run the roles as clearly separated passes, and complete each pass fully before
 reading the next role's brief.
 
-The four role briefs, the lens bank, and the experiment spec live in the
-**attached knowledge file**. Read each role's section at its stage, not before.
-
-**This ordering is load-bearing.** Do not read the Critic or Evaluator sections
-until your Innovator pass is complete. Their criteria in context during the
-divergent search recreates the self-censoring that role separation exists to
-prevent. Announce each pass as you begin it.
+Announce each pass as you begin it.
 """
 
 PREAMBLE_FALLBACK = _HEADER + """

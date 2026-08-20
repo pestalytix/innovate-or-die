@@ -24,6 +24,23 @@ SKILL = ROOT / "skills" / "innovate-or-die"
 
 SKILL_NAME = "innovate-or-die"
 
+# ---------------------------------------------------------- activation banner
+# ADR-004 (core v2.1.0): the delivery opens with a version-stamped line, so
+# "did the protocol run?" becomes an exact string match instead of an inference
+# over the whole answer. Matched as a pattern, never as a literal version -- a
+# check pinned to one version reads a bump as an activation failure.
+BANNER_RE = re.compile(r"⟦innovate-or-die v(\d+\.\d+\.\d+)⟧")
+
+
+def read_banner(text: str) -> tuple[bool, str | None]:
+    """(on the first line, version seen anywhere). Both are recorded: a banner
+    emitted in the wrong place still proves the instruction was in context, and
+    the difference between misplaced and absent is worth keeping."""
+    first = next((l for l in (text or "").splitlines() if l.strip()), "")
+    m = BANNER_RE.match(first.strip().strip("`*_ "))
+    anywhere = m or BANNER_RE.search(text or "")
+    return bool(m), (anywhere.group(1) if anywhere else None)
+
 
 # ------------------------------------------------------------- provenance
 # A number without its provenance cannot be reproduced or trusted later: the
@@ -164,10 +181,16 @@ def run_claude(prompt: str, cwd: Path, model: str, effort: str | None = None) ->
     tok = sum(v.get("inputTokens", 0) + v.get("outputTokens", 0)
               + v.get("cacheReadInputTokens", 0) + v.get("cacheCreationInputTokens", 0)
               for v in mu.values())
-    return {"text": final.get("result", ""), "resolved_model": resolved,
+    body = final.get("result", "")
+    # The Skill tool call stays GROUND TRUTH here. The banner is recorded beside
+    # it, not instead of it: that pairing is what measures the banner's own
+    # false-negative rate (ADR-004 regression test 3) rather than assuming it.
+    banner, banner_version = read_banner(body)
+    return {"text": body, "resolved_model": resolved,
             "total_tokens": tok, "duration_ms": final.get("duration_ms", dur),
             "cost_usd": final.get("total_cost_usd"), "all_models": list(mu),
             "activated": activated, "activation_method": "observed:Skill-tool-call",
+            "banner": banner, "banner_version": banner_version,
             "skill": skill_args, "tools": tools, "num_turns": final.get("num_turns")}
 
 
@@ -199,16 +222,25 @@ def run_codex(prompt: str, cwd: Path, model: str, effort: str | None = None) -> 
                 tokens = int(tail[0].replace(",", "").strip())
             except ValueError:
                 pass
-    # Codex exposes no tool-call stream, so activation here is a HEURISTIC:
-    # protocol-specific structure that a bare answer does not produce.
+    # Codex exposes no tool-call stream. Before v2.1.0 activation here was a
+    # seven-regex marker vote -- fuzzy in both directions. The banner replaces it
+    # with an exact string match (ADR-004).
     body = p.stdout.strip()
+    banner, banner_version = read_banner(body)
     markers = sum(bool(re.search(k, body, re.I)) for k in
                   (r"kill list", r"falsifi", r"contrarian", r"reframing",
                    r"most instructive", r"still missing", r"critical assumption"))
+    # The markers are KEPT as a secondary signal rather than deleted: a run that
+    # activated but omitted the banner is a banner failure, not a non-activation,
+    # and recording it as the latter would manufacture the very finding this
+    # instrument exists to measure. `activation_method` says which signal fired.
     return {"text": body, "resolved_model": resolved,
             "total_tokens": tokens, "duration_ms": dur, "cost_usd": None,
-            "all_models": [resolved], "activated": markers >= 2,
-            "activation_method": "heuristic:markers", "marker_count": markers}
+            "all_models": [resolved], "activated": bool(banner) or markers >= 2,
+            "banner": banner, "banner_version": banner_version,
+            "activation_method": ("observed:banner" if banner else
+                                  "heuristic:markers (no banner)"),
+            "marker_count": markers}
 
 
 def run_gemini(prompt: str, cwd: Path, model: str, effort: str | None = None) -> dict:
@@ -322,6 +354,8 @@ def main() -> int:
                    "all_models": r.get("all_models"),
                    "activated": r.get("activated"),
                    "activation_method": r.get("activation_method") or "unknown:run-failed",
+                   "banner": r.get("banner"),
+                   "banner_version": r.get("banner_version"),
                    "tools": r.get("tools"), "num_turns": r.get("num_turns"),
                    "effort": args.effort or "default (deployed condition)",
                    "parse_confidence": r.get("parse_confidence"),
@@ -337,7 +371,8 @@ def main() -> int:
                                 f"{r['resolved_model']} -- run failed per MODEL_POLICY rule 3")
             (out / "timing.json").write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
             act = "" if arm == "without_skill" else (
-                " [activated]" if r.get("activated") else " [NOT ACTIVATED]")
+                (" [activated]" if r.get("activated") else " [NOT ACTIVATED]")
+                + (" [banner]" if r.get("banner") else " [no banner]"))
             print(f"  done: {r['resolved_model']}{' MISMATCH!' if mismatch else ''}{act}  "
                   f"{r['total_tokens']:,} tok  {r['duration_ms']/1000:.0f}s", flush=True)
     print("ALL RUNS COMPLETE", flush=True)

@@ -1,205 +1,216 @@
 {
-  "skill_name": "innovate-or-die",
-  "_note": "Assertions are added after the first run, per agentskills.io guidance and the Phase D ruling. Prompts are identical across the with_skill and without_skill arms -- that identity is what makes the delta meaningful.",
-  "evals": [
+ "skill_name": "innovate-or-die",
+ "_note": "Assertions are added after the first run, per agentskills.io guidance and the Phase D ruling. Prompts are identical across the with_skill and without_skill arms -- that identity is what makes the delta meaningful.",
+ "evals": [
+  {
+   "id": 1,
+   "slug": "eval-route-density",
+   "domain": "field services",
+   "phrasing": "casual",
+   "prompt": "we run residential pest control in three towns, about 900 accounts, quarterly service. windshield time is eating us alive - techs spend maybe 40% of the day driving. we've already tried route optimization software and it helped a bit. what are we missing here?",
+   "expected_output": "Non-obvious hypotheses about the real binding constraint (likely route density or the quarterly-cadence assumption rather than routing efficiency), each with a causal mechanism, plus a cheap experiment the operator could run this week.",
+   "assertions": [
     {
-      "id": 1,
-      "slug": "eval-route-density",
-      "domain": "field services",
-      "phrasing": "casual",
-      "prompt": "we run residential pest control in three towns, about 900 accounts, quarterly service. windshield time is eating us alive - techs spend maybe 40% of the day driving. we've already tried route optimization software and it helped a bit. what are we missing here?",
-      "expected_output": "Non-obvious hypotheses about the real binding constraint (likely route density or the quarterly-cadence assumption rather than routing efficiency), each with a causal mechanism, plus a cheap experiment the operator could run this week.",
-      "assertions": [
-        {
-          "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
-          "check": "delivers_answer"
-        },
-        {
-          "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
-          "check": "falsifier_with_number"
-        },
-        {
-          "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
-          "check": "experiment_spec_complete"
-        },
-        {
-          "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
-          "check": "kill_list_min_5"
-        },
-        {
-          "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
-        },
-        {
-          "text": "The answer distinguishes facts and evidence from assumptions and speculation"
-        },
-        {
-          "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint"
-        }
-      ]
+     "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+     "check": "delivers_answer"
     },
     {
-      "id": 2,
-      "slug": "eval-dental-no-shows",
-      "domain": "healthcare operations",
-      "phrasing": "precise",
-      "control": "conventional-near-optimal",
-      "_control_note": "The well-established interventions (reminder sequences, deposits/late-cancel fees, strategic overbooking, waitlist backfill) are genuinely near-optimal here. A correct run says so and labels the winner conventional. A run that invents an exotic mechanism to appear innovative FAILS intellectual_independence -- this case tests the protocol against novelty-forcing.",
-      "prompt": "A six-operatory dental practice loses roughly 14% of its hygiene appointments to no-shows, despite automated SMS reminders sent 48 hours ahead. The practice owner wants to know how to fix this.",
-      "expected_output": "An honest finding that the conventional playbook is close to optimal, explicitly labelled as conventional, with the narrow places it is not (e.g. specific patient segments) identified. Exotic mechanisms proposed as headline recommendations are a failure.",
-      "assertions": [
-        {
-          "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
-          "check": "delivers_answer"
-        },
-        {
-          "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
-          "check": "falsifier_with_number"
-        },
-        {
-          "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
-          "check": "experiment_spec_complete"
-        },
-        {
-          "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
-          "check": "kill_list_min_5"
-        },
-        {
-          "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
-        },
-        {
-          "text": "The answer distinguishes facts and evidence from assumptions and speculation"
-        },
-        {
-          "text": "The answer states that the conventional approach is at or near optimal and labels it as conventional",
-          "check": "conventional_winner_labelled"
-        },
-        {
-          "text": "The answer does NOT present an exotic or novel-sounding mechanism as its headline recommendation"
-        }
-      ],
-      "_prompt_v1": "A six-operatory dental practice has a 14% no-show rate on hygiene appointments. They already send automated SMS reminders 48 hours ahead. Evaluate what would most reduce the no-show rate, and be explicit about how confident you are in each option.",
-      "_prompt_v1_note": "Replaced 2026-08-19 after iteration-1. The v1 wording opened with 'Evaluate what would most reduce...', which reads as decision analysis -- the exact use the skill's description tells agents to decline. The skill therefore never activated on the with_skill arm (claude-sonnet-5: 40,923 tok / 36s with zero protocol markers, vs 41,386 tok / 43s for its own control). The case could not measure what it was designed to measure. v2 keeps the conventional-is-near-optimal structure and the precise register but drops the evaluate/choose framing. Iteration-1 dental numbers ran under v1 and are NOT comparable to later iterations."
+     "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+     "check": "falsifier_with_number"
     },
     {
-      "id": 3,
-      "slug": "eval-municipal-water-loss",
-      "domain": "public infrastructure",
-      "phrasing": "precise",
-      "prompt": "A municipal water utility serving 60,000 connections loses an estimated 22% of treated water to non-revenue water. Capital budget for the next three years is committed. Identify approaches to reducing non-revenue water that do not require new capital expenditure, and state what evidence would confirm or refute each.",
-      "expected_output": "Options that respect the binding capital constraint, distinguish real from inherited constraints, and carry falsifiers with numbers. Should surface non-obvious framings (e.g. apparent vs real losses, metering accuracy, pressure management, tariff structure) with mechanisms.",
-      "assertions": [
-        {
-          "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
-          "check": "delivers_answer"
-        },
-        {
-          "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
-          "check": "falsifier_with_number"
-        },
-        {
-          "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
-          "check": "experiment_spec_complete"
-        },
-        {
-          "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
-          "check": "kill_list_min_5"
-        },
-        {
-          "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
-        },
-        {
-          "text": "The answer distinguishes facts and evidence from assumptions and speculation"
-        },
-        {
-          "text": "Every proposed approach respects the stated constraint of no new capital expenditure"
-        }
-      ]
+     "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+     "check": "experiment_spec_complete"
     },
     {
-      "id": 4,
-      "slug": "eval-bookstore-events",
-      "domain": "small retail",
-      "phrasing": "casual",
-      "prompt": "i own an independent bookstore, we do author events but they barely break even and take a ton of staff time. thinking about dropping them entirely. what would you do?",
-      "expected_output": "A reframing of what the events are actually producing (customer acquisition, community asset, publisher relationships, data) rather than an events-vs-no-events binary, with at least one deletion-style option and a cheap test of the real value.",
-      "assertions": [
-        {
-          "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
-          "check": "delivers_answer"
-        },
-        {
-          "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
-          "check": "falsifier_with_number"
-        },
-        {
-          "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
-          "check": "experiment_spec_complete"
-        },
-        {
-          "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
-          "check": "kill_list_min_5"
-        },
-        {
-          "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
-        },
-        {
-          "text": "The answer distinguishes facts and evidence from assumptions and speculation"
-        },
-        {
-          "text": "The answer reframes what the events produce rather than treating it as a keep-or-drop binary"
-        }
-      ]
+     "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+     "check": "kill_list_min_5"
     },
     {
-      "id": 5,
-      "slug": "eval-saas-onboarding-churn",
-      "domain": "software",
-      "phrasing": "precise",
-      "prompt": "A B2B SaaS product for construction subcontractors has 6% monthly logo churn concentrated in the first 90 days. Onboarding is a 45-minute guided call plus a documentation portal. Propose approaches to reducing early churn, including any that change the business model or system architecture rather than the onboarding flow.",
-      "expected_output": "At least one option that changes incentive structure, pricing, or architecture rather than improving onboarding, with the causal mechanism named and the hidden thesis stated. Falsifiable next test required.",
-      "assertions": [
-        {
-          "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
-          "check": "delivers_answer"
-        },
-        {
-          "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
-          "check": "falsifier_with_number"
-        },
-        {
-          "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
-          "check": "experiment_spec_complete"
-        },
-        {
-          "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
-          "check": "kill_list_min_5"
-        },
-        {
-          "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
-        },
-        {
-          "text": "The answer distinguishes facts and evidence from assumptions and speculation"
-        },
-        {
-          "text": "At least one option changes pricing, incentive structure, or system architecture rather than the onboarding flow"
-        }
-      ]
+     "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+    },
+    {
+     "text": "The answer distinguishes facts and evidence from assumptions and speculation"
+    },
+    {
+     "text": "The answer challenges the quarterly service cadence or territory design as an inherited rather than real constraint"
     }
-  ],
-  "_assertions_authored": "2026-08-19, after iteration-1 codex/workhorse outputs. delivers_answer and conventional_winner_labelled were added in response to observed failures, not written in advance.",
-  "iteration_2_additional_assertions": {
-    "provenance": "Authored 2026-08-19 after observing the iteration-1 judge divergence: flagship-tier runs scored HIGHER on protocol-compliance assertions but LOWER on blind pairwise holistic quality, with the judge repeatedly preferring the control arm as more concrete and implementable. Per Gate D ruling 2 this is NOT an ADR-002 protocol fix -- it becomes a measurable assertion in iteration-2 so the hypothesis is tested rather than assumed.",
-    "applies_from_iteration": 2,
-    "assertions": [
-      {
-        "text": "Each top opportunity names a specific first action the reader could take within a week"
-      },
-      {
-        "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
-      },
-      {
-        "text": "The answer does not substitute breadth of exploration for a decidable recommendation"
-      }
-    ]
+   ]
+  },
+  {
+   "id": 2,
+   "slug": "eval-dental-no-shows",
+   "domain": "healthcare operations",
+   "phrasing": "precise",
+   "control": "conventional-near-optimal",
+   "_control_note": "The well-established interventions (reminder sequences, deposits/late-cancel fees, strategic overbooking, waitlist backfill) are genuinely near-optimal here. A correct run says so and labels the winner conventional. A run that invents an exotic mechanism to appear innovative FAILS intellectual_independence -- this case tests the protocol against novelty-forcing.",
+   "prompt": "A six-operatory dental practice loses roughly 14% of its hygiene appointments to no-shows, despite automated SMS reminders sent 48 hours ahead. The practice owner wants to know how to fix this.",
+   "expected_output": "An honest finding that the conventional playbook is close to optimal, explicitly labelled as conventional, with the narrow places it is not (e.g. specific patient segments) identified. Exotic mechanisms proposed as headline recommendations are a failure.",
+   "assertions": [
+    {
+     "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+     "check": "delivers_answer"
+    },
+    {
+     "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+     "check": "falsifier_with_number"
+    },
+    {
+     "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+     "check": "experiment_spec_complete"
+    },
+    {
+     "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+     "check": "kill_list_min_5"
+    },
+    {
+     "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+    },
+    {
+     "text": "The answer distinguishes facts and evidence from assumptions and speculation"
+    },
+    {
+     "text": "The answer states that the conventional approach is at or near optimal and labels it as conventional",
+     "check": "conventional_winner_labelled"
+    },
+    {
+     "text": "The answer does NOT present an exotic or novel-sounding mechanism as its headline recommendation"
+    }
+   ],
+   "_prompt_v1": "A six-operatory dental practice has a 14% no-show rate on hygiene appointments. They already send automated SMS reminders 48 hours ahead. Evaluate what would most reduce the no-show rate, and be explicit about how confident you are in each option.",
+   "_prompt_v1_note": "Replaced 2026-08-19 after iteration-1. The v1 wording opened with 'Evaluate what would most reduce...', which reads as decision analysis -- the exact use the skill's description tells agents to decline. The skill therefore never activated on the with_skill arm (claude-sonnet-5: 40,923 tok / 36s with zero protocol markers, vs 41,386 tok / 43s for its own control). The case could not measure what it was designed to measure. v2 keeps the conventional-is-near-optimal structure and the precise register but drops the evaluate/choose framing. Iteration-1 dental numbers ran under v1 and are NOT comparable to later iterations."
+  },
+  {
+   "id": 3,
+   "slug": "eval-municipal-water-loss",
+   "domain": "public infrastructure",
+   "phrasing": "precise",
+   "prompt": "A municipal water utility serving 60,000 connections loses an estimated 22% of treated water to non-revenue water. Capital budget for the next three years is committed. Identify approaches to reducing non-revenue water that do not require new capital expenditure, and state what evidence would confirm or refute each.",
+   "expected_output": "Options that respect the binding capital constraint, distinguish real from inherited constraints, and carry falsifiers with numbers. Should surface non-obvious framings (e.g. apparent vs real losses, metering accuracy, pressure management, tariff structure) with mechanisms.",
+   "assertions": [
+    {
+     "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+     "check": "delivers_answer"
+    },
+    {
+     "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+     "check": "falsifier_with_number"
+    },
+    {
+     "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+     "check": "experiment_spec_complete"
+    },
+    {
+     "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+     "check": "kill_list_min_5"
+    },
+    {
+     "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+    },
+    {
+     "text": "The answer distinguishes facts and evidence from assumptions and speculation"
+    },
+    {
+     "text": "Every proposed approach respects the stated constraint of no new capital expenditure"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "slug": "eval-bookstore-events",
+   "domain": "small retail",
+   "phrasing": "casual",
+   "prompt": "i own an independent bookstore, we do author events but they barely break even and take a ton of staff time. thinking about dropping them entirely. what would you do?",
+   "expected_output": "A reframing of what the events are actually producing (customer acquisition, community asset, publisher relationships, data) rather than an events-vs-no-events binary, with at least one deletion-style option and a cheap test of the real value.",
+   "assertions": [
+    {
+     "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+     "check": "delivers_answer"
+    },
+    {
+     "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+     "check": "falsifier_with_number"
+    },
+    {
+     "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+     "check": "experiment_spec_complete"
+    },
+    {
+     "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+     "check": "kill_list_min_5"
+    },
+    {
+     "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+    },
+    {
+     "text": "The answer distinguishes facts and evidence from assumptions and speculation"
+    },
+    {
+     "text": "The answer reframes what the events produce rather than treating it as a keep-or-drop binary"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "slug": "eval-saas-onboarding-churn",
+   "domain": "software",
+   "phrasing": "precise",
+   "prompt": "A B2B SaaS product for construction subcontractors has 6% monthly logo churn concentrated in the first 90 days. Onboarding is a 45-minute guided call plus a documentation portal. Propose approaches to reducing early churn, including any that change the business model or system architecture rather than the onboarding flow.",
+   "expected_output": "At least one option that changes incentive structure, pricing, or architecture rather than improving onboarding, with the causal mechanism named and the hidden thesis stated. Falsifiable next test required.",
+   "assertions": [
+    {
+     "text": "The answer delivers a recommendation rather than stopping at clarifying questions",
+     "check": "delivers_answer"
+    },
+    {
+     "text": "The answer includes a falsifiable claim carrying a specific number or threshold",
+     "check": "falsifier_with_number"
+    },
+    {
+     "text": "The answer includes a complete experiment spec (hypothesis, critical assumption, success threshold, failure threshold, what is learned either way)",
+     "check": "experiment_spec_complete"
+    },
+    {
+     "text": "The answer surfaces a compact kill list with at least 5 rejected ideas",
+     "check": "kill_list_min_5"
+    },
+    {
+     "text": "At least one proposed opportunity is supported by a named causal mechanism rather than an analogy or a gesture"
+    },
+    {
+     "text": "The answer distinguishes facts and evidence from assumptions and speculation"
+    },
+    {
+     "text": "At least one option changes pricing, incentive structure, or system architecture rather than the onboarding flow"
+    }
+   ]
   }
+ ],
+ "_assertions_authored": "2026-08-19, after iteration-1 codex/workhorse outputs. delivers_answer and conventional_winner_labelled were added in response to observed failures, not written in advance.",
+ "iteration_2_additional_assertions": {
+  "provenance": "Authored 2026-08-19 after observing the iteration-1 judge divergence: flagship-tier runs scored HIGHER on protocol-compliance assertions but LOWER on blind pairwise holistic quality, with the judge repeatedly preferring the control arm as more concrete and implementable. Per Gate D ruling 2 this is NOT an ADR-002 protocol fix -- it becomes a measurable assertion in iteration-2 so the hypothesis is tested rather than assumed.",
+  "applies_from_iteration": 2,
+  "assertions": [
+   {
+    "text": "Each top opportunity names a specific first action the reader could take within a week"
+   },
+   {
+    "text": "The answer's recommendations are concrete enough to hand to an operator without further interpretation"
+   },
+   {
+    "text": "The answer does not substitute breadth of exploration for a decidable recommendation"
+   }
+  ]
+ },
+ "v2_1_0_activation_assertion": {
+  "provenance": "ADR-004, applied 2026-08-20 with core v2.1.0. The protocol now opens its delivery with a version-stamped activation banner, which makes 'did it run?' an exact string match instead of an inference over the whole answer. Graded in the with_skill arm ONLY: the control arm has no protocol and can never emit it, so grading it in both arms would turn the protocol's own signature into a measured quality delta. Excluded from pass_rate for the same reason -- see grade.py.",
+  "applies_from_iteration": 3,
+  "assertions": [
+   {
+    "text": "The answer opens with the activation banner, on the first line",
+    "check": "banner_present",
+    "arm": "with_skill"
+   }
+  ]
+ }
 }

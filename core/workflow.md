@@ -40,6 +40,8 @@ On failure, perform one targeted revision addressing the evaluator's named defic
 
 Final answer structure, in order:
 
+0. **Activation line** — open with `⟦innovate-or-die v{{CORE_VERSION}}⟧` alone on the first line, so the reader can see the protocol ran.
+
 1. **Strongest surviving thesis** — lead with it, not a catalog.
 2. **Most important reframing** — the deepest change in how to think about the problem, with the real-vs-inherited constraint that drives it.
 3. **Top opportunities (up to 3)** — concept · insight · causal mechanism · why non-obvious · why disproportionate value · biggest reason it fails.

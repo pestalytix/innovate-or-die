@@ -60,10 +60,16 @@ Use the innovate-or-die skill on this: we run residential pest control in three
 towns and windshield time is eating us alive. what are we missing?
 ```
 
-To check whether it actually ran: if the answer comes back with no list of
-rejected ideas and no experiment with a pass/fail number, it didn't run. There is
-no error message when this happens — a run where the skill sat out looks exactly
-like an ordinary answer. In our published testing, the skill was installed for 7
+To check whether it actually ran: **look at the first line.** From v2.1.0 the
+answer opens with a marker naming the skill and the version that produced it,
+like `⟦innovate-or-die v2.1.0⟧`. If that line is there, it ran — nothing else
+writes it.
+
+If it is *missing*, that is a strong hint but not proof: a model that ran the
+protocol can still skip the line. The older tell still applies — no list of
+rejected ideas and no experiment with a pass/fail number means it didn't run.
+There is no error message either way; a run where the skill sat out otherwise
+looks exactly like an ordinary answer. In our published testing, the skill was installed for 7
 runs on Claude Code and **actually switched on in 3 of them** (that is a raw
 count, not a rate — the sample is far too small to be one), while it started
 reliably every time in Codex. We do not know why: three explanations were

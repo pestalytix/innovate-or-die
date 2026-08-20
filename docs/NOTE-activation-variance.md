@@ -7,6 +7,21 @@ decision); tracked here as its own workstream.
 falsified. They are kept below with their falsifying observations, because knowing
 what the mechanism is *not* is the only durable result so far.
 
+> **Detection changed at core v2.1.0 ([ADR-004](ADR-004-activation-banner.md)).**
+> Every row below was recorded before the activation banner existed, by one of two
+> methods: an observed `Skill` tool call in the Claude event stream, or — on Codex,
+> which exposes no tool-call stream — a seven-regex marker vote. From v2.1.0 the
+> delivery opens with `⟦innovate-or-die v<version>⟧`, so activation is an exact
+> string match, and the Codex leg records `observed:banner` instead of
+> `heuristic:markers`. **Counts before and after that line were produced by
+> different instruments and must be labelled as such rather than pooled.** The
+> banner also makes the OBSERVE-AND-ABORT survey below workable on any host that
+> streams tokens, not only on hosts that emit tool-call events — which is what
+> makes a real denominator affordable.
+>
+> The banner does not make activation more likely. It makes a miss visible. This
+> workstream — why the description does not fire — remains open and unexplained.
+
 ## Observations (claude-sonnet-5 unless noted)
 
 | case | register | activation method | activated | tokens |

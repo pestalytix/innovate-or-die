@@ -3,12 +3,12 @@ name: innovate-or-die
 description: "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search. Use when the user asks to innovate, rethink a strategy, think differently, find unconventional or category-changing opportunities, challenge assumptions, escape generic advice, ask what's non-obvious or what everyone is missing, develop testable hypotheses, or explicitly invokes \"innovate or die\" or $innovate-or-die. Also use for open-ended strategy, product, pricing, marketing, growth, or system-architecture questions where the conventional answer is already known and the value lies in overlooked options. Do NOT use to choose between already-defined options (decision analysis) or to execute a build (delivery workflow)."
 license: MIT
 metadata:
-  version: "2.0.2"
+  version: "2.1.0"
   author: "Ken Pendergast"
   author_url: "https://kenpendergast.com"
 ---
 
-# Workflow (core v2.0.2)
+# Workflow (core v2.1.0)
 
 Turn an ambiguous problem into a small set of valuable, non-obvious hypotheses that survive adversarial review and can be tested by the user as they exist today.
 
@@ -49,6 +49,8 @@ On failure, perform one targeted revision addressing the evaluator's named defic
 ## Stage 6 — Deliver
 
 Final answer structure, in order:
+
+0. **Activation line** — open with `⟦innovate-or-die v2.1.0⟧` alone on the first line, so the reader can see the protocol ran.
 
 1. **Strongest surviving thesis** — lead with it, not a catalog.
 2. **Most important reframing** — the deepest change in how to think about the problem, with the real-vs-inherited constraint that drives it.

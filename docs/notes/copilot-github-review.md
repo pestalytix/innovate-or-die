@@ -137,6 +137,7 @@ These are cheap, and they turn "fixed once" into "cannot regress."
  
 - `docs/` mixes durable reference (ADRs, COMPATIBILITY) with dated working notes
   (`HANDOFF-2026-08-19.md`, `SESSION-STATE-2026-08-19.md`, and now this file).
+  *(Actioned 2026-08-20: those three moved to `docs/notes/`.)*
   Consider a `docs/notes/` subfolder so the ADRs and compatibility matrix — the
   documents a contributor must read — aren't buried among session ephemera.
 - The orchestrator `.agent.md` relies on the human to manually open a fresh chat

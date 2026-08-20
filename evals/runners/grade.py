@@ -65,7 +65,29 @@ def _delivers_answer(t: str):
                           f"recommendation markers {'present' if has_rec else 'ABSENT'}")
 
 
+# ADR-004. The version is matched as a PATTERN, never as a literal: a check
+# pinned to one version would fail on the next bump and be read as an activation
+# failure. Leading backticks/emphasis are tolerated -- a model that wraps the
+# line in a code span has still emitted the banner.
+_BANNER = re.compile(r"⟦innovate-or-die v(\d+\.\d+\.\d+)⟧")
+
+
+def _banner_present(t: str):
+    first = next((l for l in t.splitlines() if l.strip()), "")
+    m = _BANNER.match(first.strip().strip("`*_ "))
+    if m:
+        return True, f"activation banner on the first line, protocol v{m.group(1)}"
+    # Present but misplaced is a different finding from absent, and the
+    # difference is what says whether the instruction was read but reordered.
+    anywhere = _BANNER.search(t)
+    if anywhere:
+        return False, (f"banner found (v{anywhere.group(1)}) but NOT on the first line; "
+                       f"first line was: {first.strip()[:100]}")
+    return False, f"no activation banner; first line was: {first.strip()[:100] or '(empty)'}"
+
+
 CHECKS = {
+    "banner_present": _banner_present,
     "delivers_answer": _delivers_answer,
     "falsifier_with_number": _falsifier_with_number,
     "kill_list_min_5": _kill_list_5,
@@ -166,10 +188,20 @@ def main() -> int:
 
     spec = json.loads((ROOT / "evals/evals.json").read_text())
     cases = spec["evals"]
-    extra = spec.get("iteration_2_additional_assertions", {})
-    if args.iteration >= extra.get("applies_from_iteration", 99):
-        for c in cases:                       # authored-after-observation, iter-2 on
-            c["assertions"] = c["assertions"] + extra["assertions"]
+    # Assertion blocks authored after observation carry the iteration they start
+    # applying from, so an earlier iteration's grades stay reproducible. Any
+    # top-level block with `applies_from_iteration` is picked up -- adding one
+    # does not mean editing this function again.
+    for key, blk in spec.items():
+        if not (isinstance(blk, dict) and "applies_from_iteration" in blk):
+            continue
+        if args.iteration < blk["applies_from_iteration"]:
+            continue
+        print(f"applying assertion block: {key} "
+              f"(+{len(blk['assertions'])} per case, from iteration "
+              f"{blk['applies_from_iteration']})")
+        for c in cases:
+            c["assertions"] = c["assertions"] + blk["assertions"]
     base = ROOT / "evals-workspace" / f"iteration-{args.iteration}" / args.provider / args.tier
 
     for c in cases:
@@ -179,9 +211,23 @@ def main() -> int:
             if not resp.exists():
                 print(f"skip (no output): {c['slug']}/{arm}"); continue
             text = resp.read_text(encoding="utf-8")
-            results = []
+            results, arm_specific = [], []
             for a in c.get("assertions", []):
                 a = {"text": a} if isinstance(a, str) else a
+                # An assertion restricted to one arm CANNOT go in pass_rate. The
+                # control arm can never emit an activation banner, so grading it
+                # in both arms would manufacture a delta out of the protocol's
+                # own signature; grading it in one arm would change that arm's
+                # denominator and break comparability with earlier iterations.
+                # Reported separately, and excluded from every headline figure.
+                if a.get("arm") and a["arm"] != arm:
+                    continue
+                if a.get("arm"):
+                    ok, ev = CHECKS[a["check"]](text)
+                    arm_specific.append({"text": a["text"], "passed": ok, "evidence":
+                                         f"[mechanical:{a['check']}] {ev}",
+                                         "grader": "mechanical", "arm": a["arm"]})
+                    continue
                 if a.get("check") in CHECKS:
                     ok, ev = CHECKS[a["check"]](text)
                     ev = f"[mechanical:{a['check']}] {ev}"
@@ -210,6 +256,9 @@ def main() -> int:
             passed = sum(bool(r["passed"]) for r in scored)
             (d / "grading.json").write_text(json.dumps({
                 "assertion_results": results,
+                "arm_specific_results": arm_specific,
+                "arm_specific_note": ("graded in one arm only, so excluded from `summary` "
+                                      "and from every paired delta -- see ADR-004"),
                 "summary": {"passed": passed, "failed": len(scored) - passed,
                             "total": len(scored), "not_graded": len(results) - len(scored),
                             "pass_rate": round(passed / len(scored), 4) if scored else None},

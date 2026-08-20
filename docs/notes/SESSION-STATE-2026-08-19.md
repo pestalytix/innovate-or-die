@@ -1,4 +1,4 @@
-# Session state — 2026-08-19/20
+# Session state — 2026-08-19/20 (last updated 2026-08-20, v2.1.0 release)
 
 Working state, standing constraints, and traps, written so the next session (human or
 agent) can resume without re-deriving any of it. Session insurance and decision record.
@@ -11,11 +11,12 @@ agent) can resume without re-deriving any of it. Session insurance and decision 
 
 | | state |
 |---|---|
-| Protocol version | **v2.0.1** (ADR-002 Stage 0 fix) |
-| Repo visibility | **PRIVATE** — install commands 404 until flipped |
-| CI | `.github/workflows/check.yml` — `assemble.py --check` on push, green |
-| Generated trees | 41 files from `core/`, committed, drift-guarded |
-| Evals | iteration-1 (v2.0.0, 2 providers) + iteration-2 (v2.0.1, Codex workhorse) |
+| Protocol version | **v2.1.0** (ADR-004 activation banner; v2.0.2 was ADR-003) |
+| Repo visibility | **PUBLIC**, released |
+| CI | `.github/workflows/check.yml` — `assemble.py --check` **and `pytest`** on push, green |
+| Generated trees | 42 files from `core/`, committed, drift-guarded |
+| Evals | iteration-1 (v2.0.0, 2 providers) + iteration-2 (v2.0.1, Codex workhorse) + iteration-3 (v2.1.0, Codex workhorse, `with_skill` only — banner emission) |
+| Instruction headroom | **301 chars** of the 8,000 cap (was 33 before ADR-004's dedup) |
 
 **Everything outside `core/`, `docs/`, `evals/` and `build/` is generated.** Hand-edits
 are reverted by the next `assemble.py` run and caught by CI.
@@ -82,6 +83,17 @@ test (PASS on Gemini Gem), install-path audit (no auth-assuming URLs).
   `/model` strings; MODEL_POLICY pins are **PROVISIONAL and unusable** until read from
   a live `/model`.
 - **Claude iteration-2 leg** — waits on the quota window.
+- **Banner-vs-Skill-tool validity check (ADR-004 regression test 3)** — waits on the
+  quota window. **Pre-registered before the runs, per the H2 discipline:** on Claude,
+  where an observed `Skill` tool call is independent ground truth, record for every
+  `with_skill` run both *activated* (tool call) and *banner present*. The prediction
+  on record is that **banner presence equals observed activation**; the cell that
+  matters is activated-but-no-banner, which is the banner's false-negative rate. The
+  ADR's stated mechanism predicts it lands well above the 71% compliance seen on
+  Stage 6 item 5, because the banner is item 0 and carries no generation load.
+  Run it as `--arm with_skill` on the workhorse tier; the control arm cannot emit a
+  banner and adds nothing here. Until it runs, the banner's false-negative rate is
+  measured on Codex only, where there is **no ground truth to check it against**.
 
 **Substantive open questions**
 - **Activation mechanism is unknown.** Three hypotheses falsified. Next step is the

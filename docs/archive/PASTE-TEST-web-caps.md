@@ -144,4 +144,4 @@ COUNTS CHARS OR TOKENS?                   (see note in Test B)
 
 The knowledge-file retrieval test is separate — that one checks whether the model can
 read complete role sections on request with quotas intact, and it belongs to the
-Phase E pre-publication pass. See the Phase E line in `docs/HANDOFF-2026-08-19.md`.
+Phase E pre-publication pass. See the Phase E line in `docs/notes/HANDOFF-2026-08-19.md`.

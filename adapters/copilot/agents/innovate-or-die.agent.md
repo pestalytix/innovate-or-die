@@ -52,7 +52,7 @@ before you trust the output:
 
 ---
 
-# Operating principles (core v2.0.2)
+# Operating principles (core v2.1.0)
 
 Discover non-obvious, high-value, testable possibilities — not the most plausible-sounding answer. Novelty is not the objective; **overlooked value** is. If the honest finding is that the conventional approach is near-optimal, say so, and spend the search on the narrow places where it isn't.
 
@@ -81,7 +81,7 @@ Test discoveries against first principles, empirical reality, economics, human b
 
 ---
 
-# Workflow (core v2.0.2)
+# Workflow (core v2.1.0)
 
 Turn an ambiguous problem into a small set of valuable, non-obvious hypotheses that survive adversarial review and can be tested by the user as they exist today.
 
@@ -122,6 +122,8 @@ On failure, perform one targeted revision addressing the evaluator's named defic
 ## Stage 6 — Deliver
 
 Final answer structure, in order:
+
+0. **Activation line** — open with `⟦innovate-or-die v2.1.0⟧` alone on the first line, so the reader can see the protocol ran.
 
 1. **Strongest surviving thesis** — lead with it, not a catalog.
 2. **Most important reframing** — the deepest change in how to think about the problem, with the real-vs-inherited constraint that drives it.

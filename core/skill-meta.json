@@ -1,7 +1,7 @@
 {
   "_comment": "Consumed by build/assemble.py when generating SKILL.md frontmatter and manifests. Description merges trigger phrases from both source protocols (ADR-001). JSON, not YAML, so the build needs no YAML parser (stdlib json only).",
   "name": "innovate-or-die",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "license": "MIT",
   "author": {
     "name": "Ken Pendergast",
