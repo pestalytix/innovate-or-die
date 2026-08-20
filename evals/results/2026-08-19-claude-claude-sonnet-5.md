@@ -104,7 +104,7 @@ The verdict *text* is the finding. Read the reasoning, not the tally.
 
 ## Opus envelope probe (flagship, n=1, not aggregated)
 
-The 10-run flagship tier was replaced by a single envelope probe (MODEL_POLICY scope amendment). One case, `with_skill` only, `claude-opus-5`, **default effort — the deployed condition on a Max plan**, so the result carries the upward-compatibility claim. **It completed**, so the medium-effort mitigation arm was not run.
+The 10-run flagship tier was replaced by a single envelope probe (MODEL_POLICY scope amendment). One case, `with_skill` only, `claude-opus-5`, **default effort — the deployed condition on a Max plan**, so the result carries the upward-compatibility claim. **It completed**, so the medium-effort mitigation arm was not run. A `without_skill` arm for this case **does exist on disk** — `claude-opus-5`, v2.0.0, 28,357 tok, non-activated, as a control should be — but it is **excluded from the probe by design**: the probe asks whether the flagship tier carries the protocol at all, which is a one-arm question, and its figures are not aggregated with any tier. It is the run named in the uncontrolled-context banner above.
 
 | | value |
 |---|---|

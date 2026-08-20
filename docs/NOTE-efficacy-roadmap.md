@@ -41,7 +41,12 @@ list is not a plan.
   facts about the user's other projects and location into a fresh session, see
   [`COMPATIBILITY.md`](COMPATIBILITY.md) — where the standing ruling is already
   "use an account with no history, or memory disabled". That ruling was never
-  extended to the Claude lane, and it should have been. Future Claude runs must
+  extended to the Claude lane, and it should have been. **On Codex: no leakage
+  observed — but Codex exposes no event stream, so absence is unobservable, not
+  established.** The scan there could only read delivered answers; the
+  intermediate reasoning that carried the leak on the Claude side has no
+  equivalent artifact to search. A clean Codex result and an unmeasurable one
+  look identical from outside, and must not be reported as the same thing. Future Claude runs must
   come from a dedicated account, or from a session with account context
   demonstrably off, and the demonstration has to be recorded per run the way
   model resolution already is. Until that holds, no lane's numbers are clean
@@ -80,6 +85,30 @@ list is not a plan.
   reader acting on the output does better than one acting on the control's. This
   is the question the skill's premise actually rests on and the hardest to
   operationalize.
+
+## Reporting methodology — method statements are version-gated
+
+`evals/runners/report.py` is the only writer of results files, and a results file
+is regenerated whenever anything about it changes. Each regeneration re-emits
+every sentence from the generator as it stands that day. So **any sentence
+describing a method — grading, judging, presentation or arm ordering, activation
+detection — must be gated on the iteration or protocol version from which that
+method applies.**
+
+An ungated method sentence does not go stale; it is silently rewritten. A file
+recording a 2026-08-19 run comes to assert a method introduced on 2026-08-20, the
+numbers stay honest while the prose describing how they were produced becomes
+false, and the completeness gate cannot catch it because the section is present
+and the sentence is well-formed.
+
+This was not hypothetical. Regenerating the iteration-1 Claude file for an
+unrelated annotation had begun writing *"presentation order drawn independently
+per ballot from a seeded RNG"* over a judge run that used index alternation;
+`judge_section()` now takes the iteration and selects the sentence, and the rule
+is stated in full in that module's docstring.
+
+The test for a new method sentence is not *"is this true?"* but *"is this true of
+every run this generator can be pointed at?"*
 
 ## What may be claimed until then
 

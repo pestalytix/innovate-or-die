@@ -132,8 +132,14 @@ and they drew on different parts of it:
 
 Measured scope, by scanning all 57 `response.md` files across both arms and every
 tier plus all three event streams for ten identifying terms: **these two runs
-only.** No other Claude run and **no Codex run** shows it — Codex exposes no
-event stream and no host metadata, so it had nothing of this kind to draw on.
+only.** No other Claude run shows it.
+
+**On Codex: no leakage observed — but absence is unobservable there, not
+established.** Codex exposes no event stream, so the scan could only read
+delivered answers; the intermediate reasoning that carried the leak on the Claude
+side has no equivalent artifact to search. A genuinely clean Codex lane and an
+unmeasurable one look identical from outside. Read the Codex result as "nothing
+found in what can be seen", not as "nothing there".
 
 Why it matters: the paired design holds prompt, model and workspace constant, and
 `run_evals.py`'s `assert_uncontaminated` checks that the *skill* is out of scope

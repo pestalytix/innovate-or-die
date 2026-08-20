@@ -237,3 +237,66 @@ def test_iteration_2_still_reports_alternation(report):
     L = []
     report.judge_section(jdoc, L, 2)
     assert "alternating per case" in "\n".join(L)
+
+
+# ------------------------------------ the flagship probe names its control run
+
+def _flagship(tmp_path, control: dict | None):
+    """Lay down the minimum opus_section() reads: the probe arm, and optionally
+    the control arm that exists on disk but is excluded from the probe."""
+    base = tmp_path / "evals-workspace/iteration-1/claude/flagship/eval-route-density"
+    (base / "with_skill").mkdir(parents=True)
+    (base / "with_skill/timing.json").write_text(json.dumps(
+        {"resolved_model": "claude-opus-5", "skill_version": "2.0.1",
+         "effort": "default", "total_tokens": 1_137_884, "duration_ms": 1_472_000,
+         "num_turns": 15, "cost_usd": 4.84, "activation_method": "observed:Skill-tool-call",
+         "tools": {"Agent": 3, "WebSearch": 4}}))
+    if control is not None:
+        (base / "without_skill").mkdir(parents=True)
+        (base / "without_skill/timing.json").write_text(json.dumps(control))
+    return base
+
+
+def test_probe_states_that_a_control_exists_on_disk(report, tmp_path, monkeypatch):
+    """'with_skill only' alone read as 'no control was run' — a different claim,
+    and one the uncontrolled-context banner directly contradicts."""
+    _flagship(tmp_path, {"resolved_model": "claude-opus-5", "skill_version": "2.0.0",
+                         "total_tokens": 28_357, "duration_ms": 47_581,
+                         "activated": False})
+    monkeypatch.setattr(report, "ROOT", tmp_path)
+    L = []
+    report.opus_section(L)
+    para = next(x for x in L if "envelope probe (MODEL_POLICY" in x)
+    assert "does exist on disk" in para
+    assert "28,357 tok" in para, "the control's figures must be derived, not asserted"
+    assert "v2.0.0" in para and "claude-opus-5" in para
+    assert "non-activated, as a control should be" in para
+    assert "excluded from the probe by design" in para
+    assert "uncontrolled-context banner" in para, "must tie to the banner that names it"
+
+
+def test_probe_says_nothing_about_a_control_that_is_not_there(report, tmp_path,
+                                                             monkeypatch):
+    """The clause is derived from disk; with no control run there is nothing to
+    claim and the section must not invent one."""
+    _flagship(tmp_path, None)
+    monkeypatch.setattr(report, "ROOT", tmp_path)
+    L = []
+    report.opus_section(L)
+    para = next(x for x in L if "envelope probe (MODEL_POLICY" in x)
+    assert "does exist on disk" not in para
+    assert para.rstrip().endswith("the medium-effort mitigation arm was not run.")
+
+
+def test_an_unexpectedly_activated_control_is_not_described_as_non_activated(
+        report, tmp_path, monkeypatch):
+    """A control that fired is a finding, not something to paper over with the
+    word the happy path uses."""
+    _flagship(tmp_path, {"resolved_model": "claude-opus-5", "skill_version": "2.0.0",
+                         "total_tokens": 28_357, "activated": True})
+    monkeypatch.setattr(report, "ROOT", tmp_path)
+    L = []
+    report.opus_section(L)
+    para = next(x for x in L if "envelope probe (MODEL_POLICY" in x)
+    assert "non-activated, as a control should be" not in para
+    assert "activated=True" in para

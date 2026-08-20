@@ -14,6 +14,34 @@ dropped while the write itself succeeded. Never trust a write; verify the artifa
 
 The workspace is gitignored, so the results file is the durable public record and
 must be self-sufficient.
+
+## Method statements are version-gated. Always.
+
+**Every sentence in this file that describes a METHOD -- how answers were graded,
+how the judge was run, how presentation or arm order was chosen, how activation
+was detected -- must be gated on the iteration or protocol version from which
+that method applies.** Never write the current method as unconditional prose.
+
+The reason is specific to this generator being the only writer. A results file is
+regenerated whenever anything else about it changes: a corrected banner, a new
+annotation, a derived line that used to be a literal. Each regeneration re-emits
+every sentence from TODAY's source. So an ungated method sentence does not merely
+go stale -- it is silently rewritten, and a file recording a 2026-08-19 run comes
+to assert a method that did not exist until 2026-08-20. The numbers stay honest
+while the prose describing how they were produced quietly becomes false, and
+nothing in the completeness gate can catch it, because the section is present and
+the sentence is well-formed.
+
+Worked example, `judge_section()`: presentation order was index alternation
+through iteration 2 and per-ballot randomization from iteration 3. The function
+takes `iteration` and selects the sentence accordingly. Regenerating the
+iteration-1 file for an unrelated reason had already begun writing "drawn
+independently per ballot from a seeded RNG" over a run that alternated by index;
+the gate is what stops that. `banners()` does the same for the version-span and
+grading-method text, and for annotations scoped to one lane.
+
+The test for a new method sentence is not "is this true?" but "is this true of
+every run this generator can be pointed at?" If not, gate it.
 """
 from __future__ import annotations
 import argparse, datetime as dt, json, sys
@@ -228,12 +256,28 @@ def opus_section(L):
     W = ROOT / "evals-workspace/iteration-1/claude/workhorse/eval-route-density"
     a = load(W / "with_skill-ORIGINAL-inferred/timing.json")
     b = load(W / "with_skill/timing.json")
+    # The probe is one-armed, but a control run for the same case DOES exist on
+    # disk. Saying "with_skill only" without saying so read as "no control was
+    # run", which is a different claim -- and the uncontrolled-context banner
+    # above names that very run, so the file contradicted itself.
+    c = load(ROOT / "evals-workspace/iteration-1/claude/flagship/eval-route-density/"
+                    "without_skill/timing.json")
+    control = ((f" A `without_skill` arm for this case **does exist on disk** — "
+                f"`{c['resolved_model']}`, v{c.get('skill_version','?')}, "
+                f"{c['total_tokens']:,} tok, "
+                + ("non-activated, as a control should be" if c.get("activated") is False
+                   else f"activated={c.get('activated')}")
+                + " — but it is **excluded from the probe by design**: the probe asks "
+                  "whether the flagship tier carries the protocol at all, which is a "
+                  "one-arm question, and its figures are not aggregated with any tier. "
+                  "It is the run named in the uncontrolled-context banner above.")
+               if c else "")
     L += ["## Opus envelope probe (flagship, n=1, not aggregated)", "",
           "The 10-run flagship tier was replaced by a single envelope probe (MODEL_POLICY "
           "scope amendment). One case, `with_skill` only, `claude-opus-5`, **default "
           "effort — the deployed condition on a Max plan**, so the result carries the "
           "upward-compatibility claim. **It completed**, so the medium-effort mitigation "
-          "arm was not run.", "",
+          "arm was not run." + control, "",
           "| | value |", "|---|---|",
           f"| resolved model | `{t['resolved_model']}` |",
           f"| skill version | **v{t.get('skill_version','?')}** |",
