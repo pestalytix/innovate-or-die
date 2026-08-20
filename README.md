@@ -215,12 +215,43 @@ python3 build/assemble.py            # regenerate
 python3 build/assemble.py --dry-run  # show what would change
 python3 build/assemble.py --check    # CI drift guard
 pip install pytest && python3 -m pytest   # harness unit tests
+python3 build/package.py             # build both release zips into dist/
 ```
 
-CI runs the last two on every push. The tests cover the generator's two refusal
-mechanisms (a substitution that will not silently no-op, a reference check that
-will not let an unresolvable path ship) and the eval harness's two corrected
-correctness bugs (matched-pair aggregation, strict-majority judging).
+CI runs `--check` and the tests on every push. The tests cover the generator's
+two refusal mechanisms (a substitution that will not silently no-op, a reference
+check that will not let an unresolvable path ship), the packager's zip-layout
+assertions, and the eval harness's two corrected correctness bugs (matched-pair
+aggregation, strict-majority judging).
+
+### Releases
+
+**Release assets are built only by
+[.github/workflows/release.yml](.github/workflows/release.yml), on a `v*` tag
+push.** Running `package.py` by hand is for inspecting what a release would
+contain; it is not how anything gets published. The job re-runs the drift check
+and the tests, then refuses to go further unless **the tag equals the `version`
+in `core/skill-meta.json`** — without that guard, tagging `v2.2.0` against an
+unbumped `skill-meta.json` would publish assets named `…-v2.1.0.zip` and every
+download link would point at a file that is not there.
+
+**Two zips ship per release**, because claude.ai wants the skill *folder* as the
+zip root and Perplexity Computer wants `SKILL.md` itself there. A zip built for
+one does not load on the other — it does not degrade, it fails — so each layout
+is asserted against the finished zip before it can be uploaded. The quoted
+requirements are in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Assets are
+built from the tag with `git archive`, never from the working tree, and are
+reproducible: `python3 build/package.py --ref vX.Y.Z` rebuilds the published
+bytes. `dist/` is gitignored and never committed.
+
+Cutting a release, in four lines:
+
+```
+# 1. protocol change? write the ADR first — docs/ADR-00N-*.md
+# 2. bump "version" in core/skill-meta.json
+python3 build/assemble.py && git add -A && git commit -m "vX.Y.Z: ..."
+git tag vX.Y.Z && git push && git push --tags
+```
 
 Generated trees are committed, because installers read the repo layout. **Do not
 hand-edit anything outside `core/`** — CI regenerates and diffs on every push, so
