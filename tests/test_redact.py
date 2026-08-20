@@ -409,14 +409,38 @@ def test_parse_guard_reports_the_location(redact, tmp_path, monkeypatch, capsys)
     assert f"{rel}:2" in err, "must name the failing line, not just the file"
 
 
-def test_a_line_that_never_parsed_is_not_a_regression(redact, tmp_path, monkeypatch):
-    """The guard checks for regressions, not pre-existing malformity."""
+def test_a_line_that_never_parsed_is_not_a_regression(redact, tmp_path, monkeypatch,
+                                                      capsys):
+    """The guard checks for REGRESSIONS, not pre-existing malformity.
+
+    A stream carrying a line that was already unparseable must not be blocked,
+    must not be reported as a regression, and must still exit 0. Otherwise one
+    bad line in an archived transcript would make the whole tree unpublishable
+    and there would be no way to redact it at all.
+    """
     f = tmp_path / "evals/transcripts/it/p/t/c/with_skill/trace/stream.jsonl"
     f.parent.mkdir(parents=True)
-    f.write_text('NOT JSON AT ALL\n{"cwd":"/Users/someone/x"}\n')
+    before = 'NOT JSON AT ALL\n{"cwd":"/Users/someone/x"}\n'
+    f.write_text(before)
+
+    # Only line 2 is tracked: line 1 never parsed, so it is not the guard's.
+    assert redact.parse_shape(f, before) == {2}
+
     monkeypatch.setattr(redact, "ROOT", tmp_path)
     monkeypatch.setattr("sys.argv", ["redact_transcripts.py"])
-    assert redact.main() == 0
+    assert redact.main() == 0, "a pre-existing bad line must not fail the run"
+
+    out, err = capsys.readouterr()
+    assert "PARSE GUARD FAILED" not in err
+    assert err == "", "nothing to report: this is not a regression"
+    assert "parse guard OK" in out
+
+    after = f.read_text()
+    assert after.splitlines()[0] == "NOT JSON AT ALL", "left exactly as found"
+    # Guards against a vacuous pass: the run must really have done the work,
+    # not skipped the file because one of its lines was malformed.
+    assert "/Users/REDACTED/x" in after
+    assert redact.parse_shape(f, after) == {2}
 
 
 # ------------------------------------------------- --dry-run is a real rehearsal
