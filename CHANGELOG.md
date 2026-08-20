@@ -52,10 +52,22 @@ packaging, a fourth web target, and the Perplexity findings.
   probe — the same one that settled the Gemini Gem — returned all four Innovator
   top-level quotas and all four sub-quotas intact, `>=` symbols preserved, relative
   reference path preserved. The flat asset is a full-skill install.
-  **It stays a Level 1 *candidate* regardless.** Level 1 is a claim about how a
-  host runs the protocol, not about whether the files arrived. Banner emission is
-  **UNOBSERVED** (the probe aborted at Stage 0, before Stage 6 writes the banner)
-  and sub-agent role isolation is **UNTESTED**. Both must pass before promotion.
+- **Perplexity Computer settled at Level 3** (2026-08-20), after two full runs on
+  the same prompt with different orchestrator models. The activation banner was
+  emitted **2/2** — a count, not a rate, by `heuristic` method, since Perplexity
+  exposes no tool-call stream — and both outputs carried full Stage 6 structure.
+  But **sub-agent dispatch was `observed-single` on both runs**: no isolation, one
+  context, the same as ChatGPT GPTs, Gems and M365. Level 1 would require
+  Perplexity to dispatch the skill's stages as separate sub-agents; it did not.
+  The CANDIDATE label is withdrawn everywhere. A passing import probe measures
+  what arrived, never what runs — that distinction is the whole finding.
+- **Two Perplexity-specific behaviours now documented**, both of which change how
+  the host must be *evaluated*, not just read: **live web search runs inside the
+  protocol** (so a with/without delta here is not like-for-like with any other
+  host and must never be blended into one), and **account memory leaks into fresh
+  sessions** (so evals need an account with no history, or memory disabled). Its
+  orchestrator model is also user-selectable, which is why the banner count is
+  reported across two configurations.
 - The README's claim that the ChatGPT and Gemini caps "have no first-party source"
   was stale — ChatGPT was settled by paste test on 2026-08-19. Corrected.
 

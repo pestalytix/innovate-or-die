@@ -134,29 +134,14 @@ separation they can provide, so fidelity degrades in four known steps.
 **Level 1 — Agentic hosts with subagents.** Claude Code, Codex, Copilot coding
 agent. The innovator and critic run in genuinely separate contexts. Full fidelity.
 
-**Level 1, candidate — Perplexity Computer.** The install works: uploading the
-flat zip to Enterprise Computer was tested on 2026-08-20, and the role briefs and
-reference files arrive **intact** — all eight Innovator quotas came back verbatim,
-symbols and all. So this is a real, full-skill install, and the table above says
-so plainly.
-
-It stays a *candidate* for Level 1 because Level 1 is a claim about how the host
-**runs** the protocol, not about whether the files arrived. Two things are still
-unmeasured: whether Computer's sub-agents give the innovator and critic genuinely
-separate contexts, and whether the run emits the version banner at all — the test
-stopped at Stage 0, well before the banner is written at Stage 6. Content arriving
-intact is not evidence about either. Both have to pass before this moves up;
-[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) records exactly what was and was
-not measured.
-
 **Level 2 — Copilot `.agent.md` profiles.** One profile per role plus an
 orchestrator. The separation is real but *manual*: you open a fresh chat per role
 and hand forward only what the next role is entitled to see. Fidelity depends on
 you following that.
 
-**Level 3 — Web loader + knowledge file.** ChatGPT GPTs, Gems, Agent Builder,
-Perplexity Projects. One context, staged reading: the instructions file carries
-the principles and workflow, the role briefs live in an attached knowledge file
+**Level 3 — One context, staged reading.** ChatGPT GPTs, Gems, Agent Builder,
+Perplexity Projects, and Perplexity Computer. The instructions file carries the
+principles and workflow, the role briefs live in an attached knowledge file
 read stage by stage.
 Two caveats — there is no true isolation, only discipline; and knowledge-file
 access is **retrieval-mediated**, so a role brief may in principle arrive in
@@ -164,6 +149,22 @@ fragments. **Tested once and passed:** a verbatim quota-extraction probe on a
 Gemini Gem (2026-08-19) returned all eight Innovator quotas intact and exact, with
 no fragmentation of enumerated lines. ChatGPT GPTs and M365 Agent Builder use
 different retrieval implementations and remain untested.
+
+**Perplexity Computer sits here too, and is the most capable host on this rung.**
+It is the only Level 3 host that installs as a **full zip** rather than a paste
+plus an attachment, and the only one that runs **live web search inside the
+protocol** — in testing it went and cited sources for an industry figure the
+argument depended on, instead of flagging it as something you should look up. It
+also **draws on what Perplexity already knows about you**: one run referenced four
+facts about the user's projects and location that were nowhere in the prompt,
+which is useful more often than not, but worth knowing before you use it on
+anything sensitive.
+
+It is not Level 1. Level 1 would require Perplexity to dispatch the skill's
+stages as separate sub-agents, and on two observed runs **it did not** — the
+roles shared one context, the same as every other host on this rung. The install
+being excellent is not the same as the isolation being real, and only the second
+one moves a host up.
 
 **Level 4 — Single-paste fallback.** Everything inlined in one document, for hosts
 that take no attachment. The whole protocol — including what the critic checks

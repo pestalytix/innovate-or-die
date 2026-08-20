@@ -18,7 +18,7 @@ agent) can resume without re-deriving any of it. Session insurance and decision 
 | Evals | iteration-1 (v2.0.0, 2 providers) + iteration-2 (v2.0.1, Codex workhorse) + iteration-3 (v2.1.0, Codex workhorse, `with_skill` only — banner emission) |
 | Instruction headroom | **301 chars** of the 8,000 cap (was 33 before ADR-004's dedup); **291** on `perplexity-project`, whose preamble names its host |
 | Release assets | **two** zips on v2.1.0, both built from the tag by `build/package.py` and reproducible from it: `…-skill-v2.1.0.zip` (folder-root, claude.ai) `sha256:089d6973…` and `…-skill-flat-v2.1.0.zip` (`SKILL.md` at zip root, Perplexity Computer) `sha256:6ac122d1…`. The original folder-root asset (`bb37204f…`, 14,251 B) was **replaced** 2026-08-20 — it predated `package.py`, carried wall-clock timestamps and was not rebuildable from the tag. Content was identical; both sha256s are in the CHANGELOG |
-| Perplexity | Computer = **Level 1 candidate**: flat-zip import PASSED the verbatim quota probe (Enterprise tier, 2026-08-20), but banner emission is UNOBSERVED and sub-agent isolation UNTESTED — both block promotion. Projects = Level 3, 8,000-char cap **reported not paste-tested** |
+| Perplexity | Computer = **Level 3**, demoted 2026-08-20 from Level 1 candidate. Import PASSED (verbatim quota probe) and banner emitted **2/2** across two orchestrator models — but sub-agent dispatch was `observed-single` on both full runs, so there is no isolation and no Level 1 claim. Projects = Level 3, 8,000-char cap **reported not paste-tested**. Two host-specific behaviours affect evals: **live web search inside the protocol** and **account memory leaking into fresh sessions** |
 
 **Everything outside `core/`, `docs/`, `evals/` and `build/` is generated.** Hand-edits
 are reverted by the next `assemble.py` run and caught by CI.
@@ -98,24 +98,26 @@ test (PASS on Gemini Gem), install-path audit (no auth-assuming URLs).
   Run it as `--arm with_skill` on the workhorse tier; the control arm cannot emit a
   banner and adds nothing here. Until it runs, the banner's false-negative rate is
   measured on Codex only, where there is **no ground truth to check it against**.
-- **Perplexity Computer — promotion to Level 1.** The import question is
-  **CLOSED, PASS** (2026-08-20, Ken, Perplexity **Enterprise** Computer, flat zip
-  v2.1.0): the verbatim quota-extraction probe returned all four Innovator
-  top-level quotas and all four sub-quotas intact, `>=` symbols preserved, and the
-  relative reference path preserved. Subfolders survive the import; the flat asset
-  is a full-skill install and the README says so without qualification.
-  **Two things still block Level 1, and neither is about content arriving:**
-  1. **Banner emission — UNOBSERVED.** The probe **aborted at Stage 0**, long
-     before Stage 6 where the ADR-004 banner is written. Nothing about banner
-     emission on this host has been seen either way. Note this is a *third* host
-     with no ground truth to check the banner against — Codex has none either, and
-     only Claude's observed `Skill` tool call provides it.
-  2. **Sub-agent role isolation — UNTESTED.** Computer has sub-agents; whether they
-     give the innovator and critic genuinely separate contexts is unmeasured.
-  **Both must pass before promotion.** Until then the README says **Level 1
-  candidate**. Do not read the passing content probe as evidence about execution —
-  it measured what arrived, not what runs. Also open: only the **Enterprise** tier
-  was tested; other Perplexity tiers are unmeasured.
+- **Perplexity Computer — CLOSED 2026-08-20. Settled at Level 3, not Level 1.**
+  Kept here rather than deleted because the shape of the answer is the reusable
+  part. Three measurements, one host, all by Ken on Perplexity **Enterprise**
+  Computer with flat zip v2.1.0:
+  1. **Import — PASS.** Verbatim quota-extraction probe: all four Innovator
+     top-level quotas and all four sub-quotas intact, `>=` symbols and the
+     relative reference path preserved.
+  2. **Banner emission — 2/2**, across two orchestrator models (pinned GLM 5.2;
+     multi-model default), both runs carrying full Stage 6 structure. Method
+     `heuristic` (banner), **not** `observed` — Perplexity exposes no tool-call
+     stream, so like Codex there is no ground truth to check emission against.
+     A count, not a rate.
+  3. **Sub-agent dispatch — `observed-single`.** Computer's normal multi-agent
+     activity display did not appear on either run. Method: visual, against the
+     observer's baseline. Isolation: **none**; one context, same as GPT/Gem/M365.
+  **The install is excellent and the level is still 3.** That gap is the lesson:
+  a passing content probe measures what arrived, never what runs. Level 1 needs
+  dispatch `observed-separate` — positively, not by absence of a UI display — and
+  critic inputs readable so separation can be checked rather than assumed.
+  Still unmeasured: only the **Enterprise** tier was tested, and n=2 on one prompt.
 - **Perplexity Projects instructions cap** — the build now emits
   `perplexity-project-{instructions,knowledge,fallback}.md` at the same 8,000-char
   budget as ChatGPT, with **291 chars of headroom** (10 fewer than the other three:

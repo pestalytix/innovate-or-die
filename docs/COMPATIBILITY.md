@@ -164,19 +164,111 @@ host, and the README says so without qualification.
 - The host tested was **Enterprise** Computer. Whether other Perplexity tiers
   import identically is untested. One tier is not all tiers — the same caution
   the knowledge-file caveat carries for retrieval implementations.
-- Content arriving intact says nothing about **how the host runs it**. See below.
+- Content arriving intact says nothing about **how the host runs it** — and the
+  execution runs below went on to demonstrate exactly that gap.
 
-### Still open — both block promotion out of candidate status
+### Two full runs — 2026-08-20 — banner 2/2, and the demotion to Level 3
 
-| Question | Why it matters | Status |
+Both open questions from the import probe are now answered. One passed; the
+other failed, and the failure is the one that decides the fidelity level.
+
+**Setup.** Two complete end-to-end runs, same prompt — the windshield-time
+example from the README — on Perplexity **Enterprise** Computer with the flat
+zip v2.1.0 installed. Run by Ken. The variable was the orchestrator model,
+which Perplexity lets the user select:
+
+| | run 1 | run 2 |
 |---|---|---|
-| Does the skill **emit the ADR-004 activation banner** on this host? | The banner is the only positive signal that the protocol ran at all. The probe could not answer it: it **aborted at Stage 0**, long before Stage 6 where the banner is written. | **UNOBSERVED** |
-| Does Perplexity Computer give the roles **real sub-agent isolation**? | Sub-agents exist on the host, but the protocol needs the innovator and critic in genuinely separate contexts. Isolation is the design choice everything else rests on; without it the host is Level 3 with extra steps, not Level 1. | **UNTESTED** |
+| Orchestrator model | **pinned, GLM 5.2** | **default** (multi-model) |
+| Activation banner | **PRESENT** | **PRESENT** |
+| Stage 6 structure | full | full |
+| Stage 0 assumptions declared up front | — | **yes** ([ADR-002](ADR-002-stage0-single-turn.md) behaviour) |
+| Explicit regulatory deferrals | — | **two** |
 
-**Both must pass before Perplexity Computer is promoted to Level 1.** A passing
-content probe is not a passing execution probe, and the temptation to treat one
-as the other is exactly why they are listed separately here. Until then the
-README lists it as a **Level 1 candidate**, and Projects as Level 3.
+"Full Stage 6 structure" means all of it, checked item by item: thesis,
+reframing, three opportunities each with a mechanism and a failure mode, the
+contrarian hypothesis, an experiment carrying **numeric** pass/fail thresholds,
+a kill list, and residuals.
+
+**Activation: 2 of 2. Method: `heuristic` (banner).** A count, not a rate — n=2.
+Per this project's standing rule, the method is stated rather than implied:
+Perplexity exposes no tool-call stream, so as on Codex the banner is an
+output-side inference with **no independent ground truth to check it against**.
+Only Claude's observed `Skill` call provides that. What 2/2 does establish is
+that emission survives a **change of orchestrator model**, which is a
+configuration axis no other host in this file exposes at all.
+
+**Sub-agent dispatch: `observed-single`.** Ken watched both runs. Computer's
+normal multi-agent activity display — the one it shows for ordinary Computer
+tasks — **did not appear on either run**. Method: visual, against the observer's
+own baseline of what this host looks like when it does dispatch sub-agents.
+
+State the limit of that method plainly: **absence of a UI display is weaker
+evidence than a positive observation.** It is consistent with a host that
+dispatched sub-agents without rendering them. But the claim being tested is
+Level 1 — *the roles run in genuinely separate contexts* — and that claim needs
+positive evidence, which does not exist here. Two observed runs with no dispatch
+indication is more than enough to withhold it.
+
+**Isolation: none.** One context, the same as ChatGPT GPTs, Gems and M365
+Agent Builder.
+
+### Level: 3 — demoted from Level 1 candidate
+
+Perplexity Computer is **Level 3**, and the CANDIDATE label is withdrawn from
+the README, this file, the session state and the CHANGELOG.
+
+The import probe passing was never evidence about execution, and this is the
+measurement that made the distinction concrete: the files arrive perfectly, the
+skill runs perfectly, and the roles still share one context. Level 1 would
+require Perplexity to dispatch the skill's stages as separate sub-agents. **It
+did not, on two observed runs.**
+
+**What would reverse this**, stated so the bar cannot drift: dispatch observed
+as `observed-separate` — positively, not by absence of a display — *and* the
+critic's inputs readable, so that separation can be checked rather than assumed.
+Anything less leaves it at Level 3.
+
+### Perplexity-specific behaviours
+
+Three things this host does that no other host in this file does. Each changes
+how its output must be read, and (a) and (b) change how it must be *evaluated*.
+
+**(a) Web search runs inside the skill.** Run 2 cited external sources for a
+load-bearing industry figure, mid-protocol. No other supported host does this:
+everywhere else the protocol runs on whatever the model already knows plus what
+the user pasted.
+
+> **Consequence for evals: Perplexity is its own tier and must never be blended
+> with the others.** A with/without delta measured here is not like-for-like with
+> the same delta on ChatGPT, a Gem or M365 — the arms differ by live retrieval as
+> well as by the protocol, so the number would attribute to the skill an effect
+> that partly belongs to web access. This is the same discipline as standing rule
+> 5 on protocol versions, applied to a host capability instead of a version.
+
+For users this is mostly upside — it is the one Level 3 host that can check a
+figure instead of flagging it — but the "it doesn't know your prices or your
+local rules" caveat still holds: retrieved is not verified.
+
+**(b) Account memory leaks into fresh sessions.** Run 2 referenced **four facts**
+about the user's other projects and location that appeared nowhere in the prompt.
+
+> **Consequence for evals: use an account with no history, or memory disabled.**
+> Otherwise runs are contaminated by whatever the account already knows, arms are
+> not comparable, and the results are unreproducible by anyone else — the same
+> failure class as the contamination assertion already guarded in the harness.
+
+For users: the skill will draw on what Perplexity already knows about them. That
+is often helpful and occasionally surprising, and it is worth knowing before
+using it on anything sensitive.
+
+**(c) The orchestrator model is user-selectable.** Activation held across two
+configurations (pinned GLM 5.2, and the multi-model default). No other host in
+this file exposes this axis. **Record the resolved model per run wherever the UI
+exposes it** — the project's rule that a run records its *resolved* model, not
+its requested one, applies here as much as to `claude -p`, and a multi-model
+default is precisely the case where "which model actually answered" is not
+knowable from the request.
 
 ---
 

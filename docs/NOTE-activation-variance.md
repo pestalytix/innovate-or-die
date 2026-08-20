@@ -101,6 +101,48 @@ than as an `evals/results/` file because it is an activation measurement, not a
 paired eval — there is no delta to report, and `report.py` generates paired
 documents only.
 
+## Banner emission — Perplexity Enterprise Computer, v2.1.0
+
+**Measured 2026-08-20** by Ken. Two complete runs, same prompt (the README's
+windshield-time example), flat zip `v2.1.0` installed as a Computer skill. The
+variable was the **orchestrator model**, which Perplexity lets the user select —
+an axis no other host here exposes.
+
+| run | orchestrator model | banner on line 1 | Stage 6 structure | activation method |
+|---|---|---|---|---|
+| 1 | pinned, GLM 5.2 | **yes** | full | `heuristic:banner` |
+| 2 | default (multi-model) | **yes** | full | `heuristic:banner` |
+
+**2 of 2**, across two model configurations. Run 2 additionally declared its
+Stage 0 assumptions up front ([ADR-002](ADR-002-stage0-single-turn.md) behaviour)
+and issued two explicit regulatory deferrals.
+
+**Method is `heuristic`, not `observed`.** Perplexity exposes no tool-call
+stream, so the banner is an output-side inference exactly as it is on Codex.
+Recording it as `observed:banner` — as the Codex leg does — would overstate it;
+the distinction this project draws is between a *seen tool call* and an *output
+marker*, and this is the second kind. The Codex rows above carry the same
+limitation and the same caveat applies: this measures that the banner is
+emitted, not that emission tracks activation.
+
+**No cross-host rate.** Three hosts now have counts — Claude 3 of 7 activations
+(mixed inferred/observed), Codex 5 of 5 banners, Perplexity 2 of 2 banners — and
+they must not be pooled. They were produced by **three different instruments** on
+three different denominators: an observed `Skill` tool call, an exact-string
+banner match on a CLI, and a human reading two chat transcripts. Standing rule:
+counts before and after the v2.1.0 instrument change are not pooled either.
+Summing any of these into "10 of 14" would be arithmetic performed on
+incommensurable measurements.
+
+**What 2/2 does add** that the Codex run cannot: emission survived a change of
+orchestrator model. Every other banner measurement on this project holds the
+model fixed. It remains n=2, on one host, one tier, one prompt.
+
+**Note the sample contains no negatives here either.** Both runs activated, so
+nothing in this row tests what the banner does when the skill does not fire —
+the same gap flagged for Codex above. Across all three hosts the only negatives
+on record are Claude's, where ground truth exists.
+
 ## Dead hypotheses
 
 **H1 — Exclusion-clause match. FALSIFIED.** The v1 dental prompt opened "Evaluate what
