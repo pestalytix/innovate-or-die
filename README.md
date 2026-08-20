@@ -32,6 +32,7 @@ custom behavior to its AI.
 | App | What to do |
 |---|---|
 | **Claude Code** | Run `/plugin marketplace add pestalytix/innovate-or-die`, then `/plugin install innovate-or-die@pestalytix`. |
+| **claude.ai** (the website or app) | Download the skill zip from the [latest release](https://github.com/pestalytix/innovate-or-die/releases/latest), then go to **Customize → Skills → + → Create skill → Upload a skill**. Needs code execution turned on under Settings → Capabilities. |
 | **Codex** | Clone this repo — the skill is already at `.agents/skills/innovate-or-die/` and gets picked up automatically. |
 | **GitHub Copilot** | Clone this repo the same way — the skill is already at `.github/skills/innovate-or-die/` and gets picked up automatically. |
 | **Codex CLI**, as a plugin | Install this repo as a plugin; the file `.codex-plugin/plugin.json` tells it to look in `skills/`. |
