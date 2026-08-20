@@ -82,10 +82,12 @@ it carried out, that's execution. This does neither.
 
 We tested it by running the same set of problems twice — once with the skill,
 once without, same question and same AI both times — and we did it on two
-different companies' AI systems. Usually the version with the skill came out
-measurably better; occasionally it came out no better at all while costing far
-more (in one case, 19 times the cost for no gain we could measure). We publish
-those unflattering results alongside the good ones — [see for yourself](#evaluation).
+different companies' AI systems. With the skill, the models reliably produce the
+protocol's full output structure — falsifiers, a kill list, an experiment spec —
+which they rarely produce unprompted. Whether that structure yields better
+*decisions* is not yet tested. And it is not always worth the cost: in one case
+the skill spent 19 times the tokens for no measurable gain — [see the
+results](#evaluation).
 
 ---
 
@@ -107,8 +109,8 @@ Six stages, four roles, one bounded correction loop:
    with mechanisms, the most contrarian hypothesis, the cheapest
    high-information experiment, a compact kill list, and what may still be missing.
 
-The quotas are the point. Enforcement by exhortation demonstrably fails; the
-numbers are what force a real search.
+The quotas exist to force volume. Whether each quota earns its cost is
+untested — no ablation has been run.
 
 ## What you get on each app (fidelity levels)
 
@@ -137,7 +139,7 @@ different retrieval implementations and remain untested.
 **Level 4 — Single-paste fallback.** Everything inlined in one document, for hosts
 that take no attachment. The whole protocol — including what the critic checks
 for — is in context from the first token, which is the anchoring failure the
-design exists to defeat. The inlined document (~20k chars, and growing with each
+design exists to defeat. The inlined document (~25k chars, and growing with each
 protocol version) also exceeds every known instruction-field cap, so it may be
 truncated. Shipped because a documented degraded path beats an undocumented
 one, not because it is recommended.
@@ -163,9 +165,7 @@ vary — introduced after grader nondeterminism was measured.
 | [Codex workhorse, v2.0.1](evals/results/2026-08-20-codex-gpt-5.6-terra.md) | iteration-2, N=3 grading |
 | [ADR-002 regression](evals/results/2026-08-19-adr002-regression.md) | cross-version pair |
 | [Grader variance](evals/results/2026-08-19-grader-variance.md) | why grades are replicated |
-
-The results are deliberately unflattering where the evidence is unflattering — including
-one case where the skill cost 19x the tokens for no measurable gain.
+| [Judge validity](evals/results/2026-08-20-judge-validity-dental.md) | the judge rewarded novelty on the control case |
 
 Note what this does *not* establish: **role separation is not evidence.** The evaluator is
 a quality gate, not proof of correctness. A protocol that scores itself well can still be

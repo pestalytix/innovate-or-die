@@ -1,8 +1,12 @@
 # Compatibility notes
 
 Every fact below was verified against a live source on the date shown, not
-recalled. Re-verify before trusting any row older than a frontier release or a
-host UI change.
+recalled — **except where the row itself says otherwise**. Two kinds of exception
+exist and both are stated in place, never omitted: a check we did not run (the
+`skills-ref` validator row below), and a limit we accepted without a first-party
+source (rows marked **WORKING BUDGET**). A row with neither marking was seen with
+our own eyes on the date given. Re-verify before trusting any row older than a
+frontier release or a host UI change.
 
 **Verification method matters.** Where a vendor doc and a shipped validator
 disagree, the validator wins and the row says so.
@@ -26,10 +30,35 @@ disagree, the validator wins and the row says so.
 | File references | relative from skill root, one level deep |
 | Reference validator | `skills-ref validate ./my-skill` (github.com/agentskills/agentskills) — not run here; conformance is asserted by `build/assemble.py` instead |
 
-**Consequence for this repo:** `core/skill-meta.yaml` carries `version` and a
+**Consequence for this repo:** `core/skill-meta.json` carries `version` and a
 nested `author` map. Neither is a legal top-level `SKILL.md` key, so
 `assemble.py` maps them into `metadata` as quoted strings. Our generated
 values: name 15 chars, description 757 chars — both well inside the limits.
+
+---
+
+## claude.ai skill upload (zip)
+
+**Verified 2026-08-20** against
+<https://support.claude.com/en/articles/12512198-creating-custom-skills> and
+<https://support.claude.com/en/articles/12512180-getting-started-with-skills>.
+
+| Fact | Value |
+|---|---|
+| Package format | a `.zip` |
+| Zip layout | **the skill folder is the zip root, not a subfolder** — quoted: *"The ZIP should contain the skill folder as its root (not a subfolder)"* |
+| Illustrated structure | `my-skill.zip └── my-skill/ ├── skill.md └── resources/` |
+| Folder name | must match the skill name (a mismatch is listed as a common upload error) |
+| `SKILL.md` location | directly inside the skill folder, not in a subfolder |
+| Upload path | **Customize → Skills → + → Create skill → Upload a skill** |
+| Plan tiers | Free, Pro, Max, Team, Enterprise |
+| Prerequisite | **code execution must be enabled** — Settings → Capabilities (individual), or Organization settings → Skills (Team/Enterprise owners) |
+
+**Consequence for this repo:** the release asset
+`innovate-or-die-skill-v<version>.zip` is built with `innovate-or-die/` as its
+single top-level entry, so `innovate-or-die/SKILL.md` sits at depth 1 and the
+folder name matches `name:` in the frontmatter. Built from the tagged tree with
+`git archive`, never from the working tree.
 
 ---
 
@@ -115,7 +144,36 @@ fresh-chat-per-role sequence the orchestrator currently instructs by hand.
 
 ---
 
+## skills.sh (Vercel Labs registry)
+
+**Verified 2026-08-20** against <https://skills.sh>, <https://skills.sh/docs>,
+and <https://github.com/vercel-labs/skills>.
+
+| Fact | Value |
+|---|---|
+| Submission mechanism | **none published.** No submit/publish/registry flow is documented on the site, in `/docs`, or in the repo README |
+| How skills are listed | telemetry-based ranking; a skill enters the directory by being **installed**, not submitted |
+| Install command | `npx skills add <owner/repo>` |
+| Discovery in the target repo | root, `skills/`, or agent dirs (`.claude/skills/`, `.agents/skills/`); bounded depth-3 catalog walk covering `skills/<name>/SKILL.md` |
+| Requirement | valid `SKILL.md` frontmatter with `name` and `description` |
+
+**Consequence for this repo:** nothing to submit. `skills/innovate-or-die/SKILL.md`
+already matches the depth-3 walk and carries both required frontmatter keys, so
+`npx skills add pestalytix/innovate-or-die` resolves. Closed as an open item.
+
+---
+
 ## Flattened web targets — instruction character budgets
+
+> **Headroom warning (2026-08-20).** The three `*-instructions.md` files compose
+> to **7,967 of the verified 8,000-char cap — about 33 characters spare.** Core
+> is effectively at its budget: **any future growth in `core/principles.md` or
+> `core/workflow.md` needs a compensating trim in the same commit**, or
+> `build/assemble.py --check` fails and nothing ships. ADR-003 is the worked
+> example — a +202-char amendment paid for by deduplicating text that
+> `principles.md` already carried. This is a real constraint on protocol
+> changes, not a formatting note.
+
 
 **Verified 2026-08-19**
 

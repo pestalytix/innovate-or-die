@@ -42,6 +42,17 @@ def banners(args, L):
           "few points as indistinguishable from noise, and win/loss tallies as anecdote. "
           "The qualitative verdicts and named findings carry more weight than any mean "
           "here.", ""]
+    if args.iteration == 1 and args.provider == "claude" and args.tier == "workhorse":
+        L += ["> **Aggregation corrected in v2.0.2 per external review finding 5.** The "
+              "figures in this file were previously computed over **unmatched** arms: "
+              "`eval-dental-no-shows` contributed a `with_skill` run with no control, so "
+              "a 5-case `with_skill` mean was subtracted from a 4-case control mean. The "
+              "tier is now computed over **matched valid pairs only** and this file has "
+              "been regenerated. What moved: `with_skill` pass rate 0.53 → 0.54, delta "
+              "0.14 → 0.15, `with_skill` tokens 299,802 → 364,742, token delta 259,511 → "
+              "324,451, n 5 → 4. The narrative below already described this tier as "
+              "4-case; the numbers now agree with it. No run was re-executed and no "
+              "grade was re-drawn.", ""]
     if args.iteration == 1:
         L += ["> **Post-baseline annotation.** LLM-graded assertions were later measured "
               "nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this "
@@ -62,6 +73,36 @@ def banners(args, L):
           "regenerate it; this file is the durable record.", ""]
 
 
+def scope_section(args, L):
+    """What these numbers are evidence OF -- stated before any of them are read.
+
+    Added after external review. The distinction is not a hedge: the assertions
+    are derived from the protocol's own output spec, so a high pass rate says
+    the protocol ran, not that the answer is good.
+    """
+    L += ["## What this measures", "",
+          "**Protocol compliance and cost, not independent idea quality.** Three "
+          "structural reasons, each of which caps what any number below can support:",
+          "",
+          "1. **The assertions derive from the protocol's own output spec.** "
+          "`falsifier_with_number`, `experiment_spec_complete`, `kill_list_min_5` and "
+          "the rest test whether the answer has the shape this skill mandates. An arm "
+          "running the skill is being scored against its own instructions, so a "
+          "positive delta means *the protocol executed*, not *the reasoning improved*.",
+          "2. **The blind judge's dimensions mirror the protocol's evaluator.** "
+          "non-obviousness, mechanism, testability, honesty and usefulness are close "
+          "to the gate criteria in `roles/evaluator.md`. Two instruments sharing a "
+          "rubric with the thing they measure are not independent of it.",
+          "3. **Iteration-2 is in-sample.** Its additional assertions were authored "
+          "after reading iteration-1 outputs, and the cases are the same five. "
+          "Measurement on observed cases is a consistency check, not a held-out test.",
+          "",
+          "Nothing here establishes that the protocol produces better decisions, or "
+          "that a reader acting on its output does better than one acting on the "
+          "control's. That experiment has not been run — see "
+          "`docs/NOTE-efficacy-roadmap.md` for what it would take.", ""]
+
+
 def deltas_section(bench, L):
     dl = bench.get("deltas") or {}
     if not dl:
@@ -80,6 +121,17 @@ def deltas_section(bench, L):
            "**0.000**."), "",
           "Per case (deployed): " +
           ", ".join(f"`{k}` {v:+.3f}" for k, v in dl["deployed"]["per_case"].items()), ""]
+    pr = bench.get("pairing")
+    if pr:
+        L += [f"Computed over **matched valid pairs only** ({len(pr['pairs_used'])}): "
+              + ", ".join(f"`{s}`" for s in pr["pairs_used"]) + ".", ""]
+        if pr["excluded_pairs"]:
+            L += ["Pairs excluded, with reasons:", ""]
+            for e in pr["excluded_pairs"]:
+                why = "; ".join(f"{a}: {', '.join(e[a])}" for a in
+                                ("with_skill", "without_skill") if e[a])
+                L.append(f"- `{e['slug']}` — {why}")
+            L += ["", f"_{pr['note']}_", ""]
 
 
 def judge_section(jdoc, L):
@@ -308,12 +360,15 @@ def unstable_section(args, L):
 
 def required_sections(args) -> list[str]:
     req = ["## Headline", "### Two deltas", "## Per case", "## benchmark.json (verbatim)",
-           "## Reproducing", "**Statistical modesty.**", "**Reproducibility.**"]
+           "## Reproducing", "**Statistical modesty.**", "**Reproducibility.**",
+           "## What this measures", "**Protocol compliance and cost, not independent"]
     if args.iteration == 1:
         req += ["**Post-baseline annotation.**", "## Budget and metering"]
         if args.provider == "claude":
             req += ["## Opus envelope probe", "## Activation ledger",
                     "## The route-density result"]
+            if args.tier == "workhorse":
+                req += ["**Aggregation corrected in v2.0.2 per external review finding 5.**"]
         if args.provider == "codex" and args.tier == "workhorse":
             req += ["**ADR-002 regression measured post-baseline**"]
     else:
@@ -331,6 +386,13 @@ def main() -> int:
 
     base = ROOT / f"evals-workspace/iteration-{args.iteration}/{args.provider}/{args.tier}"
     bench = load(base / "benchmark.json")
+    # The reproduction command must name the model actually requested, not a
+    # placeholder: `--model <alias>` is not a command anyone can run.
+    prov = {}
+    for t in sorted(base.rglob("timing.json")):
+        prov = json.loads(t.read_text())
+        break
+    requested = prov.get("requested_model") or "<alias>"
     if not bench:
         print(f"no benchmark.json at {base}", file=sys.stderr); return 1
     cases = json.loads((ROOT / "evals/evals.json").read_text())["evals"]
@@ -347,7 +409,14 @@ def main() -> int:
          "reported by the run, not a requested alias.", "",
          "Paired design: every case ran twice, with and without the skill, same prompt, "
          "same model, clean context. The delta is the result.", ""]
+    if prov.get("repo_commit"):
+        L += [f"**Provenance:** repo `{prov['repo_commit'][:12]}`"
+              + ("**(dirty tree)**" if prov.get("repo_dirty") else "")
+              + f" · skill **v{prov.get('skill_version','?')}** "
+              f"({prov.get('skill_version_method','?')}) · "
+              f"`{prov.get('cli_name')}` {prov.get('cli_version')}", ""]
     banners(args, L)
+    scope_section(args, L)
 
     L += ["## Headline", "", "| Metric | with_skill | without_skill | delta |",
           "|---|---|---|---|"]
@@ -398,7 +467,7 @@ def main() -> int:
     L += ["## benchmark.json (verbatim)", "", "```json", json.dumps(bench, indent=2),
           "```", "", "## Reproducing", "", "```bash",
           f"python3 evals/runners/run_evals.py --provider {args.provider} --tier {args.tier} "
-          f"--model <alias> --iteration {args.iteration}",
+          f"--model {requested} --iteration {args.iteration}",
           f"python3 evals/runners/grade.py     --provider {args.provider} --tier {args.tier} "
           f"--iteration {args.iteration}" + (" --votes 3" if args.iteration > 1 else ""),
           f"python3 evals/runners/judge.py     --provider {args.provider} --tier {args.tier} "

@@ -16,7 +16,7 @@ Do not solve the problem yet.
 
 ## 2. Search distant fields
 
-Apply **at least 8 lenses** from `../references/lenses.md`, chosen because they would produce *structurally* different answers for this specific problem — not because they are easy to write about. Answer each lens's provocation verbatim, as someone who genuinely does not know how this industry does it. A lens has done its job when it yields a move the domain's own experts would not reach for.
+Apply **at least 8 lenses** from the **Lens bank** included with this brief, chosen because they would produce *structurally* different answers for this specific problem — not because they are easy to write about. Answer each lens's provocation verbatim, as someone who genuinely does not know how this industry does it. A lens has done its job when it yields a move the domain's own experts would not reach for.
 
 Failure modes: eight lenses that all conclude the same thing (one lens applied eight times); analogy without mechanism; exotic lenses chosen for flavor.
 

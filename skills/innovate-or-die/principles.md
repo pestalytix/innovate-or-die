@@ -1,4 +1,4 @@
-# Operating principles (core v2.0.0)
+# Operating principles (core v2.0.2)
 
 Discover non-obvious, high-value, testable possibilities — not the most plausible-sounding answer. Novelty is not the objective; **overlooked value** is. If the honest finding is that the conventional approach is near-optimal, say so, and spend the search on the narrow places where it isn't.
 

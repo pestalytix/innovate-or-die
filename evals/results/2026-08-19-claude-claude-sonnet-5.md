@@ -10,17 +10,29 @@ Paired design: every case ran twice, with and without the skill, same prompt, sa
 
 > **Statistical modesty.** Five cases, **one run per case, per arm**. Every number here is **directional only** — no repeated trials of the runs themselves, so no variance estimate and no significance. `stddev` across cases measures case-to-case spread, not run-to-run stability. Treat differences of a few points as indistinguishable from noise, and win/loss tallies as anecdote. The qualitative verdicts and named findings carry more weight than any mean here.
 
+> **Aggregation corrected in v2.0.2 per external review finding 5.** The figures in this file were previously computed over **unmatched** arms: `eval-dental-no-shows` contributed a `with_skill` run with no control, so a 5-case `with_skill` mean was subtracted from a 4-case control mean. The tier is now computed over **matched valid pairs only** and this file has been regenerated. What moved: `with_skill` pass rate 0.53 → 0.54, delta 0.14 → 0.15, `with_skill` tokens 299,802 → 364,742, token delta 259,511 → 324,451, n 5 → 4. The narrative below already described this tier as 4-case; the numbers now agree with it. No run was re-executed and no grade was re-drawn.
+
 > **Post-baseline annotation.** LLM-graded assertions were later measured nondeterministic (see `2026-08-19-grader-variance.md`); the grades in this file are **single draws**, not replicated measurements. This file is the v2.0.0 record: annotated, never re-graded.
 
 > **Reproducibility.** `evals-workspace/` holds the raw transcripts and is **local-only (gitignored)**. `evals/evals.json` plus `evals/runners/` regenerate it; this file is the durable record.
+
+## What this measures
+
+**Protocol compliance and cost, not independent idea quality.** Three structural reasons, each of which caps what any number below can support:
+
+1. **The assertions derive from the protocol's own output spec.** `falsifier_with_number`, `experiment_spec_complete`, `kill_list_min_5` and the rest test whether the answer has the shape this skill mandates. An arm running the skill is being scored against its own instructions, so a positive delta means *the protocol executed*, not *the reasoning improved*.
+2. **The blind judge's dimensions mirror the protocol's evaluator.** non-obviousness, mechanism, testability, honesty and usefulness are close to the gate criteria in `roles/evaluator.md`. Two instruments sharing a rubric with the thing they measure are not independent of it.
+3. **Iteration-2 is in-sample.** Its additional assertions were authored after reading iteration-1 outputs, and the cases are the same five. Measurement on observed cases is a consistency check, not a held-out test.
+
+Nothing here establishes that the protocol produces better decisions, or that a reader acting on its output does better than one acting on the control's. That experiment has not been run — see `docs/NOTE-efficacy-roadmap.md` for what it would take.
 
 ## Headline
 
 | Metric | with_skill | without_skill | delta |
 |---|---|---|---|
-| Assertion pass rate | 0.53 | 0.39 | 0.14 |
-| Duration (s) | 373 | 36 | 336.76 |
-| Tokens | 299,802 | 40,291 | 259510.8 |
+| Assertion pass rate | 0.54 | 0.39 | 0.15 |
+| Duration (s) | 460 | 36 | 423.83 |
+| Tokens | 364,742 | 40,291 | 324450.75 |
 
 ### Two deltas
 
@@ -32,6 +44,14 @@ Paired design: every case ran twice, with and without the skill, same prompt, sa
 Excluded from per-activation: `eval-municipal-water-loss, eval-bookstore-events` — the skill did not fire, so those arms are baseline runs.
 
 Per case (deployed): `eval-route-density` +0.000, `eval-municipal-water-loss` +0.000, `eval-bookstore-events` +0.143, `eval-saas-onboarding-churn` +0.428
+
+Computed over **matched valid pairs only** (4): `eval-route-density`, `eval-municipal-water-loss`, `eval-bookstore-events`, `eval-saas-onboarding-churn`.
+
+Pairs excluded, with reasons:
+
+- `eval-dental-no-shows` — without_skill: no timing.json
+
+_a non-activated with_skill run is NOT invalid -- it is a real deployed outcome and is included in the deployed delta; see `deltas`_
 
 ### What the judge actually said
 
@@ -175,18 +195,18 @@ Run back-to-back, consecutive calls hit `cacheRead` instead of re-creating the c
   "run_summary": {
     "with_skill": {
       "pass_rate": {
-        "mean": 0.53,
-        "stddev": 0.19
+        "mean": 0.54,
+        "stddev": 0.21
       },
       "time_seconds": {
-        "mean": 372.67,
-        "stddev": 476.97
+        "mean": 459.74,
+        "stddev": 502.79
       },
       "tokens": {
-        "mean": 299801.8,
-        "stddev": 359689.41
+        "mean": 364741.75,
+        "stddev": 379983.31
       },
-      "n": 5
+      "n": 4
     },
     "without_skill": {
       "pass_rate": {
@@ -204,9 +224,9 @@ Run back-to-back, consecutive calls hit `cacheRead` instead of re-creating the c
       "n": 4
     },
     "delta": {
-      "pass_rate": 0.14,
-      "time_seconds": 336.76,
-      "tokens": 259510.8
+      "pass_rate": 0.15,
+      "time_seconds": 423.83,
+      "tokens": 324450.75
     }
   },
   "deltas": {
@@ -236,6 +256,25 @@ Run back-to-back, consecutive calls hit `cacheRead` instead of re-creating the c
     ],
     "gap_is": "activation/execution reliability"
   },
+  "pairing": {
+    "rule": "matched valid pairs only: both arms present, neither carrying model_mismatch, TIMEOUT/UNKNOWN resolution, a harness error, a parse failure, or a null grade",
+    "note": "a non-activated with_skill run is NOT invalid -- it is a real deployed outcome and is included in the deployed delta; see `deltas`",
+    "pairs_used": [
+      "eval-route-density",
+      "eval-municipal-water-loss",
+      "eval-bookstore-events",
+      "eval-saas-onboarding-churn"
+    ],
+    "excluded_pairs": [
+      {
+        "slug": "eval-dental-no-shows",
+        "with_skill": [],
+        "without_skill": [
+          "no timing.json"
+        ]
+      }
+    ]
+  },
   "resolved_models": [
     "claude-sonnet-5"
   ],
@@ -247,7 +286,7 @@ Run back-to-back, consecutive calls hit `cacheRead` instead of re-creating the c
 ## Reproducing
 
 ```bash
-python3 evals/runners/run_evals.py --provider claude --tier workhorse --model <alias> --iteration 1
+python3 evals/runners/run_evals.py --provider claude --tier workhorse --model claude-sonnet-5 --iteration 1
 python3 evals/runners/grade.py     --provider claude --tier workhorse --iteration 1
 python3 evals/runners/judge.py     --provider claude --tier workhorse --iteration 1
 python3 evals/runners/aggregate.py --provider claude --tier workhorse --iteration 1

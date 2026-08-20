@@ -25,6 +25,44 @@ SKILL = ROOT / "skills" / "innovate-or-die"
 SKILL_NAME = "innovate-or-die"
 
 
+# ------------------------------------------------------------- provenance
+# A number without its provenance cannot be reproduced or trusted later: the
+# same command against a different commit, skill version, or CLI build is a
+# different experiment. Captured once at run start, recorded per run.
+
+def _sh(*cmd: str) -> str | None:
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return (p.stdout or p.stderr).strip().splitlines()[0] if (p.stdout or p.stderr) else None
+    except Exception:
+        return None
+
+
+def skill_version() -> tuple[str, str]:
+    """Read the version from the skill tree AS IT IS AT RUN TIME, not from a
+    hardcoded map. The tree is what the run actually used."""
+    m = re.search(r'^\s*version:\s*"?([^"\n]+?)"?\s*$',
+                  (SKILL / "SKILL.md").read_text(encoding="utf-8"), re.M)
+    if m:
+        return m.group(1).strip(), "read:SKILL.md-frontmatter"
+    meta = ROOT / "core" / "skill-meta.json"
+    if meta.exists():
+        return json.loads(meta.read_text())["version"], "read:core/skill-meta.json"
+    return "UNKNOWN", "unresolved"
+
+
+def provenance(provider: str) -> dict:
+    ver, how = skill_version()
+    cli = {"claude": ("claude", "--version"), "codex": ("codex", "--version"),
+           "gemini": ("gemini", "--version")}[provider]
+    return {"repo_commit": _sh("git", "-C", str(ROOT), "rev-parse", "HEAD"),
+            "repo_dirty": bool(_sh("git", "-C", str(ROOT), "status", "--porcelain")),
+            "skill_version": ver,
+            "skill_version_method": how,
+            "cli_name": cli[0],
+            "cli_version": _sh(*cli)}
+
+
 def assert_uncontaminated(provider: str) -> None:
     """A without_skill arm is only a valid control if the skill is genuinely out
     of scope. Project-local scope is guaranteed by the empty temp cwd, but a
@@ -246,6 +284,10 @@ def main() -> int:
     args = ap.parse_args()
 
     assert_uncontaminated(args.provider)   # control-arm validity gate
+    prov = provenance(args.provider)
+    print(f"provenance: commit {str(prov['repo_commit'])[:8]}"
+          f"{' DIRTY' if prov['repo_dirty'] else ''}  skill v{prov['skill_version']}  "
+          f"{prov['cli_name']} {prov['cli_version']}", flush=True)
     cases = json.loads((ROOT / "evals/evals.json").read_text())["evals"]
     if args.only:
         cases = [c for c in cases if c["slug"] == args.only]
@@ -283,7 +325,8 @@ def main() -> int:
                    "tools": r.get("tools"), "num_turns": r.get("num_turns"),
                    "effort": args.effort or "default (deployed condition)",
                    "parse_confidence": r.get("parse_confidence"),
-                   "marker_count": r.get("marker_count")}
+                   "marker_count": r.get("marker_count"),
+                   **prov}
             if arm == "with_skill" and r.get("activated") is False:
                 rec["error"] = ("SKILL DID NOT ACTIVATE -- with_skill arm ran as a "
                                 "baseline; exclude from headline delta")

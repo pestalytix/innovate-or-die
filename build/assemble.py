@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import posixpath
 import re
 import sys
 from pathlib import Path
@@ -38,13 +39,18 @@ def load_core() -> dict:
     for field in ("name", "version", "license", "description"):
         if field not in meta:
             raise SystemExit(f"core/skill-meta.json missing required field: {field}")
+    # core/ carries `{{CORE_VERSION}}` rather than a literal version, so a
+    # heading cannot drift from skill-meta.json. Substituted once, here.
+    def v(rel: str) -> str:
+        return read(rel).replace("{{CORE_VERSION}}", meta["version"])
+
     return {
         "meta": meta,
-        "principles": read("principles.md"),
-        "workflow": read("workflow.md"),
-        "roles": {r: read(f"roles/{r}.md") for r in ROLE_ORDER},
-        "lenses": read("references/lenses.md"),
-        "experiment": read("references/experiment-spec.md"),
+        "principles": v("principles.md"),
+        "workflow": v("workflow.md"),
+        "roles": {r: v(f"roles/{r}.md") for r in ROLE_ORDER},
+        "lenses": v("references/lenses.md"),
+        "experiment": v("references/experiment-spec.md"),
     }
 
 
@@ -201,7 +207,13 @@ def agent_profiles(c: dict) -> dict[str, str]:
     for r in ROLE_ORDER:
         body = c["roles"][r]
         if r == "innovator":  # the lens bank is the innovator's working reference
-            body = body + "\n\n---\n\n" + c["lenses"]
+            body = _sub(body, REF_LENS_INLINE, "copilot innovator") \
+                + "\n\n---\n\n" + c["lenses"]
+        if r == "reviser":    # the experiment spec is the reviser's working reference
+            # These profiles install as bare .agent.md copies, so a reference to
+            # ../references/ resolves to nothing. Carry the spec instead.
+            body = _sub(body, REF_EXP_INLINE, "copilot reviser") \
+                + "\n\n---\n\n" + c["experiment"]
         fm = ["---", f"name: innovate-or-die-{r}",
               f"description: {yaml_escape(ROLE_BLURB[r])}", "---", ""]
         out[f"innovate-or-die-{r}.agent.md"] = "\n".join(fm) + body
@@ -238,7 +250,7 @@ Then assemble the final answer in the Stage 6 order below.
 
 ---
 
-{c['workflow']}
+{_sub(c['workflow'], WF_COPILOT, 'copilot orchestrator')}
 """
     out["innovate-or-die.agent.md"] = orch
     return out
@@ -322,12 +334,19 @@ def readme_fallback_drift(fallback_len: int) -> str | None:
                      path.read_text(encoding="utf-8"), re.S)
     if not para:
         return None
-    # Only exact digit figures are checked. "~20k chars" is deliberately loose
-    # and is treated as the drift-proof phrasing: nothing to check.
-    quoted = re.search(r"([0-9][0-9,]{2,})\s*chars", para.group(1))
-    if not quoted:
-        return None
-    n = int(quoted.group(1).replace(",", ""))
+    # Both forms are checked. The loose "~25k chars" phrasing ages more slowly
+    # than an exact figure, but it still ages: inlining the lens bank moved the
+    # fallback from ~20k to ~25k and the loose form went stale silently, which
+    # is precisely what this check exists to prevent.
+    text = para.group(1)
+    quoted = re.search(r"([0-9][0-9,]*)\s*k\b", text, re.I)
+    if quoted:
+        n = int(quoted.group(1).replace(",", "")) * 1000
+    else:
+        quoted = re.search(r"([0-9][0-9,]{2,})\s*chars", text)
+        if not quoted:
+            return None
+        n = int(quoted.group(1).replace(",", ""))
     if abs(n - fallback_len) <= README_DRIFT_TOLERANCE * fallback_len:
         return None
     return (f"README.md quotes the single-paste fallback at {n:,} chars; it is now "
@@ -335,15 +354,166 @@ def readme_fallback_drift(fallback_len: int) -> str | None:
             f"update it or use an approximate phrasing that cannot drift.")
 
 
-def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, str]:
-    roles = [x for r in ROLE_ORDER for x in ("---", c["roles"][r])]
 
-    instructions = _join([PREAMBLE_SPLIT, "---", c["principles"], "---", c["workflow"]])
+# ------------------------------------------------------- reference resolution
+# core/ is authored for the canonical skill package, where `roles/critic.md`
+# and `../references/lenses.md` are real files. Every other surface FLATTENS
+# that layout, so a path copied through verbatim tells the model to open
+# something the install cannot reach -- and the model either invents the
+# contents or drops the step. Each context declares how the core's references
+# render there, and check_references() fails the build if a path survives into
+# a surface that cannot resolve it.
+
+def _sub(text: str, pairs: list[tuple[str, str]], ctx: str) -> str:
+    """Literal substitution that REFUSES to no-op.
+
+    `str.replace` returns the string unchanged when its anchor drifts, which is
+    exactly how a broken reference survives a green build. If core/ rewording
+    breaks an anchor, fail here rather than ship an artifact whose instructions
+    point at a file that does not exist.
+    """
+    for old, new in pairs:
+        if old not in text:
+            raise SystemExit(
+                f"assemble.py: reference anchor missing for {ctx}:\n  {old[:90]!r}\n"
+                "core/ wording changed -- update the REF_* tables in build/assemble.py.")
+        text = text.replace(old, new)
+    return text
+
+
+LOAD_SENTENCE = (
+    "Read `principles.md` now. Load each role file at its stage, not before: "
+    "`roles/innovator.md` (with `references/lenses.md`) at Stage 1; `roles/critic.md` "
+    "at Stage 2; `roles/reviser.md` at Stage 3; `roles/evaluator.md` at Stage 4; "
+    "`references/experiment-spec.md` when assembling the final answer.")
+
+ISOLATION_CLAUSE = ("do not read `roles/critic.md` or `roles/evaluator.md` before "
+                    "Stage 1 is complete")
+
+# Stage headers that name a role file, shared by every context.
+_STAGE_ANCHORS = [
+    ("Follow `roles/innovator.md` in full", "innovator"),
+    ("Follow `roles/critic.md`.", "critic"),
+    ("Follow `roles/reviser.md` with", "reviser"),
+    ("Follow `roles/evaluator.md`.", "evaluator"),
+]
+_EXPERIMENT_ANCHOR = "full spec per `references/experiment-spec.md`"
+
+
+def _workflow_pairs(load: str, isolation: str, stage: dict, experiment: str):
+    pairs = [(LOAD_SENTENCE, load), (ISOLATION_CLAUSE, isolation)]
+    pairs += [(a, a.replace(f"`roles/{r}.md`", stage[r])) for a, r in _STAGE_ANCHORS]
+    pairs += [(_EXPERIMENT_ANCHOR, experiment)]
+    return pairs
+
+
+# Everything inlined in one document (web fallback).
+WF_SINGLE = _workflow_pairs(
+    load=("Everything the method needs is in **this document**. The **Operating "
+          "principles** section above applies throughout. Work each role's section at "
+          "its stage, not before: **Innovator** (with the **Lens bank**) at Stage 1; "
+          "**Critic** at Stage 2; **Reviser** at Stage 3; **Evaluator** at Stage 4; the "
+          "**Experiment spec** section when assembling the final answer."),
+    isolation="do not read the **Critic** or **Evaluator** sections before Stage 1 is complete",
+    stage={r: f"the **{r.capitalize()}** section" for r in ROLE_ORDER},
+    experiment="full spec per the **Experiment spec** section of this document")
+
+# Instructions file; the role briefs live in the attached knowledge file.
+WF_SPLIT = _workflow_pairs(
+    load=("Read the **Operating principles** below now. The role briefs, lens bank, "
+          "and experiment spec are in the **attached knowledge file** -- read each at "
+          "its stage, not before: **Innovator** (with the **Lens bank**) at Stage 1; "
+          "**Critic** at Stage 2; **Reviser** at Stage 3; **Evaluator** at Stage 4; the "
+          "**Experiment spec** when assembling the final answer."),
+    isolation=("do not read the **Critic** or **Evaluator** briefs before Stage 1 is "
+               "complete"),
+    stage={r: f"the **{r.capitalize()}** brief" for r in ROLE_ORDER},
+    experiment="full spec per the **Experiment spec** in the knowledge file")
+
+# Copilot orchestrator; each role is a separate .agent.md profile.
+WF_COPILOT = _workflow_pairs(
+    load=("The **Operating principles** section below applies throughout. Open a fresh "
+          "chat per role at its stage, not before: `innovate-or-die-innovator` (which "
+          "carries the lens bank) at Stage 1; `innovate-or-die-critic` at Stage 2; "
+          "`innovate-or-die-reviser` at Stage 3 (which carries the experiment spec); "
+          "`innovate-or-die-evaluator` at Stage 4."),
+    isolation=("do not open the critic or evaluator profiles before Stage 1 is complete"),
+    stage={r: f"the `innovate-or-die-{r}` profile" for r in ROLE_ORDER},
+    experiment=("full spec per the **Experiment spec** carried in the "
+                "`innovate-or-die-reviser` profile"))
+
+# Role-brief references, by what the surrounding artifact actually carries.
+LENS_ANCHOR = "from `../references/lenses.md`"
+EXPSPEC_ANCHOR = "per `../references/experiment-spec.md`"
+REF_LENS_INLINE = [(LENS_ANCHOR, "from the **Lens bank** included with this brief")]
+REF_LENS_DOC = [(LENS_ANCHOR, "from the **Lens bank** section of this document")]
+REF_EXP_INLINE = [(EXPSPEC_ANCHOR, "per the **Experiment spec** included with this brief")]
+REF_EXP_DOC = [(EXPSPEC_ANCHOR, "per the **Experiment spec** section of this document")]
+
+
+# A markdown-quoted filename. Deliberately narrow: it matches the form core/
+# actually uses, so a prose mention of "a .md file" does not trip the check.
+_REF_RE = re.compile(r"`([A-Za-z0-9_][A-Za-z0-9_./-]*\.md)`")
+
+# Surfaces that ship as ONE file. Nothing relative can resolve from them.
+_SINGLE_FILE_PREFIXES = ("adapters/web/", "adapters/copilot/agents/")
+
+
+def check_references(files: dict[str, str], fatal: list[str]) -> None:
+    """Every relative file reference must resolve in its own install context.
+
+    Repo-tree artifacts resolve against the generated tree; single-file
+    artifacts (web adapters, agent profiles) are installed alone, so any file
+    reference in them is unresolvable by construction.
+    """
+    tree = set(files)
+    for rel, content in sorted(files.items()):
+        if not rel.endswith(".md"):
+            continue
+        refs = sorted(set(_REF_RE.findall(content)))
+        if not refs:
+            continue
+        if rel.startswith(_SINGLE_FILE_PREFIXES):
+            fatal.append(
+                f"{rel}: installs as a single file but references "
+                + ", ".join(f"`{r}`" for r in refs)
+                + " -- nothing relative can resolve there; inline it or name the section")
+            continue
+        base = posixpath.dirname(rel)
+        for r in refs:
+            target = posixpath.normpath(posixpath.join(base, r))
+            if target not in tree:
+                fatal.append(f"{rel}: reference `{r}` resolves to {target}, "
+                             "which the generated tree does not contain")
+
+
+def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, str]:
+    # Role briefs, with their own references pointed at whatever the
+    # containing document actually carries.
+    def _roles(lens_pairs, exp_pairs):
+        out = []
+        for r in ROLE_ORDER:
+            body = c["roles"][r]
+            if r == "innovator":
+                body = _sub(body, lens_pairs, f"web role {r}")
+            if r == "reviser":
+                body = _sub(body, exp_pairs, f"web role {r}")
+            out += ["---", body]
+        return out
+
+    instructions = _join([PREAMBLE_SPLIT, "---", c["principles"], "---",
+                          _sub(c["workflow"], WF_SPLIT, "web instructions")])
     knowledge = _join([_HEADER, "# Innovate or Die -- role briefs and references",
                        "Read each section at its stage, as the instructions direct.",
-                       *roles, "---", c["lenses"], "---", c["experiment"]])
-    fallback = _join([PREAMBLE_FALLBACK, "---", c["principles"], "---", c["workflow"],
-                      *roles, "---", c["experiment"]])
+                       *_roles(REF_LENS_DOC, REF_EXP_DOC),
+                       "---", c["lenses"], "---", c["experiment"]])
+    # The fallback is the whole method in one paste: the lens bank must be
+    # HERE, not referenced. Its absence was the defect this inlining fixes --
+    # the text demanded eight lenses from a file the paste never carried.
+    fallback = _join([PREAMBLE_FALLBACK, "---", c["principles"], "---",
+                      _sub(c["workflow"], WF_SINGLE, "web fallback"),
+                      *_roles(REF_LENS_DOC, REF_EXP_DOC),
+                      "---", c["lenses"], "---", c["experiment"]])
 
     out = {}
     for target, (label, budget, status) in WEB_TARGETS.items():
@@ -397,6 +567,11 @@ def generate() -> tuple[dict[str, str], list[str], list[str]]:
     for fname, content in web_variants(c, problems, fatal).items():
         files[f"adapters/web/{fname}"] = content
 
+    check_references(files, fatal)
+    for rel, content in sorted(files.items()):
+        if "{{" in content:
+            leftover = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", content)))
+            fatal.append(f"{rel}: unsubstituted placeholder(s) {leftover} shipped")
     return files, problems, fatal
 
 
@@ -426,10 +601,11 @@ def main() -> int:
 
     if args.check:
         if fatal:
-            print("FAIL: generated instructions file exceeds its target's cap.\n")
+            print("FAIL: a generated artifact is unusable as shipped.\n")
             for f in fatal:
                 print(f"  error: {f}")
-            print("\nCaps live in WEB_TARGETS; sources in docs/COMPATIBILITY.md.")
+            print("\nCaps live in WEB_TARGETS (sources in docs/COMPATIBILITY.md); "
+                  "reference rendering lives in the REF_*/WF_* tables.")
             return 1
         if created or changed:
             print("DRIFT: committed trees do not match core/.\n")
@@ -460,8 +636,8 @@ def main() -> int:
     for p in problems:
         print(f"  warning: {p}")
     if fatal:
-        print("  -> `--check` will fail on this. The instructions file is the "
-              "primary install path and must fit its cap.")
+        print("  -> `--check` will fail on this. A generated artifact is unusable "
+              "as shipped: over its cap, or referencing a file its install cannot reach.")
     return 0
 
 

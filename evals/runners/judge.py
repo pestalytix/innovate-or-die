@@ -127,17 +127,39 @@ def main() -> int:
         from collections import Counter
         tally = Counter(b.get("winner") for b in ballots)
         top, n_top = tally.most_common(1)[0]
-        d = next(b for b in ballots if b.get("winner") == top)
+        # A/B/tie is a THREE-way split, so the most common vote is not
+        # necessarily a majority: 1-1-1 would otherwise award a win on a single
+        # ballot. Require strictly more than half; anything less is a tie.
+        has_majority = n_top * 2 > len(ballots)
         # unblind only now
         mapping = {"A": first, "B": second}
-        winner = mapping.get(d.get("winner"), "tie")
+        winner = mapping.get(top, "tie") if has_majority else "tie"
+        # Every ballot is evidence. Keeping one "representative" ballot threw
+        # away the disagreement that makes a split verdict worth reading.
+        unblinded = [{"winner_arm": mapping.get(b.get("winner"), "tie"),
+                      "scores": {mapping[k]: v for k, v in b.items() if k in ("A", "B")},
+                      "reason": b.get("reason", "")} for b in ballots]
+        dims = ("non_obviousness", "mechanism", "testability", "honesty", "usefulness")
+        scores_mean = {}
+        for arm in (first, second):
+            vals = [bb["scores"][arm] for bb in unblinded if arm in bb["scores"]]
+            if vals:
+                scores_mean[arm] = {d_: round(sum(v.get(d_, 0) for v in vals) / len(vals), 2)
+                                    for d_ in dims}
+        agreeing = [bb["reason"] for bb in unblinded if bb["winner_arm"] == winner]
         rec = {"slug": c["slug"], "presented_first": first,
                "vote_split": dict(tally), "votes": len(ballots),
                "unanimous": n_top == len(ballots),
-               "scores": {mapping[k]: v for k, v in d.items() if k in ("A", "B")},
-               "winner_arm": winner, "reason": d.get("reason", "")}
+               "majority": has_majority,
+               "ballots": unblinded,
+               "scores_mean": scores_mean,
+               "winner_arm": winner,
+               "reason": (agreeing[0] if agreeing else
+                          "no majority across ballots -- recorded as a tie; "
+                          "see `ballots` for each judge's reasoning")}
         out.append(rec)
-        print(f"{c['slug']:34s} winner={winner}")
+        print(f"{c['slug']:34s} winner={winner}"
+              f"{'' if has_majority else '  (NO MAJORITY -> tie)'}")
 
     (base / "judge.json").write_text(json.dumps(
         {"judge_model_requested": args.judge_model,

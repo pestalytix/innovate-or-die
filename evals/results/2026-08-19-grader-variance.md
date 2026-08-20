@@ -5,7 +5,10 @@ re-graded to pick up an unrelated re-run, and the grades came back different. Sa
 response files, same assertions, same pinned grader (`claude-sonnet-5`), two draws.
 
 This document exists because the finding changes how every other number in the eval
-history should be read.
+history should be read. Its companion is
+[`2026-08-20-judge-validity-dental.md`](2026-08-20-judge-validity-dental.md), which
+records the same class of problem in the *pairwise judge* rather than the assertion
+grader.
 
 ## The two draws
 

@@ -37,7 +37,21 @@ before adoption.
    fields) and in the results filename.
 3. **A requested-vs-resolved mismatch is a run failure**, not a footnote. The
    runner flags `model_mismatch` and the run is excluded from headline numbers.
-4. Claude Code reports several models per run in `modelUsage` — the pinned model
+4. **Harness validity and product outcome are different exclusions.** A run is
+   *harness-invalid* when the number does not measure what it claims to —
+   `model_mismatch`, a `TIMEOUT`/`UNKNOWN` resolution, a parse failure, or a null
+   grade. Those are dropped from every figure, and `aggregate.py` names each
+   dropped pair with its reason. A **non-activation is not harness-invalid**: it
+   is a real, correctly measured deployed outcome, and dropping it would delete
+   the activation-reliability finding instead of reporting it. It is included in
+   the `deployed` delta and excluded only from `per_activation`. Rule of thumb:
+   *did the instrument fail, or did the product?* Only the first is an exclusion.
+5. **Deltas are computed over matched valid pairs only.** Both arms of a case
+   must be present and harness-valid, or the case is dropped from both arms.
+   Per-arm means over different case sets are not comparable and must never be
+   subtracted. (Introduced 2026-08-20 after external review finding 5, which
+   caught exactly that on the iteration-1 Claude workhorse tier.)
+6. Claude Code reports several models per run in `modelUsage` — the pinned model
    plus utility calls (observed: `claude-haiku-4-5-20251001` alongside the pinned
    model on a trivial prompt). The runner resolves by matching the requested
    family first and only falls back to highest-output-token model, recording

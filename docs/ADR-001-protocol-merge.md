@@ -60,6 +60,6 @@ The fork is the maintainability bug (same class as `enrich_llm.py` prompt drift)
 ## Consequences
 
 - Both source protocols become historical; `docs/` retains them for reference.
-- The critic's job grows (audit + detector + checklist + kill list); its reference file is the longest. Acceptable: the critic is where the value is created.
+- The critic's job grows (audit + detector + checklist + kill list); its reference file is the longest. Acceptable: the critic carries the largest share of the enforcement text. No ablation has tested where value is created.
 - v2 is more token-expensive than v1 (quotas guarantee volume). Mitigation: terse-format rules (one line per candidate) are part of the quota spec, and the evaluator does not reward length.
 - Every adapter regenerates from `core/`; hand-edits to generated files are prohibited and CI-guarded.
