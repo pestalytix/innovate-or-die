@@ -317,9 +317,10 @@ WEB_TARGETS = {
     "m365-copilot": ("M365 Copilot Agent Builder -- Instructions field", 8000,
                      "VERIFIED 2026-08-19: Microsoft Learn, Instructions field 8,000 chars"),
     "perplexity-project": ("Perplexity Projects -- Project instructions field", 8000,
-                           "REPORTED 2026-08-20: Perplexity help centre states 8,000 chars; "
-                           "read by the author, not fetchable here (the help centre 403s "
-                           "automated requests) and not yet paste-tested"),
+                           "REPORTED 2026-08-20: help center says \"up to 8,000 characters\"; "
+                           "read via live fetch by the Claude.ai advisory session, NOT "
+                           "machine-checkable from this repo (403 to CI-style fetches) "
+                           "and not yet paste-tested"),
 }
 
 # Targets whose preamble names the host outright instead of saying "this host".
