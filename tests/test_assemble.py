@@ -119,6 +119,33 @@ def test_slack_warning_fires_only_inside_the_slack_margin(assemble, monkeypatch)
     assert any("exceeds" in f for f in fatal), "over the cap is fatal, not a warning"
 
 
+# --------------------------------------------- per-target preamble host naming
+
+def test_preamble_wrap_width_matches_the_authored_paragraph(assemble):
+    """Re-wrapping must reproduce the source when the words are unchanged.
+
+    PREAMBLE_WRAP is a magic number, and the wrong one would reflow lines the
+    host name never touched -- making every host-named target differ from the
+    generic preamble by a whole paragraph instead of by one phrase, and hiding
+    a real wording change inside the noise.
+    """
+    import textwrap
+    anchor = assemble.PREAMBLE_HOST_ANCHOR
+    assert textwrap.fill(" ".join(anchor.split()), width=assemble.PREAMBLE_WRAP) == anchor
+
+
+def test_host_named_preamble_differs_only_in_the_host_name(assemble):
+    _anchor, filled = assemble._preamble_host_pair("Perplexity Projects")
+    assert "Perplexity Projects provides no context isolation" in " ".join(filled.split())
+    assert "This host" not in filled
+
+
+def test_every_host_named_target_is_a_real_web_target(assemble):
+    """A typo'd key here would silently emit the generic preamble under a target
+    that documents itself as naming its host."""
+    assert set(assemble.WEB_PREAMBLE_HOST) <= set(assemble.WEB_TARGETS)
+
+
 # ------------------------------------------------- the real build, end to end
 
 def test_real_build_has_no_fatal_findings(assemble):

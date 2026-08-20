@@ -13,10 +13,12 @@ agent) can resume without re-deriving any of it. Session insurance and decision 
 |---|---|
 | Protocol version | **v2.1.0** (ADR-004 activation banner; v2.0.2 was ADR-003) |
 | Repo visibility | **PUBLIC**, released |
-| CI | `.github/workflows/check.yml` — `assemble.py --check` **and `pytest`** on push, green |
-| Generated trees | 42 files from `core/`, committed, drift-guarded |
+| CI | `.github/workflows/check.yml` — `assemble.py --check` **and `pytest`** on push, green. `release.yml` — on `v*` tags: both gates, a tag-vs-`skill-meta.json` version guard, then `package.py` and a `gh release upload`. **Never fired — no tag has been pushed since it was written**, so its upload step is unproven in CI; the v2.1.0 assets were uploaded by hand with the same `gh release upload` command |
+| Generated trees | 45 files from `core/`, committed, drift-guarded (42 + the perplexity-project web target) |
 | Evals | iteration-1 (v2.0.0, 2 providers) + iteration-2 (v2.0.1, Codex workhorse) + iteration-3 (v2.1.0, Codex workhorse, `with_skill` only — banner emission) |
-| Instruction headroom | **301 chars** of the 8,000 cap (was 33 before ADR-004's dedup) |
+| Instruction headroom | **301 chars** of the 8,000 cap (was 33 before ADR-004's dedup); **291** on `perplexity-project`, whose preamble names its host |
+| Release assets | **two** zips on v2.1.0, both built from the tag by `build/package.py` and reproducible from it: `…-skill-v2.1.0.zip` (folder-root, claude.ai) `sha256:089d6973…` and `…-skill-flat-v2.1.0.zip` (`SKILL.md` at zip root, Perplexity Computer) `sha256:6ac122d1…`. The original folder-root asset (`bb37204f…`, 14,251 B) was **replaced** 2026-08-20 — it predated `package.py`, carried wall-clock timestamps and was not rebuildable from the tag. Content was identical; both sha256s are in the CHANGELOG |
+| Perplexity | Computer = **Level 1 candidate**: flat-zip import PASSED the verbatim quota probe (Enterprise tier, 2026-08-20), but banner emission is UNOBSERVED and sub-agent isolation UNTESTED — both block promotion. Projects = Level 3, 8,000-char cap **reported not paste-tested** |
 
 **Everything outside `core/`, `docs/`, `evals/` and `build/` is generated.** Hand-edits
 are reverted by the next `assemble.py` run and caught by CI.
@@ -61,8 +63,10 @@ Author's items are marked; the rest are executable.
    Gate E is a clean-machine test on >=2 hosts.
 3. **skills.sh listing** — *deferred deliberately*: no authoritative submission
    procedure was found. Read the mechanism from skills.sh itself post-flip.
-4. **Publish the Custom GPT and the Gem** from `adapters/web/*-instructions.md` +
-   `*-knowledge.md`. *(author — personal accounts, not scriptable)*
+4. ~~**Publish the Custom GPT and the Gem**~~ — **done 2026-08-20**; both are live
+   and the README now links them directly. **GPT visibility is unconfirmed**, so the
+   README describes it as a *link*, not as a GPT Store listing. Confirm the
+   visibility setting before any wording that implies discoverability.
 5. **Cross-link** repo <-> kenpendergast.com. *(author)*
 6. **Retire `innovation-mode`** from the Claude project — only after the published
    skill is confirmed working there.
@@ -94,6 +98,34 @@ test (PASS on Gemini Gem), install-path audit (no auth-assuming URLs).
   Run it as `--arm with_skill` on the workhorse tier; the control arm cannot emit a
   banner and adds nothing here. Until it runs, the banner's false-negative rate is
   measured on Codex only, where there is **no ground truth to check it against**.
+- **Perplexity Computer — promotion to Level 1.** The import question is
+  **CLOSED, PASS** (2026-08-20, Ken, Perplexity **Enterprise** Computer, flat zip
+  v2.1.0): the verbatim quota-extraction probe returned all four Innovator
+  top-level quotas and all four sub-quotas intact, `>=` symbols preserved, and the
+  relative reference path preserved. Subfolders survive the import; the flat asset
+  is a full-skill install and the README says so without qualification.
+  **Two things still block Level 1, and neither is about content arriving:**
+  1. **Banner emission — UNOBSERVED.** The probe **aborted at Stage 0**, long
+     before Stage 6 where the ADR-004 banner is written. Nothing about banner
+     emission on this host has been seen either way. Note this is a *third* host
+     with no ground truth to check the banner against — Codex has none either, and
+     only Claude's observed `Skill` tool call provides it.
+  2. **Sub-agent role isolation — UNTESTED.** Computer has sub-agents; whether they
+     give the innovator and critic genuinely separate contexts is unmeasured.
+  **Both must pass before promotion.** Until then the README says **Level 1
+  candidate**. Do not read the passing content probe as evidence about execution —
+  it measured what arrived, not what runs. Also open: only the **Enterprise** tier
+  was tested; other Perplexity tiers are unmeasured.
+- **Perplexity Projects instructions cap** — the build now emits
+  `perplexity-project-{instructions,knowledge,fallback}.md` at the same 8,000-char
+  budget as ChatGPT, with **291 chars of headroom** (10 fewer than the other three:
+  its preamble names the host outright). The 8,000 figure is **reported by the help
+  centre, not paste-tested**, and unlike every other row in `COMPATIBILITY.md` it
+  could not be machine-verified — both Perplexity help-centre articles return
+  **HTTP 403 to automated fetches**. Blocked on the author: paste the real file into
+  a live Project, save, reload, confirm what survived — the method that settled
+  ChatGPT and Gemini. Until then it sits in the same epistemic class as the Gemini
+  cap: a budget we build to, not a ceiling we have watched hold.
 
 **Substantive open questions**
 - **Activation mechanism is unknown.** Three hypotheses falsified. Next step is the

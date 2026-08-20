@@ -35,6 +35,11 @@ def assemble():
 
 
 @pytest.fixture(scope="session")
+def package():
+    return _load("package_under_test", "build/package.py")
+
+
+@pytest.fixture(scope="session")
 def aggregate():
     return _load("aggregate_under_test", "evals/runners/aggregate.py")
 

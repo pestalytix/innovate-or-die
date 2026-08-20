@@ -26,8 +26,8 @@ walked past.
 Pick the row for the app you use. Some rows install this as a *plugin* — an
 add-on package the app loads for you. A repo is this project's folder on GitHub;
 `git clone` copies it to your computer. Custom GPTs (ChatGPT), Gems (Gemini),
-Agent Builder (Microsoft 365), and Agent Skills are each platform's way of adding
-custom behavior to its AI.
+Agent Builder (Microsoft 365), Projects and Computer skills (Perplexity), and
+Agent Skills are each platform's way of adding custom behavior to its AI.
 
 **If you're not sure, use Claude Code — it's two commands**, and it's the setup
 this was designed for: the roles genuinely run in separate sessions there. Then
@@ -37,15 +37,17 @@ it doesn't always switch on by itself.
 | App | What to do |
 |---|---|
 | **Claude Code** | Run `/plugin marketplace add pestalytix/innovate-or-die`, then `/plugin install innovate-or-die@pestalytix`. |
-| **claude.ai** (the website or app) | Download the skill zip from the [latest release](https://github.com/pestalytix/innovate-or-die/releases/latest), then go to **Customize → Skills → + → Create skill → Upload a skill**. Needs code execution turned on under Settings → Capabilities. |
+| **claude.ai** (the website or app) | Download `innovate-or-die-skill-v….zip` — the one *without* `flat` in the name — from the [latest release](https://github.com/pestalytix/innovate-or-die/releases/latest), then go to **Customize → Skills → + → Create skill → Upload a skill**. Needs code execution turned on under Settings → Capabilities. |
 | **Codex** | Clone this repo — the skill is already at `.agents/skills/innovate-or-die/` and gets picked up automatically. |
 | **GitHub Copilot** | Clone this repo the same way — the skill is already at `.github/skills/innovate-or-die/` and gets picked up automatically. |
 | **Codex CLI**, as a plugin | Install this repo as a plugin; the file `.codex-plugin/plugin.json` tells it to look in `skills/`. |
 | **Any app that accepts Agent Skills** | Copy the folder `skills/innovate-or-die/` into wherever that app keeps its skills. |
 | **VS Code / Visual Studio** | Copy `adapters/copilot/agents/*.agent.md` into `.github/agents/` (or `~/.copilot/agents`), and start with the one named `innovate-or-die`. |
-| **ChatGPT**, as a Custom GPT | Paste `adapters/web/chatgpt-gpt-instructions.md` into the Instructions box, and upload `chatgpt-gpt-knowledge.md` as Knowledge. |
-| **Gemini**, as a Gem | Paste `adapters/web/gemini-gem-instructions.md` into the Gem's instructions, and attach `gemini-gem-knowledge.md`. |
+| **ChatGPT** | Easiest: open the [ready-made GPT](https://chatgpt.com/g/g-6a85fa3ea49c8191b4a7c58167f8eff5-innovate-or-die) (a link — it is not listed in the GPT Store). Or build your own: paste `adapters/web/chatgpt-gpt-instructions.md` into the Instructions box, and upload `chatgpt-gpt-knowledge.md` as Knowledge. |
+| **Gemini** | Easiest: open the [ready-made Gem](https://gemini.google.com/gem/1XoPOHbLHJCR5zxVRxmOKsZVlBzsK5EWj). Or build your own: paste `adapters/web/gemini-gem-instructions.md` into the Gem's instructions, and attach `gemini-gem-knowledge.md`. |
 | **Microsoft 365 Copilot**, in Agent Builder | Paste `adapters/web/m365-copilot-instructions.md` into Instructions (that field holds 8,000 characters), and add `m365-copilot-knowledge.md` as a knowledge source. |
+| **Perplexity Computer** | Download the **flat** skill zip (`…-skill-flat-….zip`) from the [latest release](https://github.com/pestalytix/innovate-or-die/releases/latest) — Perplexity needs a different zip layout from claude.ai — then go to **Computer → Skills → Create skill → Upload a skill**. |
+| **Perplexity**, as a Project | Paste `adapters/web/perplexity-project-instructions.md` into the Project instructions, and upload `perplexity-project-knowledge.md` to the Project's Files. |
 | **Any app that can't take file attachments** | Paste the whole of `adapters/web/<target>-fallback.md` (pick the file matching your app) into the chat — the weakest option, and [there is a catch](#what-you-get-on-each-app-fidelity-levels). |
 
 Then ask it something hard, or just say `innovate or die`.
@@ -132,14 +134,30 @@ separation they can provide, so fidelity degrades in four known steps.
 **Level 1 — Agentic hosts with subagents.** Claude Code, Codex, Copilot coding
 agent. The innovator and critic run in genuinely separate contexts. Full fidelity.
 
+**Level 1, candidate — Perplexity Computer.** The install works: uploading the
+flat zip to Enterprise Computer was tested on 2026-08-20, and the role briefs and
+reference files arrive **intact** — all eight Innovator quotas came back verbatim,
+symbols and all. So this is a real, full-skill install, and the table above says
+so plainly.
+
+It stays a *candidate* for Level 1 because Level 1 is a claim about how the host
+**runs** the protocol, not about whether the files arrived. Two things are still
+unmeasured: whether Computer's sub-agents give the innovator and critic genuinely
+separate contexts, and whether the run emits the version banner at all — the test
+stopped at Stage 0, well before the banner is written at Stage 6. Content arriving
+intact is not evidence about either. Both have to pass before this moves up;
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) records exactly what was and was
+not measured.
+
 **Level 2 — Copilot `.agent.md` profiles.** One profile per role plus an
 orchestrator. The separation is real but *manual*: you open a fresh chat per role
 and hand forward only what the next role is entitled to see. Fidelity depends on
 you following that.
 
-**Level 3 — Web loader + knowledge file.** ChatGPT GPTs, Gems, Agent Builder. One
-context, staged reading: the instructions file carries the principles and
-workflow, the role briefs live in an attached knowledge file read stage by stage.
+**Level 3 — Web loader + knowledge file.** ChatGPT GPTs, Gems, Agent Builder,
+Perplexity Projects. One context, staged reading: the instructions file carries
+the principles and workflow, the role briefs live in an attached knowledge file
+read stage by stage.
 Two caveats — there is no true isolation, only discipline; and knowledge-file
 access is **retrieval-mediated**, so a role brief may in principle arrive in
 fragments. **Tested once and passed:** a verbatim quota-extraction probe on a
@@ -155,8 +173,10 @@ protocol version) also exceeds every known instruction-field cap, so it may be
 truncated. Shipped because a documented degraded path beats an undocumented
 one, not because it is recommended.
 
-Two of those caps are themselves unverified: the ChatGPT Custom GPT and Gemini Gem
-instruction limits have no first-party source. See `docs/COMPATIBILITY.md`.
+Not every cap behind those levels is equally solid: the Gemini Gem limit is a
+lower bound we have watched hold, not a published figure, and the Perplexity
+Projects limit is reported by its help centre but never paste-tested. See
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md), which states the method for each.
 
 ## Evaluation
 

@@ -20,6 +20,7 @@ import json
 import posixpath
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -315,7 +316,53 @@ WEB_TARGETS = {
                      "so the cap is >= that size; exact cap unknown"),
     "m365-copilot": ("M365 Copilot Agent Builder -- Instructions field", 8000,
                      "VERIFIED 2026-08-19: Microsoft Learn, Instructions field 8,000 chars"),
+    "perplexity-project": ("Perplexity Projects -- Project instructions field", 8000,
+                           "REPORTED 2026-08-20: Perplexity help centre states 8,000 chars; "
+                           "read by the author, not fetchable here (the help centre 403s "
+                           "automated requests) and not yet paste-tested"),
 }
+
+# Targets whose preamble names the host outright instead of saying "this host".
+# Naming it grounds the instruction -- the model is told which product's
+# limitation it is working around, not just that one exists.
+#
+# Only the new target is listed. Adding the other three is a one-line change and
+# is deliberately not made here: it would rewrite three artifacts that are
+# already published and paste-tested, for a wording improvement no evidence asks
+# for. Do it in its own commit, with its own headroom check, or not at all.
+WEB_PREAMBLE_HOST = {
+    "perplexity-project": "Perplexity Projects",
+}
+
+# The paragraph the host name is substituted into, quoted at its wrapped width
+# because that is how it appears in PREAMBLE_SPLIT. Run through _sub(), so a
+# reword of the preamble fails the build rather than silently emitting the
+# generic "This host" text under a target that promised to name its host.
+PREAMBLE_HOST_ANCHOR = """You are running a four-role innovation protocol **alone, in one context**. This
+host provides no context isolation, so fidelity depends on you enforcing it:
+run the roles as clearly separated passes, and complete each pass fully before
+reading the next role's brief."""
+
+# The width PREAMBLE_SPLIT was authored at. Re-wrapping at any other width would
+# reflow lines the host name never touched, so the emitted diff between two
+# targets would be the whole paragraph instead of one word. A test asserts that
+# filling the anchor with its own words reproduces it byte for byte, which is
+# what pins this number to the source rather than to taste.
+PREAMBLE_WRAP = 79
+
+
+def _preamble_host_pair(host: str) -> tuple[str, str]:
+    """Swap "This host" for the host's name and re-wrap the paragraph.
+
+    Re-wrapping rather than patching one line: host names differ in length, and
+    a substitution that leaves the original line breaks in place produces a
+    ragged paragraph whose raggedness varies per target -- a diff that looks
+    like an edit every time a name changes. textwrap makes the output a
+    function of the text, not of where the old words happened to sit.
+    """
+    unwrapped = " ".join(PREAMBLE_HOST_ANCHOR.split())
+    named = unwrapped.replace("This host provides", f"{host} provides", 1)
+    return PREAMBLE_HOST_ANCHOR, textwrap.fill(named, width=PREAMBLE_WRAP)
 
 _HEADER = "<!-- GENERATED from core/ by build/assemble.py -- do not hand-edit. -->"
 
@@ -547,8 +594,15 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
             out += ["---", body]
         return out
 
-    instructions = _join([PREAMBLE_SPLIT, "---", c["principles"], "---",
-                          _sub(c["workflow"], WF_SPLIT, "web instructions")])
+    def _instructions(target: str) -> str:
+        preamble = PREAMBLE_SPLIT
+        host = WEB_PREAMBLE_HOST.get(target)
+        if host:
+            preamble = _sub(preamble, [_preamble_host_pair(host)],
+                            f"web preamble for {target}")
+        return _join([preamble, "---", c["principles"], "---",
+                      _sub(c["workflow"], WF_SPLIT, "web instructions")])
+
     knowledge = _join([_HEADER, "# Innovate or Die -- role briefs and references",
                        "Read each section at its stage, as the instructions direct.",
                        *_roles(REF_LENS_DOC, REF_EXP_DOC),
@@ -563,6 +617,7 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
 
     out = {}
     for target, (label, budget, status) in WEB_TARGETS.items():
+        instructions = _instructions(target)
         out[f"{target}-instructions.md"] = instructions
         out[f"{target}-knowledge.md"] = knowledge
         out[f"{target}-fallback.md"] = fallback

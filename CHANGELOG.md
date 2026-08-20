@@ -5,6 +5,95 @@ All notable changes to the core protocol. Format follows
 versioned with [semver](https://semver.org/). Protocol changes require an ADR
 and a version bump.
 
+## [Unreleased]
+
+No protocol change — `core/` is untouched, so the version stays 2.1.0. Release
+packaging, a fourth web target, and the Perplexity findings.
+
+### Added
+- **`build/package.py`** — builds the release assets from a tag with `git
+  archive`, never from the working tree, and emits **two** zips because two hosts
+  demand incompatible layouts: `innovate-or-die-skill-v<ver>.zip` (skill folder as
+  the zip root — claude.ai) and `innovate-or-die-skill-flat-v<ver>.zip` (`SKILL.md`
+  at the zip root — Perplexity Computer). Each layout is asserted against the
+  finished zip before it can reach a release, so a wrong-rooted asset fails the
+  build instead of failing silently at someone else's upload.
+  **Builds are reproducible.** `git archive` given a `<ref>:<path>` argument
+  resolves a *tree*, which carries no date, so it stamps members with the wall
+  clock and writes a second build-time mtime into an `UT` extra field that no zip
+  listing shows. Both are normalised to the commit time in UTC. Two builds of the
+  same tag are now byte-identical, in CI or on a laptop, in any timezone.
+- **`.github/workflows/release.yml`** — on a `v*` tag: `assemble.py --check`,
+  `pytest`, a guard that the tag matches `core/skill-meta.json`, then `package.py`
+  and a `gh release upload`. `check.yml` is untouched. Uses the `gh` CLI rather
+  than a third-party action, so no external code receives the write-scoped token.
+- **A fourth web target, `perplexity-project`** — `perplexity-project-{instructions,
+  knowledge,fallback}.md`, same 8,000-char budget as `chatgpt-gpt`. Its preamble
+  names Perplexity Projects outright instead of saying "this host", which costs 10
+  characters: **7,709 of 8,000, 291 spare**. The other three are unchanged at 7,699.
+- **`tests/test_package.py`** — the packager's layout assertions, each handed the
+  mistake it exists to catch (flat zip checked as folder-root and the reverse,
+  `SKILL.md` one level too deep, a dropped member), plus a positive control so the
+  negative tests cannot pass an assertion that rejects everything, plus a
+  reproducibility test. Three more in `test_assemble.py` cover the per-target
+  preamble. Suite: 56 → **65**.
+- **README** now links the published [Custom GPT] and [Gem] directly, and carries
+  two Perplexity rows (Computer, Projects).
+
+### Changed
+- **`docs/COMPATIBILITY.md` gains a Perplexity section**, with every figure quoted
+  verbatim rather than paraphrased. Its provenance is stated exactly: read
+  2026-08-20 by the Claude.ai advisory session via live fetch (HTTP 200), **not
+  machine-checked from this repo** — the help center returns 403 to CI-style
+  fetches. That is a third kind of exception to this project's verification rule,
+  and the file's opening paragraph now enumerates all three.
+- **Perplexity Computer subfolder survival: TESTED, PASS** (2026-08-20, Ken,
+  Perplexity Enterprise Computer, flat zip v2.1.0). The verbatim quota-extraction
+  probe — the same one that settled the Gemini Gem — returned all four Innovator
+  top-level quotas and all four sub-quotas intact, `>=` symbols preserved, relative
+  reference path preserved. The flat asset is a full-skill install.
+  **It stays a Level 1 *candidate* regardless.** Level 1 is a claim about how a
+  host runs the protocol, not about whether the files arrived. Banner emission is
+  **UNOBSERVED** (the probe aborted at Stage 0, before Stage 6 writes the banner)
+  and sub-agent role isolation is **UNTESTED**. Both must pass before promotion.
+- The README's claim that the ChatGPT and Gemini caps "have no first-party source"
+  was stale — ChatGPT was settled by paste test on 2026-08-19. Corrected.
+
+### Fixed
+- **`package.py --check` no longer builds into `dist/` and deletes afterwards.**
+  It built the assets, asserted them, then removed them — which also removed
+  assets a previous real run had left there. A verification mode that can destroy
+  what it verifies makes "I built the zips" and "the zips are on disk" separately
+  true and jointly false. It now builds into a temp dir and says so, and both
+  modes print what is left behind.
+
+### Release assets — v2.1.0 re-cut
+The v2.1.0 folder-root asset originally attached to the release was **not built by
+`package.py`**: its member timestamps are wall-clock build time, 45 seconds after
+the tag's own commit, so it could not be reproduced from the tag. It has been
+**replaced** with the reproducible build, and the flat asset added. Recorded here
+because a published checksum that silently changes is worse than one that changes
+loudly:
+
+| Asset | sha256 | size |
+|---|---|---|
+| `innovate-or-die-skill-v2.1.0.zip` — **superseded**, original upload | `bb37204fcf728a7982c860438915172ae72d9a0421454d6f58135e80eecad86e` | 14,251 |
+| `innovate-or-die-skill-v2.1.0.zip` — current, `package.py` build | `089d69738cc76430a4da1fe64c0ec7e02c428209392e9a063a3478a7f162d41a` | 14,053 |
+| `innovate-or-die-skill-flat-v2.1.0.zip` — new | `6ac122d1e5bbe7e0d9a714b7c7c72126534d85e9b10064e45eeb927af6429f27` | 13,625 |
+
+Reproduce either with `python3 build/package.py --ref v2.1.0` — **from the tag,
+not from `HEAD`**. The two differ: member mtimes come from the ref's own commit,
+so a `HEAD` build of the same files yields different bytes and a different
+checksum. That is the property working, not a defect.
+
+The two folder-root builds are **identical in content** — same 11 members, same
+names, same order, same CRC-32s. They differ only in embedded timestamps and the
+`UT` extra field, which is the 198-byte size difference. The asset had been
+downloaded twice before replacement.
+
+[Custom GPT]: https://chatgpt.com/g/g-6a85fa3ea49c8191b4a7c58167f8eff5-innovate-or-die
+[Gem]: https://gemini.google.com/gem/1XoPOHbLHJCR5zxVRxmOKsZVlBzsK5EWj
+
 ## [2.1.0] — 2026-08-20
 
 Minor. **The first change to the delivery structure since v2.0.0**, and the first

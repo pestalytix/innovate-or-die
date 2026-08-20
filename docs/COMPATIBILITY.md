@@ -1,12 +1,14 @@
 # Compatibility notes
 
 Every fact below was verified against a live source on the date shown, not
-recalled — **except where the row itself says otherwise**. Two kinds of exception
-exist and both are stated in place, never omitted: a check we did not run (the
-`skills-ref` validator row below), and a limit we accepted without a first-party
-source (rows marked **WORKING BUDGET**). A row with neither marking was seen with
-our own eyes on the date given. Re-verify before trusting any row older than a
-frontier release or a host UI change.
+recalled — **except where the row itself says otherwise**. Three kinds of exception
+exist and each is stated in place, never omitted: a check we did not run (the
+`skills-ref` validator row below), a limit we accepted without a first-party
+source (rows marked **WORKING BUDGET**), and a first-party source that only a
+human could read because the host blocks automated fetches (the Perplexity
+section). A row with none of those markings was seen with our own eyes on the
+date given. Re-verify before trusting any row older than a frontier release or a
+host UI change.
 
 **Verification method matters.** Where a vendor doc and a shipped validator
 disagree, the validator wins and the row says so.
@@ -58,7 +60,123 @@ values: name 15 chars, description 757 chars — both well inside the limits.
 `innovate-or-die-skill-v<version>.zip` is built with `innovate-or-die/` as its
 single top-level entry, so `innovate-or-die/SKILL.md` sits at depth 1 and the
 folder name matches `name:` in the frontmatter. Built from the tagged tree with
-`git archive`, never from the working tree.
+`git archive`, never from the working tree. A **second** asset,
+`innovate-or-die-skill-flat-v<version>.zip`, carries the identical files under
+the opposite layout — see Perplexity, immediately below, for why one zip cannot
+serve both hosts.
+
+---
+
+## Perplexity — Computer skills and Projects
+
+Sources:
+<https://www.perplexity.ai/help-center/en/articles/13914413-how-to-use-computer-skills>
+(article updated 2026-08-14) and
+<https://www.perplexity.ai/help-center/en/articles/10352961-what-are-spaces>
+(article updated 2026-07-30).
+
+**Read 2026-08-20 by the Claude.ai advisory session via live fetch (HTTP 200);
+not machine-checked from this repo — the help center returns 403 to CI-style
+fetches.** That split is the whole reason this section is marked: the figures
+below were read off the live pages, but no build step, CI job, or agent working
+in this repo can re-read them to confirm the pages still say so. Every value in
+the two tables is therefore **quoted verbatim** rather than paraphrased, so a
+future reader can diff the quote against the live article instead of trusting a
+summary of it.
+
+### Computer skill upload (zip)
+
+Quoted verbatim from the article (updated 2026-08-14):
+
+| Fact | Value (verbatim) |
+|---|---|
+| Package format and layout | *"a .zip file with a SKILL.md file at the root level, or upload a .md file directly"* |
+| Max size | *"Maximum file size: 10 MB"* |
+| Skill `name` — character set | *"lowercase with hyphens only"* |
+| Skill `name` — length | *"between 1 and 64 characters"* |
+| Upload path | **Computer → Skills → Create skill → Upload a skill** |
+
+Note the alternative the quote offers: a bare `.md` file is also accepted. We do
+not use it — it would ship `SKILL.md` with no role briefs at all — but it is the
+documented fallback if the zip path ever breaks.
+
+**This is the exact inverse of claude.ai's requirement.** claude.ai wants the
+skill *folder* as the zip root; Perplexity wants `SKILL.md` itself there. No
+single zip satisfies both, and a zip built for one is not degraded on the other
+— it simply does not load. That is why `build/package.py` emits two assets from
+the same tree rather than one, and why each is layout-asserted before it can
+reach a release.
+
+Size is not a live constraint: the skill package is ~14 KB against a 10 MB cap,
+three orders of magnitude of headroom. The `name` rule is identical to
+agentskills.io's, and `innovate-or-die` (15 chars) already satisfies both.
+
+### Projects (formerly Spaces)
+
+| Fact | Value |
+|---|---|
+| Instructions field | *"up to 8,000 characters"* (verbatim) |
+| Renamed | Spaces → **Projects** |
+| Knowledge attachment | files uploaded to the Project's **Files** |
+
+**On the rename date.** 2026-07-30 is the date the *article* was updated, which
+is what the source actually gives us. Treating it as the date of the rename is an
+inference, and a reasonable one, but it is not a quoted fact — so it is written
+here as the article's update date and nowhere as "renamed on". If the exact
+rename date matters to something, it needs its own source.
+
+The 8,000 figure matches the ChatGPT and M365 caps, so the existing web target
+budget carries over unchanged — `perplexity-project-instructions.md` is built to
+the same cap as `chatgpt-gpt-instructions.md` and currently sits **291 chars
+under** it (10 more than the others: its preamble names the host).
+
+**The cap is REPORTED, not paste-tested.** The ChatGPT 8,000 was settled by
+pasting the real file into the live builder and reloading; this one has not been.
+A published figure and a figure we have watched hold are different things, and
+only the second one has ever caught a surprise. Until the paste test runs, this
+sits in the same epistemic class as the Gemini row — a number we build to, not a
+ceiling we have seen enforced.
+
+### Subfolder survival — TESTED AND PASSED, 2026-08-20
+
+**Method:** the verbatim quota-extraction probe, the same one that settled the
+Gemini Gem on 2026-08-19 — upload the artifact, then ask the host to return the
+Innovator brief's quotas *verbatim* and check them character by character. This
+is the probe's second use, and reusing it is deliberate: two hosts measured the
+same way are comparable, two hosts measured differently are not.
+
+| | |
+|---|---|
+| Date | 2026-08-20 |
+| Run by | Ken |
+| Host | Perplexity **Enterprise** Computer |
+| Artifact | `innovate-or-die-skill-flat-v2.1.0.zip` — the flat asset, `SKILL.md` at zip root |
+| Result | **PASS.** All four Innovator top-level quotas and all four sub-quotas returned intact. `>=` symbols preserved. The relative reference path survived too |
+
+**What this establishes:** the `roles/` and `references/` subfolders inside the
+flat zip **survive the Computer import**. The failure this probe was written to
+catch — a skill that loads with `SKILL.md` present and its four role briefs
+silently missing — did not occur. The flat asset is a full-skill install on this
+host, and the README says so without qualification.
+
+**What it does not establish**, and neither should be read out of it:
+
+- The host tested was **Enterprise** Computer. Whether other Perplexity tiers
+  import identically is untested. One tier is not all tiers — the same caution
+  the knowledge-file caveat carries for retrieval implementations.
+- Content arriving intact says nothing about **how the host runs it**. See below.
+
+### Still open — both block promotion out of candidate status
+
+| Question | Why it matters | Status |
+|---|---|---|
+| Does the skill **emit the ADR-004 activation banner** on this host? | The banner is the only positive signal that the protocol ran at all. The probe could not answer it: it **aborted at Stage 0**, long before Stage 6 where the banner is written. | **UNOBSERVED** |
+| Does Perplexity Computer give the roles **real sub-agent isolation**? | Sub-agents exist on the host, but the protocol needs the innovator and critic in genuinely separate contexts. Isolation is the design choice everything else rests on; without it the host is Level 3 with extra steps, not Level 1. | **UNTESTED** |
+
+**Both must pass before Perplexity Computer is promoted to Level 1.** A passing
+content probe is not a passing execution probe, and the temptation to treat one
+as the other is exactly why they are listed separately here. Until then the
+README lists it as a **Level 1 candidate**, and Projects as Level 3.
 
 ---
 
@@ -165,12 +283,14 @@ already matches the depth-3 walk and carries both required frontmatter keys, so
 
 ## Flattened web targets — instruction character budgets
 
-> **Headroom (updated 2026-08-20, core v2.1.0).** The three `*-instructions.md`
-> files compose to **7,699 of the verified 8,000-char cap — 301 characters
-> spare.** That is above the 200-char slack target `build/assemble.py` now warns
-> below, so the build is quiet again. It was 33 characters before ADR-004: the
-> activation banner cost 128 and was paid for by a 396-char dedup of the web
-> preamble against the workflow it duplicated.
+> **Headroom (updated 2026-08-20, core v2.1.0).** Three of the four
+> `*-instructions.md` files compose to **7,699 of the verified 8,000-char cap —
+> 301 characters spare.** The fourth, `perplexity-project-instructions.md`, is
+> **7,709 — 291 spare**: its preamble names its host outright rather than saying
+> "this host", which costs 10 characters. Both are above the 200-char slack
+> target `build/assemble.py` warns below, so the build is quiet again. It was 33
+> characters before ADR-004: the activation banner cost 128 and was paid for by a
+> 396-char dedup of the web preamble against the workflow it duplicated.
 >
 > **The rule has not relaxed.** Growth in `core/principles.md` or
 > `core/workflow.md` still needs a compensating trim in the same commit once the
@@ -188,6 +308,7 @@ already matches the depth-3 walk and carries both required frontmatter keys, so
 | M365 Copilot Agent Builder — Instructions | **8,000** | **Verified** | Microsoft Learn, *Build agents with Agent Builder*, doc dated 2026-05-26. Same table: Name 30 chars, Description 1,000 chars |
 | ChatGPT Custom GPT — Instructions | **8,000** | **Verified** | **Paste test by the author, 2026-08-19.** 8,000-char limit shown in the GPT builder UI; the 7,874-char instructions file was accepted |
 | Gemini Gem — Instructions | **≥ ~7.9k, exact cap unknown** | **Working budget** | **Paste test by the author, 2026-08-19.** The Gem accepted the full instructions file (7,874 chars), so the cap is at least that. Google publishes no limit and the UI shows none; upper bound untested. Build keeps 8,000 as the working budget |
+| Perplexity Projects — Project instructions | **8,000** | **Reported** | *"up to 8,000 characters"*, quoted from the Perplexity help center article (updated 2026-07-30). Read 2026-08-20 by the Claude.ai advisory session via live fetch; not machine-checkable from this repo, and not paste-tested — see the Perplexity section above |
 | ChatGPT custom instructions (not GPTs) | 5,000 paid / 1,500 free | Verified, secondary | Raised from 1,500 on 2026-07-15. Not used by this project — recorded to prevent confusion with the Custom GPT field |
 
 **Method note.** The two previously-unverified caps were settled by paste test

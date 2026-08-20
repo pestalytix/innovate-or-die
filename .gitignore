@@ -14,3 +14,6 @@ docs/notes/local/
 
 # chat-session handoffs stay local; never published
 docs/handoffs/
+
+# release build artifacts: rebuilt from any tag with build/package.py
+dist/
