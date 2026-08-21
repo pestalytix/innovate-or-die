@@ -10,22 +10,27 @@ find out whether the zip that goes to OpenAI behaves.
 
 ## Procedure
 
-### 1. Build from a SHA, not from the tree
+### 1. Build from the commit, not from the tag and not from the tree
 
 ```
-git rev-parse vX.Y.Z^{commit}                     # record this
-python3 build/package.py --ref vX.Y.Z
-sha256sum dist/innovate-or-die-openai-vX.Y.Z.zip  # record this too
+python3 build/package.py --ref a9ee346
+sha256sum dist/innovate-or-die-openai-v2.1.0.zip   # record this
 ```
 
-Both values go in the table below **and** in [README.md](README.md). If they
-differ between the two, the wrong artifact was tested.
+Expected: `a370409ff480e41b440a62ddd402e43834b4b52a8dadae419ad5598365ebb3ab`,
+17,918 bytes. **A different hash means you are not testing the recorded
+artifact — stop and find out why before going further.**
+
+`--ref v2.1.0` will not work: the tag predates this package, and the version in
+the filename is not the artifact's identity. The commit and the checksum are.
+See the provenance block in [README.md](README.md), which is where these values
+are recorded and where any future build must also be recorded.
 
 ### 2. Extract and re-validate
 
 ```
 mkdir -p /tmp/iod-artifact-test && cd /tmp/iod-artifact-test
-unzip <path>/innovate-or-die-openai-vX.Y.Z.zip
+unzip <path>/innovate-or-die-openai-v2.1.0.zip
 python3 <repo>/build/validate_openai.py /tmp/iod-artifact-test
 ```
 
@@ -86,7 +91,7 @@ Blank until run. Fill in from the run, not from memory.
 |---|---|
 | Date run | |
 | Run by | |
-| Tag / commit SHA | |
+| Commit SHA built from | |
 | Artifact `sha256` | |
 | Host and build | |
 | Model | |

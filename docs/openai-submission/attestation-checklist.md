@@ -10,14 +10,14 @@ Work down it immediately before submitting. Tick nothing in advance.
 
 | # | Claim | How to verify | ✓ |
 |---|---|---|---|
-| 1 | Built from a tagged commit, not a working tree | `python3 build/package.py --ref vX.Y.Z`; the script reads only the ref through `git archive` | |
-| 2 | The build is reproducible from that tag | build twice; `sha256sum` matches. Asserted by `tests/test_package.py` | |
+| 1 | Built from a recorded commit, not a working tree | `python3 build/package.py --ref a9ee346`; the script reads only the ref through `git archive`. **Not the `v2.1.0` tag** — it predates this package | |
+| 2 | The build is reproducible from that commit | build twice; `sha256sum` matches the value in [README.md](README.md). Asserted by `tests/test_package.py` | |
 | 3 | Generated trees match `core/` | `python3 build/assemble.py --check` exits 0 | |
 | 4 | Harness tests pass | `python3 -m pytest -q` | |
-| 5 | The artifact passes every directory rule | `python3 build/validate_openai.py dist/innovate-or-die-openai-vX.Y.Z.zip` exits 0 | |
+| 5 | The artifact passes every directory rule | `python3 build/validate_openai.py dist/innovate-or-die-openai-v2.1.0.zip` exits 0 | |
 | 6 | Exactly one plugin root, no sibling files | `unzip -l` shows a single top-level directory. Asserted by `assert_openai_layout` | |
 | 7 | The member set is exactly what was intended | `EXPECTED_OPENAI` in `build/package.py`, asserted against the finished zip | |
-| 8 | SHA and `sha256` of the submitted artifact are recorded | the table in [README.md](README.md) is filled in | |
+| 8 | SHA and `sha256` of the submitted artifact are recorded | the provenance block in [README.md](README.md) — recorded 2026-08-21 for `a9ee346` / `a370409f…` | |
 
 ## Skills-only scope
 
@@ -64,5 +64,5 @@ Work down it immediately before submitting. Tick nothing in advance.
 
 | # | | ✓ |
 |---|---|---|
-| 30 | The artifact tested in ChatGPT is the artifact being submitted — same SHA, same checksum | |
+| 30 | The artifact tested in ChatGPT is the artifact being submitted — same commit, same checksum | |
 | 31 | Every row above is ticked, or the claim it covers has been removed from the submission | |
