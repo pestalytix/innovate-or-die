@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Innovate or Die">
+  <title>Innovate or Die</title>
+  <rect width="512" height="512" rx="96" fill="#101418"/>
+  <g fill="none" stroke="#f2f4f6" stroke-width="16" stroke-linecap="round">
+    <path d="M256 428 L96 236"/>
+    <path d="M256 428 L172 176"/>
+    <path d="M256 428 L256 152"/>
+    <path d="M256 428 L340 176"/>
+    <path d="M256 428 L416 236"/>
+    <circle cx="96" cy="236" r="26"/>
+    <circle cx="172" cy="176" r="26"/>
+    <circle cx="340" cy="176" r="26"/>
+    <circle cx="416" cy="236" r="26"/>
+  </g>
+  <circle cx="256" cy="152" r="42" fill="#f2f4f6"/>
+  <circle cx="256" cy="428" r="24" fill="#f2f4f6"/>
+</svg>

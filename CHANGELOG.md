@@ -7,10 +7,104 @@ and a version bump.
 
 ## [Unreleased]
 
-No protocol change — `core/` is untouched, so the version stays 2.1.0. Release
-packaging, a fourth web target, and the Perplexity findings.
+No protocol change — the protocol files in `core/` are untouched, so the version
+stays 2.1.0. Release packaging, a fourth web target, the Perplexity findings, and
+the OpenAI Plugins Directory package.
+
+### Publisher decision — OpenAI directory only
+
+**Decided by Ken Pendergast, 2026-08-21.** Recorded verbatim, and also carried in
+`core/listing-openai.json`'s `_note` so it travels with the file it governs:
+
+> Ken Pendergast remains creator, author, and copyright holder. PESTalytix LLC is
+> the verified publisher for the OpenAI directory only. Use PESTalytix LLC ONLY
+> in `.codex-plugin/plugin.json` `author.name` and `interface.developerName`. Do
+> NOT touch `skill-meta.json` author, `.claude-plugin/plugin.json`, LICENSE, or
+> published ZIPs. Disclosure text: "Created by Ken Pendergast. Published on
+> OpenAI by PESTalytix LLC." — include in the OpenAI `longDescription`.
+
+This is the same split already recorded in `docs/COMPATIBILITY.md` under
+*Distribution identity vs authorship*, applied to one more surface: distribution
+identity tracks PESTalytix, authorship is Ken Pendergast personally, and the two
+are deliberately not reconciled. What is new is that the OpenAI directory is the
+first surface where the split is **visible to the consumer**, which is why the
+disclosure sentence is in the listing copy rather than only in a manifest.
+
+`build/validate_openai.py` enforces the narrow half of this as a POLICY rule:
+`author.name` must equal `interface.developerName` **in the artifact**. The portal
+would otherwise normalise a mismatch away at a manual confirmation step, which
+would put the published publisher identity in the hands of whoever clicks rather
+than in `core/`.
 
 ### Added
+- **`core/listing-openai.json`** — the canonical source for the OpenAI directory
+  listing: publisher identity plus the whole `interface` block. Generated into
+  `.codex-plugin/plugin.json` by `assemble.py`, which copies `interface` through
+  wholesale rather than field by field, so a listing field added in `core/`
+  reaches the manifest by being added in `core/` and not by also remembering to
+  edit the generator. Identity — name, version, description, licence, keywords,
+  skills — still comes from `core/skill-meta.json`, unchanged.
+  The copy itself is deliberately architecture-neutral and **carries no counts**.
+  The README says how many candidates the protocol generates and how many a critic
+  typically kills; in README context those read as a description of the method, but
+  in store copy a number reads as a *result* — a claim about what the user will
+  get — and no measurement supports reading it that way. `shortDescription` is
+  "Ideas that survive reality" (26 of 30 chars).
+- **`assets/logo.svg`** — the listing logo and composer icon, one file for both.
+  512×512 numeric square viewBox, no `width`/`height` units, no `<script>`, no
+  external `href`, no embedded font or image. Self-contained because a branding
+  asset that fetches anything is a branding asset that can break or leak after
+  submission.
+- **`build/validate_openai.py`** — the directory's rules for **skills-only**
+  packages, run against the finished zip. Every rule is tagged **OPENAI** (the
+  portal enforces it; failing means a rejected upload or a rejected listing) or
+  **POLICY** (ours; the portal would accept the package and it is still not the
+  one we meant to publish). Both exit 1 — neither is submittable — but the report
+  says which, because a POLICY rule mistaken for an OPENAI one becomes folklore
+  about the portal, and an OPENAI rule mistaken for a house rule gets waived.
+  **17 OPENAI + 2 POLICY rules**, each carrying its source URL and the date it was
+  read (2026-08-21,
+  <https://developers.openai.com/plugins/deploy/submission-errors>);
+  `--rules` prints the table.
+  Two limits exist per listing field and **the tighter one is enforced**:
+  `shortDescription` at 240 chars passes package validation and is rejected at
+  final submission, so a package can upload clean and never list. The failure
+  names both numbers.
+  The MCP-backed rule set — screenshots, four required listing URLs, domain
+  verification, mandatory test cases — is **deliberately not implemented**, and
+  the module says so. An unimplemented rule that looks implemented is worse than
+  an absent one; what is enforced instead is that this package stays skills-only.
+- **A third release asset, `innovate-or-die-openai-v<ver>.zip`.** Not another
+  layout of the skill package — a different artifact. The directory takes a
+  *plugin*: exactly one plugin root, here a single top-level directory with no
+  sibling files, holding `.codex-plugin/`, `skills/innovate-or-die/`, `assets/`
+  and `LICENSE`. It is the only asset carrying the logo and the licence, and it
+  omits `.claude-plugin/` — one manifest per host, and the publisher identity in
+  the two manifests is intentionally different. Built by one `git archive` over
+  four repo paths from the ref, restamped and asserted exactly like the other two,
+  and byte-reproducible from the tag. Layout assertion **and** validator run on
+  every build, not only under `--check`: `release.yml` calls `package.py` without
+  `--check`, so a check that only fired in verification mode would be a check the
+  release path never ran.
+- **`docs/openai-submission/`** — what the submission needs that is not code, and
+  the record of what was actually filed. Five positive cases taken unchanged from
+  `evals/evals.json` (reused rather than written fresh, so the cases a reviewer
+  sees are the cases the skill is measured on), three negative cases chosen for
+  proximity rather than distance — vendor comparison, implement an approved
+  design, summarize an article — an attestation checklist that names every claim
+  and where it is verifiable, release notes stating what is *not* in the package
+  (no credentials, no dependencies, no external calls, no telemetry), and a
+  ChatGPT artifact-test procedure. The SHA, checksum and results fields are
+  **left blank**: they get filled in from the real build and the real run, not
+  from an expectation.
+- **`tests/test_validate_openai.py`** — a positive control on the package we
+  actually intend to publish, one negative fixture per rule *class* rather than
+  per rule, a test that every rule in the table is reachable by some check (a rule
+  no check evaluates silently approves everything), and a test that a POLICY-only
+  failure still exits 1 while saying whose rule it was. **Five more in
+  `test_package.py`** cover the plugin asset: single root, member set, the
+  wrong-rooted build, the validator against the built artifact, and
+  reproducibility. Suite: 154 → **170**.
 - **`build/package.py`** — builds the release assets from a tag with `git
   archive`, never from the working tree, and emits **two** zips because two hosts
   demand incompatible layouts: `innovate-or-die-skill-v<ver>.zip` (skill folder as
@@ -38,7 +132,17 @@ packaging, a fourth web target, and the Perplexity findings.
   reproducibility test. Three more in `test_assemble.py` cover the per-target
   preamble. Suite: 56 → **65**.
 - **README** now links the published [Custom GPT] and [Gem] directly, and carries
-  two Perplexity rows (Computer, Projects).
+  two Perplexity rows (Computer, Projects), plus a ChatGPT Plugins Directory row
+  marked **submission pending** — the package is built and checked, nothing has
+  been through the portal, and the artifact is untested in ChatGPT.
+- **`docs/COMPATIBILITY.md` gains an OpenAI Plugins Directory section**, verified
+  2026-08-21 against the submission-errors page, with every limit quoted and the
+  two-limits-per-field trap called out. Its status row reads **UNTESTED** and
+  points at the artifact-test procedure. The existing ChatGPT Custom GPT row is a
+  different surface — a pasted instruction field, not an uploaded package — and is
+  untouched; the section says so, because conflating the two is the easy mistake.
+- **`.github/workflows/release.yml`** uploads the third asset on the next `v*`
+  tag.
 
 ### Changed
 - **`docs/COMPATIBILITY.md` gains a Perplexity section**, with every figure quoted

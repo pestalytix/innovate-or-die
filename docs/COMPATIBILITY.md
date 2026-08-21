@@ -319,7 +319,68 @@ knowable from the request.
 | Everything else | lives at the plugin root, not under `.codex-plugin/` |
 
 No official JSON-schema validator was found for this manifest. The `interface`
-block is carried forward from the v1 manifest unchanged.
+block is no longer hand-maintained here: it is generated from
+`core/listing-openai.json` — see the next section.
+
+---
+
+## OpenAI Plugins Directory — skills-only plugin packages
+
+**Verified 2026-08-21** · source:
+<https://developers.openai.com/plugins/deploy/submission-errors>
+
+| | |
+|---|---|
+| **ChatGPT Plugins Directory, skills-only** | **Status: UNTESTED** — nothing has been through the portal, and the built artifact has not been installed in ChatGPT. Procedure and the blank results table: [openai-submission/chatgpt-artifact-test.md](openai-submission/chatgpt-artifact-test.md) |
+
+This is a **different ChatGPT surface** from the Custom GPT row in the
+instruction-budget table below, which is about pasting instructions into the GPT
+builder and is unaffected by any of this. One is a pasted prompt, the other is an
+uploaded package; conflating them is the easy mistake here.
+
+Every figure below was read from the source page on 2026-08-21. They are enforced
+by `build/validate_openai.py`, which tags each rule **OPENAI** (the portal
+enforces it) or **POLICY** (ours), and prints the source and read-date with every
+failure. Run `python3 build/validate_openai.py --rules` for the table as code.
+
+| Fact | Value |
+|---|---|
+| Manifest path | `.codex-plugin/plugin.json`, `.agent-plugin/plugin.json`, or `.claude-plugin/plugin.json`, at the archive root or in its single top-level directory |
+| Plugin root | *"ZIP must contain exactly one plugin root, either at the archive root or in one top-level directory"* |
+| Siblings | *"A ZIP with a top-level plugin directory must not contain sibling files"* |
+| `name` | must start with an ASCII letter or digit; only ASCII letters, digits, `_`, `-`; max 64 |
+| `version` | semver; max 64 |
+| `interface.displayName` | **≤ 30** for final directory submission — 80 for package validation alone |
+| `interface.shortDescription` | **≤ 30** for final directory submission — **240** for package validation alone |
+| `interface.longDescription` | *"at most 4,000 characters. Line breaks are allowed"* |
+| `interface.developerName` | **≤ 80** for final directory submission — 120 for package validation alone |
+| `interface.category` | one of: Productivity, Creativity, Developer Tools, Business & Operations, Data & Analytics, Communication, Education & Research, Security, Finance, Healthcare, Travel, Entertainment, Other |
+| `interface.capabilities` | *"At most 20. Each capability must be non-empty, one line, and at most 120 characters"* |
+| `interface.defaultPrompt` | *"At most 3. Each prompt must be non-empty, unique after Unicode and whitespace normalization, one line, at most 128 characters"* |
+| `interface.logo`, `interface.composerIcon` | both required, square, *"must start with `./`"*, a relative path inside the plugin with no `..` traversal or drive prefix, ending `.png` `.jpg` `.jpeg` `.webp` `.svg`, max 5 MiB |
+| SVG assets | numeric `viewBox`, or numeric `width`/`height`; square; ≥ 48×48; positive finite numbers, no units, no percentages |
+| Raster assets | square, ≥ 48×48, ≤ 4,096×4,096 |
+| Skills | in `skills/`, each in its own subdirectory containing `SKILL.md` |
+| Qualified skill id | `plugin-name:skill-name` ≤ 64 chars total |
+| Skills-only exclusions | must not contain `mcpServers`, `.mcp.json`, `apps`, `.app.json`, or `interface.screenshots` |
+| Listing URLs | `websiteURL`, `supportURL`, `privacyPolicyURL`, `termsOfServiceURL` are *"optional for skills-only plugins and required for MCP-backed plugins"*; HTTPS when given |
+| Zip size | ≤ 100 MB compressed, ≤ 512 MiB extracted, ≤ 5,000 entries, ≤ 20 path segments |
+| `author.name` vs `interface.developerName` | *"must match, or the selected verified identity is used for both after confirmation"* |
+
+**Two limits per field, and the smaller one is the one that matters.**
+`shortDescription` is the trap: 240 characters passes package validation and is
+rejected at final submission, so a package can upload clean and never list.
+`validate_openai.py` enforces the submission limit and names both in the failure.
+
+**The MCP-backed rule set is deliberately not implemented.** Screenshots at
+exactly 706px wide, the four required listing URLs, domain verification, and a
+mandatory five positive plus three negative test cases apply to MCP- and
+app-backed plugins, not to this one. An unimplemented rule that looks implemented
+is worse than an absent one, so the validator states its scope and enforces that
+the package stays skills-only rather than pretending to cover the rest.
+
+**Raster dimension checks are out of scope** for the same reason: they need an
+image decoder, `build/` is stdlib-only by design, and this package ships an SVG.
 
 ---
 

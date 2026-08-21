@@ -40,6 +40,11 @@ def package():
 
 
 @pytest.fixture(scope="session")
+def validate_openai():
+    return _load("validate_openai_under_test", "build/validate_openai.py")
+
+
+@pytest.fixture(scope="session")
 def aggregate():
     return _load("aggregate_under_test", "evals/runners/aggregate.py")
 

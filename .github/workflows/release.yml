@@ -44,8 +44,11 @@ jobs:
             exit 1
           fi
 
-      # Packages from HEAD via git archive; asserts both zip layouts and exits 1
-      # on mismatch, so a wrong-rooted asset cannot reach the release.
+      # Packages from HEAD via git archive; asserts all three zip layouts and
+      # runs build/validate_openai.py against the finished plugin asset, exiting
+      # 1 on any mismatch -- so neither a wrong-rooted asset nor an unsubmittable
+      # listing can reach the release. Both run without --check, which is why
+      # package.py runs them on every build and not only in verification mode.
       - name: Build release assets
         run: python3 build/package.py
 
@@ -70,4 +73,5 @@ jobs:
           gh release upload "$TAG" \
             "dist/innovate-or-die-skill-v${TAG#v}.zip" \
             "dist/innovate-or-die-skill-flat-v${TAG#v}.zip" \
+            "dist/innovate-or-die-openai-v${TAG#v}.zip" \
             --clobber

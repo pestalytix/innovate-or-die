@@ -5,16 +5,32 @@
     python3 build/package.py --ref v2.1.0    # from a tag
     python3 build/package.py --check         # build in a temp dir, assert, discard
 
-Two assets, because two hosts disagree about where `SKILL.md` belongs and the
-disagreement is not negotiable at either end:
+Three assets, because three hosts disagree about what a package is and none of
+the disagreements is negotiable at its own end:
 
     innovate-or-die-skill-v<ver>.zip        innovate-or-die/SKILL.md  (depth 1)
     innovate-or-die-skill-flat-v<ver>.zip   SKILL.md                  (zip root)
+    innovate-or-die-openai-v<ver>.zip       innovate-or-die/.codex-plugin/plugin.json
+                                            innovate-or-die/skills/innovate-or-die/SKILL.md
+                                            innovate-or-die/assets/logo.svg
+                                            innovate-or-die/LICENSE
 
 claude.ai requires the skill *folder* to be the zip root; Perplexity's Computer
 skill upload requires `SKILL.md` itself at the zip root. Sources and quotes are
 in docs/COMPATIBILITY.md. Shipping one zip and hoping means one of the two
 install paths is broken, silently, for whoever tries it second.
+
+The third asset differs in kind, not just in layout: the OpenAI Plugins Directory
+takes a *plugin*, not a skill. It wants exactly one plugin root -- here a single
+top-level directory, with no sibling files beside it -- holding the manifest, the
+`skills/` tree with each skill in its own subdirectory, and the branding assets
+the listing points at. So this one is built from four repo paths rather than from
+the skill package alone, and it is the only asset that carries `assets/` and the
+`LICENSE`. `.claude-plugin/` is deliberately left out: one manifest per host, and
+the publisher identity in the two manifests is intentionally different (see
+core/listing-openai.json `_note`). Its rules -- and which of them are OpenAI's and
+which are ours -- live in build/validate_openai.py, which `--check` runs against
+the finished zip.
 
 Everything is read through `git archive` from the named ref. The working tree is
 never packaged: a release asset built from uncommitted edits is a build nobody
@@ -62,6 +78,23 @@ EXPECTED = {
     "roles/reviser.md",
 }
 
+# The OpenAI plugin asset is assembled from repo paths, not from PKG_DIR alone,
+# so its member set is spelled out at repo-relative depth. Same contract as
+# EXPECTED: a file that joins the plugin without joining this set is a file that
+# silently stops shipping.
+OPENAI_PATHS = (".codex-plugin", PKG_DIR, "assets", "LICENSE")
+
+# The single top-level directory the plugin lives in. Its name is not read by the
+# portal -- `name` in the manifest is -- but it must be the ONLY thing at the
+# archive root, so it is named once here rather than spelled at each call site.
+OPENAI_ROOT = "innovate-or-die"
+
+EXPECTED_OPENAI = {
+    ".codex-plugin/plugin.json",
+    "LICENSE",
+    "assets/logo.svg",
+} | {f"{PKG_DIR}/{rel}" for rel in EXPECTED}
+
 
 def git(*args: str) -> bytes:
     return subprocess.run(("git", "-C", str(ROOT)) + args,
@@ -100,6 +133,22 @@ def archive(ref: str, out: Path, prefix: str | None) -> None:
     # builds of the same tag then differ in bytes. restamp() undoes this.
     args.append(f"{ref}:{PKG_DIR}")
     git(*args)
+
+
+def archive_openai(ref: str, out: Path, prefix: str) -> None:
+    """Archive the plugin subset -- manifest, skills, assets, licence -- in one call.
+
+    `git archive <ref> <path>...` takes pathspecs against the ref's root tree, so
+    the four paths come out at their repo-relative positions under `prefix/`,
+    which is exactly the layout the portal wants. Note the difference from
+    archive() above: that one passes `<ref>:<path>`, which resolves a subtree and
+    flattens it to the zip root.
+
+    Still the ref, never the working tree, and still one `git archive` -- no
+    intermediate copy anyone could edit between read and write.
+    """
+    git("archive", "--format=zip", f"--output={out}", f"--prefix={prefix}/",
+        ref, *OPENAI_PATHS)
 
 
 def restamp(out: Path, when: tuple) -> None:
@@ -174,6 +223,63 @@ def assert_layout(path: Path, prefix: str | None) -> None:
                          f"skill package. missing={missing} unexpected={extra}")
 
 
+def assert_openai_layout(path: Path, prefix: str) -> None:
+    """Fail loudly if the plugin asset is not the shape the directory demands.
+
+    Layout only. Whether the *listing* is submissible -- field lengths, category,
+    branding geometry, skills-only exclusions -- is validate_openai.py's job, and
+    main() runs it against this same finished zip. Two checkers because the two
+    failures are different: this one catches a packaging mistake, that one
+    catches a metadata mistake, and a single error message conflating them sends
+    you to the wrong file.
+    """
+    with zipfile.ZipFile(path) as z:
+        names = z.namelist()
+        bad = z.testzip()
+    if bad is not None:
+        raise SystemExit(f"{path.name}: corrupt member {bad!r}")
+
+    members = sorted(n for n in names if not n.endswith("/"))
+    stray = [n for n in names if not n.startswith(f"{prefix}/")]
+    if stray:
+        # "exactly one plugin root, and no sibling files beside it" -- a stray
+        # entry here is the single most common rejected-upload shape.
+        raise SystemExit(
+            f"{path.name}: entries outside the {prefix}/ plugin root: {stray}")
+
+    got = {n[len(prefix) + 1:] for n in members}
+    if got != EXPECTED_OPENAI:
+        missing = sorted(EXPECTED_OPENAI - got)
+        extra = sorted(got - EXPECTED_OPENAI)
+        raise SystemExit(f"{path.name}: member set does not match the expected "
+                         f"plugin package. missing={missing} unexpected={extra}")
+
+
+def validate_openai(path: Path) -> None:
+    """Run build/validate_openai.py's rules against the finished zip.
+
+    Loaded by path rather than imported, because build/ is deliberately not a
+    package -- conftest.py loads the same modules the same way. The zip goes in
+    whole rather than extracted first: the archive-shape rules (one plugin root,
+    no siblings) are rules about the archive, and reading its members is the
+    closest thing to what the portal does with the file you upload.
+    """
+    import importlib.util
+
+    src = Path(__file__).resolve().parent / "validate_openai.py"
+    spec = importlib.util.spec_from_file_location("validate_openai", src)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    report = mod.validate(path)
+    if report.failures:
+        lines = [f"  [{mod.RULES[rid]['tag']}] {rid}: {detail}"
+                 for rid, detail in report.failures]
+        raise SystemExit(f"{path.name}: fails the OpenAI directory rules.\n"
+                         + "\n".join(lines)
+                         + "\n\nRun: python3 build/validate_openai.py <zip>")
+
+
 def listing(path: Path) -> str:
     with zipfile.ZipFile(path) as z:
         rows = [f"  {i.file_size:>7,}  {i.filename}" for i in z.infolist()]
@@ -210,21 +316,31 @@ def main() -> int:
         archive(args.ref, out, prefix)
         restamp(out, when)
         assert_layout(out, prefix)
-        built.append((out, prefix))
+        built.append((out, f"SKILL.md at {prefix + '/SKILL.md' if prefix else 'SKILL.md'}"))
+
+    # The plugin asset. Both checks run on every build, not only under --check:
+    # release.yml calls this script WITHOUT --check, so a rule that only fired in
+    # verification mode would be a rule the release path never ran.
+    openai_out = out_dir / f"innovate-or-die-openai-v{version}.zip"
+    archive_openai(args.ref, openai_out, OPENAI_ROOT)
+    restamp(openai_out, when)
+    assert_openai_layout(openai_out, OPENAI_ROOT)
+    validate_openai(openai_out)
+    built.append((openai_out, f"plugin root {OPENAI_ROOT}/, validated for the "
+                              f"OpenAI directory"))
 
     stamp = "%04d-%02d-%02dT%02d:%02d:%02dZ" % when
     print(f"packaged {args.ref} ({sha[:12]}) as v{version}, members stamped {stamp}\n")
-    for out, prefix in built:
-        root = f"{prefix}/SKILL.md" if prefix else "SKILL.md"
+    for out, note in built:
         shown = out.name if args.check else out.relative_to(ROOT)
-        print(f"{shown}  ({out.stat().st_size:,} bytes)  -- SKILL.md at {root}")
+        print(f"{shown}  ({out.stat().st_size:,} bytes)  -- {note}")
         print(listing(out))
         print()
 
     if args.check:
         shutil.rmtree(out_dir, ignore_errors=True)
-        print(f"--check: both layouts asserted. Built in a temp dir and discarded; "
-              f"{DIST.relative_to(ROOT)}/ untouched.")
+        print(f"--check: all three layouts asserted and the plugin asset validated. "
+              f"Built in a temp dir and discarded; {DIST.relative_to(ROOT)}/ untouched.")
     else:
         print(f"-> {DIST.relative_to(ROOT)}/ now holds {len(built)} assets. "
               "`--check` does NOT leave them there; run without it to keep them.")

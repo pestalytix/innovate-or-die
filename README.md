@@ -41,6 +41,7 @@ it doesn't always switch on by itself.
 | **Codex** | Clone this repo — the skill is already at `.agents/skills/innovate-or-die/` and gets picked up automatically. |
 | **GitHub Copilot** | Clone this repo the same way — the skill is already at `.github/skills/innovate-or-die/` and gets picked up automatically. |
 | **Codex CLI**, as a plugin | Install this repo as a plugin; the file `.codex-plugin/plugin.json` tells it to look in `skills/`. |
+| **ChatGPT**, from the Plugins Directory | *Submission pending* — not listed yet. The package is built and checked ([docs/openai-submission/](docs/openai-submission/)), but nothing has been through OpenAI's portal and the artifact is untested in ChatGPT. Until it lists, use the ready-made GPT in the ChatGPT row below. |
 | **Any app that accepts Agent Skills** | Copy the folder `skills/innovate-or-die/` into wherever that app keeps its skills. |
 | **VS Code / Visual Studio** | Copy `adapters/copilot/agents/*.agent.md` into `.github/agents/` (or `~/.copilot/agents`), and start with the one named `innovate-or-die`. |
 | **ChatGPT** | Easiest: open the [ready-made GPT](https://chatgpt.com/g/g-6a85fa3ea49c8191b4a7c58167f8eff5-innovate-or-die) (a link — it is not listed in the GPT Store). Or build your own: paste `adapters/web/chatgpt-gpt-instructions.md` into the Instructions box, and upload `chatgpt-gpt-knowledge.md` as Knowledge. |
@@ -217,7 +218,8 @@ python3 build/assemble.py            # regenerate
 python3 build/assemble.py --dry-run  # show what would change
 python3 build/assemble.py --check    # CI drift guard
 pip install pytest && python3 -m pytest   # harness unit tests
-python3 build/package.py             # build both release zips into dist/
+python3 build/package.py             # build all three release zips into dist/
+python3 build/validate_openai.py <zip>   # OpenAI directory rules, by tag
 ```
 
 CI runs `--check` and the tests on every push. The tests cover the generator's
@@ -237,14 +239,29 @@ in `core/skill-meta.json`** — without that guard, tagging `v2.2.0` against an
 unbumped `skill-meta.json` would publish assets named `…-v2.1.0.zip` and every
 download link would point at a file that is not there.
 
-**Two zips ship per release**, because claude.ai wants the skill *folder* as the
-zip root and Perplexity Computer wants `SKILL.md` itself there. A zip built for
-one does not load on the other — it does not degrade, it fails — so each layout
-is asserted against the finished zip before it can be uploaded. The quoted
-requirements are in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Assets are
-built from the tag with `git archive`, never from the working tree, and are
-reproducible: `python3 build/package.py --ref vX.Y.Z` rebuilds the published
-bytes. `dist/` is gitignored and never committed.
+**Three zips ship per release.** Two are the same skill package in incompatible
+layouts, because claude.ai wants the skill *folder* as the zip root and
+Perplexity Computer wants `SKILL.md` itself there; a zip built for one does not
+load on the other — it does not degrade, it fails. The third,
+`innovate-or-die-openai-v….zip`, is a different thing entirely: a *plugin* for the
+OpenAI Plugins Directory, with the manifest, the `skills/` tree, the listing logo
+and the licence under one top-level directory and nothing beside it. It is the
+only asset carrying `assets/` and `LICENSE`, and it deliberately omits
+`.claude-plugin/`.
+
+Each layout is asserted against the finished zip before it can be uploaded, and
+the plugin asset additionally has to pass
+[build/validate_openai.py](build/validate_openai.py) — the directory's rules,
+each tagged **OPENAI** (the portal enforces it) or **POLICY** (ours), each
+carrying the source page and the date it was read. Both checks run on every
+build, not only under `--check`, because the release workflow does not pass
+`--check`. The quoted requirements are in
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md); the submission materials are in
+[docs/openai-submission/](docs/openai-submission/).
+
+Assets are built from the tag with `git archive`, never from the working tree,
+and are reproducible: `python3 build/package.py --ref vX.Y.Z` rebuilds the
+published bytes. `dist/` is gitignored and never committed.
 
 Cutting a release, in four lines:
 

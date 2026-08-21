@@ -1,20 +1,13 @@
 {
-  "name": "innovate-or-die",
-  "version": "2.1.0",
-  "description": "Generate, attack, revise, and reality-test non-obvious solutions to difficult problems through role-separated adversarial search.",
-  "author": {
+  "_comment": "Canonical source for the OpenAI Plugins Directory listing. Consumed by build/assemble.py when generating .codex-plugin/plugin.json; nothing here is hand-copied into that manifest. Identity fields (name, version, description, license, keywords, skills) still come from core/skill-meta.json -- this file carries ONLY the publisher identity and the consumer-facing listing copy.",
+  "_note": {
+    "publisher_decision": "Decided by Ken Pendergast, 2026-08-21, recorded verbatim: Ken Pendergast remains creator, author, and copyright holder. PESTalytix LLC is the verified publisher for the OpenAI directory only. Use PESTalytix LLC ONLY in .codex-plugin/plugin.json author.name and interface.developerName. Do NOT touch skill-meta.json author, .claude-plugin/plugin.json, LICENSE, or published ZIPs. Disclosure text: \"Created by Ken Pendergast. Published on OpenAI by PESTalytix LLC.\" -- include in the OpenAI longDescription.",
+    "candidate_count_omitted": "The README says how many candidates the protocol generates and how many a critic typically kills. Those numbers are deliberately absent from every field here. In README context they read as a description of the method; in store copy a number reads as a result -- a claim about what the user will get -- and we have no measurement that supports reading it that way. Architecture words are out for the same reason: a listing describes what the thing does for the reader, not how it is built."
+  },
+  "publisher": {
     "name": "PESTalytix LLC",
     "url": "https://github.com/pestalytix/innovate-or-die"
   },
-  "license": "MIT",
-  "keywords": [
-    "innovation",
-    "strategy",
-    "critical-thinking",
-    "assumption-testing",
-    "experimentation"
-  ],
-  "skills": "./skills/",
   "interface": {
     "displayName": "Innovate or Die",
     "shortDescription": "Ideas that survive reality",

@@ -40,6 +40,15 @@ def load_core() -> dict:
     for field in ("name", "version", "license", "description"):
         if field not in meta:
             raise SystemExit(f"core/skill-meta.json missing required field: {field}")
+    # The OpenAI directory listing is consumer-facing copy plus a publisher
+    # identity that is deliberately NOT the author identity (see that file's
+    # `_note`). It lives in its own core file so the listing can be edited
+    # without touching skill-meta.json, and so nobody has to hand-copy a
+    # 4,000-char field into a generated manifest.
+    listing = json.loads(read("listing-openai.json"))
+    for field in ("publisher", "interface"):
+        if field not in listing:
+            raise SystemExit(f"core/listing-openai.json missing required field: {field}")
     # core/ carries `{{CORE_VERSION}}` rather than a literal version, so a
     # heading cannot drift from skill-meta.json. Substituted once, here.
     def v(rel: str) -> str:
@@ -47,6 +56,7 @@ def load_core() -> dict:
 
     return {
         "meta": meta,
+        "listing": listing,
         "principles": v("principles.md"),
         "workflow": v("workflow.md"),
         "roles": {r: v(f"roles/{r}.md") for r in ROLE_ORDER},
@@ -161,32 +171,36 @@ def claude_marketplace(c: dict) -> str:
 
 
 def codex_plugin(c: dict) -> str:
+    """The OpenAI/Codex manifest, assembled from two sources that must not merge.
+
+    Identity -- `name`, `version`, `description`, `license`, `keywords`, `skills`
+    -- comes from core/skill-meta.json, the same place every other host reads it.
+    Publisher identity and the whole `interface` block come from
+    core/listing-openai.json, because the OpenAI directory is the ONE surface
+    where the publisher is not the author: PESTalytix LLC is the verified
+    publisher there, Ken Pendergast is the author everywhere including here.
+    The decision, verbatim, is in that file's `_note`.
+
+    `interface` is copied through wholesale rather than field-by-field. A listing
+    field added in core/ should reach the manifest by being added in core/, not
+    by also editing this function and discovering the omission at submission.
+    """
     m = c["meta"]
-    a = m.get("author", {})
+    listing = c["listing"]
+    pub = listing["publisher"]
     doc = {
         "name": m["name"],
         "version": m["version"],
         "description": " ".join(m["description"].split()).split(". ")[0] + ".",
-        "author": {"name": a.get("name", ""), "url": a.get("url", "")},
+        "author": {"name": pub.get("name", ""), "url": pub.get("url", "")},
         "license": m["license"],
         "keywords": ["innovation", "strategy", "critical-thinking",
                      "assumption-testing", "experimentation"],
         "skills": "./skills/",
-        "interface": {
-            "displayName": "Innovate or Die",
-            "shortDescription": "Find bold ideas that survive reality checks",
-            "longDescription": ("A staged innovation workflow that generates unconventional "
-                                "hypotheses, attacks them in isolation, revises the survivors, "
-                                "and converts the strongest ideas into cheap falsifiable tests."),
-            "developerName": a.get("name", ""),
-            "category": "Productivity",
-            "capabilities": ["Interactive"],
-            "defaultPrompt": [
-                "Find a non-obvious solution to this problem.",
-                "Challenge the assumptions behind this strategy.",
-                "Turn this idea into falsifiable experiments.",
-            ],
-        },
+        # Keys beginning `_` are ours, not the host's -- notes and comments stay
+        # in core/ and never ship inside a manifest a validator will read.
+        "interface": {k: v for k, v in listing["interface"].items()
+                      if not k.startswith("_")},
     }
     return json.dumps(doc, indent=2) + "\n"
 
