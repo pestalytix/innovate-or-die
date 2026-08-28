@@ -29,8 +29,8 @@ project: sk-proj-ZZZZZZZZYYYYYYYYXXXXXXXX
 header: Bearer eyJhbGciOiJIUzI1NiJ9abcdefg
 env: ANTHROPIC_API_KEY=sk-ant-secretvaluehere
 mail: ken@pestalytix.com
-tmpdir: /private/var/folders/by/d2f80qjn0h11nyrgsw8plkd00000gn/T/iod-with_skill-87murdly/x
-memdir: .claude/projects/-private-var-folders-by-d2f80qjn0h11nyrgsw8plkd00000gn-T-iod-with-skill-87murdly/memory/
+tmpdir: /private/var/folders/by/abcdefghijklmnopqrstuvwx000000/T/iod-with_skill-87murdly/x
+memdir: .claude/projects/-private-var-folders-by-abcdefghijklmnopqrstuvwx000000-T-iod-with-skill-87murdly/memory/
 """
 
 # The prose that the naive pattern destroyed. Must survive byte-for-byte.
@@ -61,7 +61,7 @@ def test_every_declared_pattern_is_replaced(redact):
     assert "secretvaluehere" not in out
     assert "ken@pestalytix.com" not in out
     assert "[REDACTED-EMAIL]" in out
-    assert "d2f80qjn0h11nyrgsw8plkd00000gn" not in out
+    assert "abcdefghijklmnopqrstuvwx000000" not in out
     assert "/var/folders/REDACTED/T/" in out
     assert "-var-folders-REDACTED-T-" in out
     assert out.count("[REDACTED-SECRET]") == 5, out
@@ -95,9 +95,11 @@ def test_an_already_redacted_path_is_not_recounted(redact):
 # ------------------------------------------------- the machine's temp directory
 
 # `<xx>/<hash>` is stable per account per machine, so it identifies the machine.
+# The hash below is SYNTHETIC, of the real shape: pinning a real one here would
+# reintroduce into this file the identifier the rule exists to remove.
 # It reaches a transcript in two encodings and both must go: the path itself, and
 # the dash-flattened directory NAME the CLI derives from it for `memory_paths`.
-TMPDIR_HASH = "d2f80qjn0h11nyrgsw8plkd00000gn"
+TMPDIR_HASH = "abcdefghijklmnopqrstuvwx000000"
 TMPDIR_PATH = f"/private/var/folders/by/{TMPDIR_HASH}/T/iod-with_skill-87murdly"
 TMPDIR_FLAT = f"-private-var-folders-by-{TMPDIR_HASH}-T-iod-with-skill-87murdly"
 
