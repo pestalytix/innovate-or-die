@@ -171,8 +171,9 @@ one moves a host up.
 **Level 4 — Single-paste fallback.** Everything inlined in one document, for hosts
 that take no attachment. The whole protocol — including what the critic checks
 for — is in context from the first token, which is the anchoring failure the
-design exists to defeat. The inlined document (~25k chars, and growing with each
-protocol version) also exceeds every known instruction-field cap, so it may be
+design exists to defeat. The inlined document (kept under the 30k-char
+ceiling the build enforces, and growing with each protocol version) also
+exceeds every known instruction-field cap, so it may be
 truncated. Shipped because a documented degraded path beats an undocumented
 one, not because it is recommended.
 

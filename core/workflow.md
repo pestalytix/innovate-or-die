@@ -40,18 +40,94 @@ On failure, perform one targeted revision addressing the evaluator's named defic
 
 Final answer structure, in order:
 
-0. **Activation line** — open with `⟦innovate-or-die v{{CORE_VERSION}}⟧` alone on the first line, so the reader can see the protocol ran.
-
 1. **Strongest surviving thesis** — lead with it, not a catalog.
 2. **Most important reframing** — the deepest change in how to think about the problem, with the real-vs-inherited constraint that drives it.
-3. **Top opportunities (up to 3)** — concept · insight · causal mechanism · why non-obvious · why disproportionate value · biggest reason it fails.
+3. **Top opportunities** — concept · insight · causal mechanism · why non-obvious · why disproportionate value · biggest reason it fails.
 4. **Most contrarian hypothesis** worth testing.
 5. **Cheapest high-information experiment** — full spec per `references/experiment-spec.md`.
-6. **Compact kill list** — the 5 most instructive rejected ideas, one line each with the reason.
+6. **Compact kill list** — the most instructive rejected ideas, one line each with the reason.
 7. **What may still be missing** — search space suspected but not adequately explored.
 
-Omit internal drafts, audits, and scores unless the user asks; offer the full search log on request. Include assumptions, mechanisms, risks, and falsifiable next tests wherever they affect a recommendation.
+Include assumptions, mechanisms, risks, and falsifiable next tests wherever they affect a recommendation. The **Output contract** below is binding on this delivery.
 
 ## Independence
 
 Independence rules: see Operating principles. Run Stages 1–2 in separate subagent contexts where the host provides them; add passes for Stages 3–4 when useful.
+
+<!-- SPLIT:MICRO -->
+**Output contract (binding):** Your response is ONLY the final
+deliverable, in the exact structure of the Output template in the
+knowledge file — copy that template exactly. Never emit stage work: no
+stage names, lens names, candidate lists, scores, drafts, or process
+narration. Full contract rules accompany the template.
+<!-- /SPLIT:MICRO -->
+
+<!-- SPLIT:FULL -->
+## Output contract (binding rules — the template below is what you copy; these rules govern it)
+
+Your response contains ONLY the final deliverable. All stage work (framing,
+divergence lenses, candidate generation, adversarial passes, scoring) is
+internal working process — never emitted, in any form, at any effort level,
+unless the user asks for it: offer the full search log on request.
+No stage names, lens names, candidate lists, evaluator scores, internal
+drafts, or process narration appear anywhere in the response.
+
+Nothing appears before the version marker or after section 7.
+
+Total deliverable: 900–1,500 words. Section budgets are local ceilings and
+never targets; the 1,500-word total takes precedence — compress sections as
+needed to stay within it.
+
+Exceptions require receipts. A section may report that no qualifying idea
+survived, but only by showing what was challenged and why it failed or
+survived. Never weaken the analysis to satisfy the template, and never
+promote a weak idea because the structure expects one.
+
+If fewer than two serious alternatives were rejected during the process,
+the search was too narrow — reopen it before producing the final answer.
+
+Cite evidence inline when external sources are used; no separate sources
+section unless explicitly requested.
+
+A response that shows 30 candidates has failed; a response that shows the
+3 survivors of 30 has succeeded.
+
+## Output template
+
+Copy this structure exactly.
+
+⟦innovate-or-die v{{CORE_VERSION}}⟧
+
+**Problem as framed** (assumptions labeled): <restate the desired outcome, relevant capacity/budget constraints, what "better" means, and the standard/default approach being challenged, retained, or replaced. Do not invent missing constraints; label material unknowns. ≤100 words>
+
+## 1. Strongest surviving thesis
+<the single strongest conclusion from the analysis, stated as a directive. Include the mechanism that makes it work and the most important condition that must be true. ≤100 words>
+
+## 2. Most important reframing
+<the assumption, constraint, or definition of the problem that most changes the solution space. Explain what should be discarded, modified, or retained and what replaces it. If the original framing survives scrutiny, name the most important assumption that was challenged and explain why retaining it survived. ≤150 words>
+
+## 3. Top opportunities
+### A. <name>
+<idea · why it could work · why it is easy to overlook · why the upside could exceed the effort · biggest reason it could fail. ≤150 words>
+
+### B. <name>
+<same shape>
+
+<2–4 entries total. Continue with C and D only when they materially improve the answer. Fewer strong entries beat more weak ones.>
+
+## 4. Most contrarian hypothesis worth testing
+<the strongest uncomfortable or unconventional hypothesis that survived scrutiny, why it might be true, and an explicit observation that would falsify it. If no contrarian hypothesis survives, identify the strongest one considered and state what killed it. ≤120 words>
+
+<!-- Field list below must match core/references/experiment-spec.md; both ship in the same web knowledge file. -->
+## 5. Best low-cost, high-information experiment
+<hypothesis · critical assumption tested · procedure · resources required · measured outcome · success threshold · failure threshold · next action if it passes · next action if it fails · what is learned either way. Use numeric thresholds when meaningful; otherwise define observable pass/fail conditions. ≤250 words>
+
+## 6. Kill list
+- **<rejected idea>** — <the evidence, assumption failure, trade-off, or test that killed it, one line>
+- **<rejected idea>** — <same shape>
+
+<2–6 serious alternatives. Never invent trivial rejects merely to satisfy the minimum.>
+
+## 7. What may still be missing
+<identify important territory not explored, material facts not yet verified, and distinguish what is well supported, inferred, and genuinely unknown. Emphasize unknowns that could reverse the recommendation. ≤150 words>
+<!-- /SPLIT:FULL -->

@@ -105,7 +105,7 @@ def build_skill_md(c: dict, problems: list[str]) -> str:
     elif author:
         fm.append(f"  author: {yaml_escape(str(author))}")
     fm.append("---")
-    return "\n".join(fm) + "\n\n" + c["workflow"].lstrip("\n")
+    return "\n".join(fm) + "\n\n" + contract_full(c["workflow"]).lstrip("\n")
 
 
 def skill_package(c: dict, problems: list[str]) -> dict[str, str]:
@@ -296,7 +296,7 @@ before you trust the output:
 
 ---
 
-{_sub(c['workflow'], WF_COPILOT, 'copilot orchestrator')}
+{_sub(contract_full(c['workflow']), WF_COPILOT, 'copilot orchestrator')}
 """
     out["innovate-or-die.agent.md"] = orch
     return out
@@ -490,6 +490,50 @@ def _sub(text: str, pairs: list[tuple[str, str]], ctx: str) -> str:
     return text
 
 
+# --------------------------------------------------------- output-contract split
+# The output contract and template run ~3.7k chars. They fit inline on every
+# surface except the four 8,000-char web instruction fields, which would blow
+# their cap -- so those carry a short binding micro-contract and ship the full
+# text in the attached knowledge file, the same split already used for the role
+# briefs, lens bank, and experiment spec. Both variants are AUTHORED in
+# core/workflow.md between SPLIT markers, so the wording lives in the source
+# file; this routing only decides which block survives on which surface.
+_MICRO_RE = re.compile(r"<!-- SPLIT:MICRO -->\n(.*?)\n<!-- /SPLIT:MICRO -->\n\n?", re.S)
+_FULL_RE = re.compile(r"<!-- SPLIT:FULL -->\n(.*?)\n<!-- /SPLIT:FULL -->\n?", re.S)
+
+
+def _require(rx: re.Pattern, text: str, label: str) -> re.Match:
+    """Like _sub, refuse to no-op: a missing marker means core/ drifted."""
+    m = rx.search(text)
+    if not m:
+        raise SystemExit(
+            f"assemble.py: {label} block not found in core/workflow.md -- the "
+            "SPLIT markers were moved or removed. Restore them, or update the "
+            "contract routing in build/assemble.py.")
+    return m
+
+
+def contract_full(text: str) -> str:
+    """Workflow carrying the full contract inline; micro-contract dropped."""
+    _require(_MICRO_RE, text, "SPLIT:MICRO")
+    _require(_FULL_RE, text, "SPLIT:FULL")
+    text = _MICRO_RE.sub("", text, count=1)
+    return _FULL_RE.sub(lambda m: m.group(1) + "\n", text, count=1)
+
+
+def contract_micro(text: str) -> str:
+    """Workflow for capped surfaces: micro-contract only, full block removed."""
+    _require(_MICRO_RE, text, "SPLIT:MICRO")
+    _require(_FULL_RE, text, "SPLIT:FULL")
+    text = _FULL_RE.sub("", text, count=1)
+    return _MICRO_RE.sub(lambda m: m.group(1) + "\n", text, count=1)
+
+
+def contract_block(text: str) -> str:
+    """The full contract + template alone, for the web knowledge file."""
+    return _require(_FULL_RE, text, "SPLIT:FULL").group(1)
+
+
 LOAD_SENTENCE = (
     "Read `principles.md` now. Load each role file at its stage, not before: "
     "`roles/innovator.md` (with `references/lenses.md`) at Stage 1; `roles/critic.md` "
@@ -621,17 +665,23 @@ def web_variants(c: dict, problems: list[str], fatal: list[str]) -> dict[str, st
             preamble = _sub(preamble, [_preamble_host_pair(host)],
                             f"web preamble for {target}")
         return _join([preamble, "---", c["principles"], "---",
-                      _sub(c["workflow"], WF_SPLIT, "web instructions")])
+                      _sub(contract_micro(c["workflow"]), WF_SPLIT, "web instructions")])
 
     knowledge = _join([_HEADER, "# Innovate or Die -- role briefs and references",
                        "Read each section at its stage, as the instructions direct.",
                        *_roles(REF_LENS_DOC, REF_EXP_DOC),
-                       "---", c["lenses"], "---", c["experiment"]])
+                       "---", c["lenses"], "---", c["experiment"],
+                       # The instructions field is too small for the contract and
+                       # template (see the output-contract split above), so they
+                       # ride here instead -- next to the experiment spec, which
+                       # the template's section 5 mirrors and which is read at the
+                       # same moment: when the final answer is assembled.
+                       "---", contract_block(c["workflow"])])
     # The fallback is the whole method in one paste: the lens bank must be
     # HERE, not referenced. Its absence was the defect this inlining fixes --
     # the text demanded eight lenses from a file the paste never carried.
     fallback = _join([PREAMBLE_FALLBACK, "---", c["principles"], "---",
-                      _sub(c["workflow"], WF_SINGLE, "web fallback"),
+                      _sub(contract_full(c["workflow"]), WF_SINGLE, "web fallback"),
                       *_roles(REF_LENS_DOC, REF_EXP_DOC),
                       "---", c["lenses"], "---", c["experiment"]])
 

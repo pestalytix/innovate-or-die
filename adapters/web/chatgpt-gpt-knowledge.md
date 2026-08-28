@@ -217,20 +217,91 @@ Use this shape:
 ```
 Hypothesis: [specific, falsifiable claim]
 Critical assumption tested: [the single one that, if false, kills it]
-Experiment: [what the user literally does, this week]
-Resources: [hours, dollars, people, data, tools — actual figures]
+Procedure: [what the user literally does, this week]
+Resources required: [hours, dollars, people, data, tools — actual figures]
 Measured outcome: [the number or observation recorded]
 Success threshold: [value at which to invest further]
 Failure threshold: [value at which to stop]
+Next action if it passes: [what happens on success]
+Next action if it fails: [what happens on failure]
 Learned either way: [what becomes known regardless of outcome]
-If validated: [next action]
-If falsified: [next action]
 ```
 
 Rules:
 
 - **Test the assumption, not the product.** Willingness-to-pay is usually testable before anything is built — an offer, a price, a landing page, ten phone calls.
+- **Set thresholds you can actually read.** Use numeric thresholds when meaningful; otherwise define observable pass/fail conditions.
 - **Design for a clean no.** If every outcome can be read as encouraging, the experiment measures nothing. Set the failure threshold before running, in writing.
 - **Scale to the operator that exists.** An experiment requiring hiring, new builds, or months of data collection is a project, not an experiment. Redesign it smaller, or say honestly that the idea cannot be cheaply tested — which is a reason to rank it lower.
 - **Prefer information not already held.** A result predictable at 90% confidence is not worth buying; the one that genuinely cannot be called is where the value is.
 - Prefer experiments that generate information quickly over elaborate plans.
+
+---
+
+## Output contract (binding rules — the template below is what you copy; these rules govern it)
+
+Your response contains ONLY the final deliverable. All stage work (framing,
+divergence lenses, candidate generation, adversarial passes, scoring) is
+internal working process — never emitted, in any form, at any effort level,
+unless the user asks for it: offer the full search log on request.
+No stage names, lens names, candidate lists, evaluator scores, internal
+drafts, or process narration appear anywhere in the response.
+
+Nothing appears before the version marker or after section 7.
+
+Total deliverable: 900–1,500 words. Section budgets are local ceilings and
+never targets; the 1,500-word total takes precedence — compress sections as
+needed to stay within it.
+
+Exceptions require receipts. A section may report that no qualifying idea
+survived, but only by showing what was challenged and why it failed or
+survived. Never weaken the analysis to satisfy the template, and never
+promote a weak idea because the structure expects one.
+
+If fewer than two serious alternatives were rejected during the process,
+the search was too narrow — reopen it before producing the final answer.
+
+Cite evidence inline when external sources are used; no separate sources
+section unless explicitly requested.
+
+A response that shows 30 candidates has failed; a response that shows the
+3 survivors of 30 has succeeded.
+
+## Output template
+
+Copy this structure exactly.
+
+⟦innovate-or-die v2.2.0⟧
+
+**Problem as framed** (assumptions labeled): <restate the desired outcome, relevant capacity/budget constraints, what "better" means, and the standard/default approach being challenged, retained, or replaced. Do not invent missing constraints; label material unknowns. ≤100 words>
+
+## 1. Strongest surviving thesis
+<the single strongest conclusion from the analysis, stated as a directive. Include the mechanism that makes it work and the most important condition that must be true. ≤100 words>
+
+## 2. Most important reframing
+<the assumption, constraint, or definition of the problem that most changes the solution space. Explain what should be discarded, modified, or retained and what replaces it. If the original framing survives scrutiny, name the most important assumption that was challenged and explain why retaining it survived. ≤150 words>
+
+## 3. Top opportunities
+### A. <name>
+<idea · why it could work · why it is easy to overlook · why the upside could exceed the effort · biggest reason it could fail. ≤150 words>
+
+### B. <name>
+<same shape>
+
+<2–4 entries total. Continue with C and D only when they materially improve the answer. Fewer strong entries beat more weak ones.>
+
+## 4. Most contrarian hypothesis worth testing
+<the strongest uncomfortable or unconventional hypothesis that survived scrutiny, why it might be true, and an explicit observation that would falsify it. If no contrarian hypothesis survives, identify the strongest one considered and state what killed it. ≤120 words>
+
+<!-- Field list below must match core/references/experiment-spec.md; both ship in the same web knowledge file. -->
+## 5. Best low-cost, high-information experiment
+<hypothesis · critical assumption tested · procedure · resources required · measured outcome · success threshold · failure threshold · next action if it passes · next action if it fails · what is learned either way. Use numeric thresholds when meaningful; otherwise define observable pass/fail conditions. ≤250 words>
+
+## 6. Kill list
+- **<rejected idea>** — <the evidence, assumption failure, trade-off, or test that killed it, one line>
+- **<rejected idea>** — <same shape>
+
+<2–6 serious alternatives. Never invent trivial rejects merely to satisfy the minimum.>
+
+## 7. What may still be missing
+<identify important territory not explored, material facts not yet verified, and distinguish what is well supported, inferred, and genuinely unknown. Emphasize unknowns that could reverse the recommendation. ≤150 words>

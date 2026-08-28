@@ -141,25 +141,68 @@ def test_banner_does_not_enter_pass_rate_in_either_arm(graded):
 
 # ------------------------------------------------- the shipped artifacts
 
+# The banner is carried by the output template, so it lives wherever the
+# template lives -- and from v2.2.0 that is not the same file on every surface.
+# The four web instruction fields cap at 8,000 chars and cannot hold the full
+# contract and template, so those ship in the attached knowledge file and the
+# instructions carry a micro-contract pointing at it. Exactly one file per
+# target holds the banner: a second inline copy would be a bug, because the
+# model would have two templates to copy and no rule for choosing.
+WEB_TARGETS_WITH_KNOWLEDGE = ("chatgpt-gpt", "gemini-gem", "m365-copilot")
+
+
 def test_every_delivering_surface_ships_the_banner(assemble, root):
+    """Surfaces that carry the template inline must carry the banner with it."""
     version = json.loads((root / "core/skill-meta.json").read_text())["version"]
     banner = f"⟦innovate-or-die v{version}⟧"
     files, _p, _f = assemble.generate()
     must = [f"{b}/innovate-or-die/SKILL.md" for b in
             ("skills", ".agents/skills", ".github/skills")]
-    must += [f"adapters/web/{t}-{k}.md" for t in
-             ("chatgpt-gpt", "gemini-gem", "m365-copilot") for k in ("instructions", "fallback")]
+    # Instructions no longer qualify -- the fallback is a single paste and does
+    # carry the template, so it keeps the banner.
+    must += [f"adapters/web/{t}-fallback.md" for t in WEB_TARGETS_WITH_KNOWLEDGE]
     must += ["adapters/copilot/agents/innovate-or-die.agent.md"]
     for rel in must:
         assert banner in files[rel], rel
 
 
-def test_surfaces_that_assemble_nothing_do_not_ship_it(assemble):
+def test_web_instructions_point_at_the_template_instead_of_carrying_it(assemble):
+    """The split's load-bearing half: the capped instructions field carries the
+    binding micro-contract and NOT the banner. A banner here would mean the full
+    template leaked back inline -- which is what blows the 8,000-char cap."""
     files, _p, _f = assemble.generate()
-    never = [f"adapters/web/{t}-knowledge.md" for t in
-             ("chatgpt-gpt", "gemini-gem", "m365-copilot")]
-    never += [f"adapters/copilot/agents/innovate-or-die-{r}.agent.md"
-              for r in ("innovator", "critic", "reviser", "evaluator")]
+    for target in WEB_TARGETS_WITH_KNOWLEDGE + ("perplexity-project",):
+        rel = f"adapters/web/{target}-instructions.md"
+        body = files[rel]
+        assert "**Output contract (binding):**" in body, rel
+        assert "knowledge file" in body, rel
+        assert "innovate-or-die v" not in body, rel
+
+
+def test_web_knowledge_carries_the_banner_inside_the_template(assemble, root):
+    """Inverted at v2.2.0. The knowledge file used to assemble nothing; it now
+    carries the contract and template, so it is where the banner has to be."""
+    version = json.loads((root / "core/skill-meta.json").read_text())["version"]
+    banner = f"⟦innovate-or-die v{version}⟧"
+    files, _p, _f = assemble.generate()
+    for target in WEB_TARGETS_WITH_KNOWLEDGE:
+        body = files[f"adapters/web/{target}-knowledge.md"]
+        rel = f"adapters/web/{target}-knowledge.md"
+        assert banner in body, rel
+        # Inside the template block, not loose somewhere above it.
+        assert body.index("## Output template") < body.index(banner), rel
+        # Same drift guard as the canonical package: an unresolved placeholder
+        # ships a literal "{{CORE_VERSION}}" to the user, which is worse than a
+        # stale number because nothing downstream can parse it.
+        assert "{{" not in body, rel
+
+
+def test_role_briefs_still_never_ship_it(assemble):
+    """Role briefs assemble no final answer, so a banner in one means the
+    orchestrator's delivery section leaked into a role profile."""
+    files, _p, _f = assemble.generate()
+    never = [f"adapters/copilot/agents/innovate-or-die-{r}.agent.md"
+             for r in ("innovator", "critic", "reviser", "evaluator")]
     for rel in never:
         assert "innovate-or-die v" not in files[rel], rel
 

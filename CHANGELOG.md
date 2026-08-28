@@ -7,9 +7,9 @@ and a version bump.
 
 ## [Unreleased]
 
-No protocol change — the protocol files in `core/` are untouched, so the version
-stays 2.1.0. Release packaging, a fourth web target, the Perplexity findings, and
-the OpenAI Plugins Directory package.
+Release packaging, a fourth web target, the Perplexity findings, and the OpenAI
+Plugins Directory package. Distribution work only — it carries no protocol
+change of its own; the protocol change released alongside it is under [2.2.0].
 
 ### Publisher decision — OpenAI directory only
 
@@ -209,6 +209,77 @@ downloaded twice before replacement.
 
 [Custom GPT]: https://chatgpt.com/g/g-6a85fa3ea49c8191b4a7c58167f8eff5-innovate-or-die
 [Gem]: https://gemini.google.com/gem/1XoPOHbLHJCR5zxVRxmOKsZVlBzsK5EWj
+
+## [2.2.0] — 2026-08-28
+
+Minor. **The delivery is now governed by a binding output contract and a literal
+template** ([ADR-005](docs/ADR-005-output-contract.md)), replacing the seven-item
+outline that had described the final answer since v2.0.0. Additive in substance —
+sections 1–7 keep their numbers, order, and meanings — but the answer's shape is
+now specified rather than described, with per-section word ceilings and a
+1,500-word total. The web adapters could not hold
+the new text inline, so they gained a split that mirrors the one already used for
+role briefs and the lens bank. Driven by a five-cell cross-model test
+(`docs/notes/claude-models-test.md`): under v2.1.0 the same prompt leaked internal
+stage work on 2 of 5 configurations — one of them 7,723 words, most of it the
+search rather than its result — and 3 of 5 dropped the numbered sections entirely.
+
+### Added — protocol
+- **An output contract (binding rules).** Stage work — framing, lenses, candidate
+  generation, adversarial passes, scoring — is internal and never emitted, at any
+  effort level; the on-request search log survives as the one carve-out. The
+  contract also sets the deliverable at 900–1,500 words, requires receipts for any
+  section that reports no surviving idea, and refuses a search that rejected fewer
+  than two serious alternatives. Its closing line is the whole intent: *a response
+  that shows 30 candidates has failed; a response that shows the 3 survivors of 30
+  has succeeded.*
+- **An output template**, copied literally rather than paraphrased, carrying the
+  activation banner as its first line and a `Problem as framed` preamble that
+  labels assumptions. Opportunities move from "up to 3" to 2–4 with C and D only
+  when they earn it; the kill list moves from a fixed 5 to 2–6, with an explicit
+  ban on inventing trivial rejects to reach the minimum.
+
+### Changed
+- **Stage 6's superseded clauses are gone.** The banner instruction (item 0), the
+  opportunity count, the kill-list count, and the "omit internal drafts unless
+  asked" line were all restated — differently — by the contract. Four sources of
+  truth became one; Stage 6 now points at the contract instead of competing with
+  it.
+- **The experiment spec matches template section 5.** `Experiment` → `Procedure`,
+  `Resources` → `Resources required`, and `If validated` / `If falsified` become
+  `Next action if it passes` / `Next action if it fails`, ordered ahead of
+  `Learned either way` so the field list reads in the order the template names it.
+  Adds the thresholds rule: numeric where meaningful, otherwise observable
+  pass/fail conditions. A comment in each file ties the two together, since both
+  now ship in the same web knowledge file.
+- **Web adapters split the contract to the knowledge file.** The contract and
+  template run ~3.7k chars against 301 of headroom, so the four capped instruction
+  fields carry a short binding micro-contract — response is only the deliverable,
+  copy the template from the knowledge file, never emit stage work — and the full
+  text ships beside the experiment spec, which template section 5 mirrors and which
+  is read at the same moment. Both variants are authored in `core/workflow.md`
+  between `SPLIT` markers, so the wording lives in the source file and
+  `assemble.py` only routes; a missing marker fails the build rather than silently
+  emitting neither. Claude, Codex, GitHub, the Copilot orchestrator, and the
+  single-paste fallback are unaffected and keep the full text inline.
+- **The banner has exactly one home per target.** It rides with the template, so
+  on web targets it moved from the instructions file to the knowledge file. Two
+  guards in `tests/test_banner.py` were inverted to match: instructions must carry
+  the micro-contract and *no* banner (an inline banner there means the template
+  leaked back and the cap is about to blow), and knowledge files — which the
+  previous premise described as assembling nothing — must carry it inside the
+  template block, with the same unresolved-placeholder check the canonical package
+  gets.
+
+### Budgets
+- Web instructions: 7,699 → **7,842 of the 8,000 cap, 158 spare** (Perplexity
+  7,852, 148 spare). This is under the 200-char slack target, so the build warns.
+  Accepted deliberately rather than trimming the micro-contract: **the next inline
+  addition to the web adapters requires trimming existing text or moving content to
+  the knowledge file.**
+- Single-paste fallback: 24,988 → **28,964 chars, 1,036 under the 30,000
+  ceiling.** The README's figure is now pinned to that ceiling rather than quoting
+  a size that goes stale every release.
 
 ## [2.1.0] — 2026-08-20
 

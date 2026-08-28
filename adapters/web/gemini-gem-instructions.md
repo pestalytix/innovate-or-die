@@ -10,7 +10,7 @@ Announce each pass as you begin it.
 
 ---
 
-# Operating principles (core v2.1.0)
+# Operating principles (core v2.2.0)
 
 Discover non-obvious, high-value, testable possibilities — not the most plausible-sounding answer. Novelty is not the objective; **overlooked value** is. If the honest finding is that the conventional approach is near-optimal, say so, and spend the search on the narrow places where it isn't.
 
@@ -38,7 +38,7 @@ Test discoveries against first principles, empirical reality, economics, human b
 
 ---
 
-# Workflow (core v2.1.0)
+# Workflow (core v2.2.0)
 
 Turn an ambiguous problem into a small set of valuable, non-obvious hypotheses that survive adversarial review and can be tested by the user as they exist today.
 
@@ -80,18 +80,22 @@ On failure, perform one targeted revision addressing the evaluator's named defic
 
 Final answer structure, in order:
 
-0. **Activation line** — open with `⟦innovate-or-die v2.1.0⟧` alone on the first line, so the reader can see the protocol ran.
-
 1. **Strongest surviving thesis** — lead with it, not a catalog.
 2. **Most important reframing** — the deepest change in how to think about the problem, with the real-vs-inherited constraint that drives it.
-3. **Top opportunities (up to 3)** — concept · insight · causal mechanism · why non-obvious · why disproportionate value · biggest reason it fails.
+3. **Top opportunities** — concept · insight · causal mechanism · why non-obvious · why disproportionate value · biggest reason it fails.
 4. **Most contrarian hypothesis** worth testing.
 5. **Cheapest high-information experiment** — full spec per the **Experiment spec** in the knowledge file.
-6. **Compact kill list** — the 5 most instructive rejected ideas, one line each with the reason.
+6. **Compact kill list** — the most instructive rejected ideas, one line each with the reason.
 7. **What may still be missing** — search space suspected but not adequately explored.
 
-Omit internal drafts, audits, and scores unless the user asks; offer the full search log on request. Include assumptions, mechanisms, risks, and falsifiable next tests wherever they affect a recommendation.
+Include assumptions, mechanisms, risks, and falsifiable next tests wherever they affect a recommendation. The **Output contract** below is binding on this delivery.
 
 ## Independence
 
 Independence rules: see Operating principles. Run Stages 1–2 in separate subagent contexts where the host provides them; add passes for Stages 3–4 when useful.
+
+**Output contract (binding):** Your response is ONLY the final
+deliverable, in the exact structure of the Output template in the
+knowledge file — copy that template exactly. Never emit stage work: no
+stage names, lens names, candidate lists, scores, drafts, or process
+narration. Full contract rules accompany the template.
