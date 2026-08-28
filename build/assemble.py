@@ -158,13 +158,18 @@ def claude_marketplace(c: dict) -> str:
         "plugins": [{
             "name": m["name"],
             "displayName": "Innovate or Die",
-            "version": m["version"],
+            # No `version` here on purpose: plugin.json is authoritative for it,
+            # and a second copy in the marketplace entry only drifts. Dropped in
+            # 01adb87; kept out of the generator so a rebuild cannot restore it.
             "description": " ".join(m["description"].split()).split(". ")[0] + ".",
             "author": {"name": a.get("name", ""), "url": a.get("url", "")},
             "homepage": a.get("url", ""),
             "license": m["license"],
             "keywords": ["innovation", "strategy", "critical-thinking"],
-            "source": ".",
+            # Must start with "./": claude.ai marketplace sync rejects a bare
+            # ".", which resolves as a plugin name unless metadata.pluginRoot is
+            # set, and this marketplace does not set it (01adb87).
+            "source": "./",
         }],
     }
     return json.dumps(doc, indent=2) + "\n"
