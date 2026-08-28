@@ -17,3 +17,6 @@ docs/handoffs/
 
 # release build artifacts: rebuilt from any tag with build/package.py
 dist/
+
+# local pre-edit backups
+*.bak
