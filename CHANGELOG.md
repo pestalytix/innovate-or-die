@@ -219,10 +219,11 @@ sections 1–7 keep their numbers, order, and meanings — but the answer's shap
 now specified rather than described, with per-section word ceilings and a
 1,500-word total. The web adapters could not hold
 the new text inline, so they gained a split that mirrors the one already used for
-role briefs and the lens bank. Driven by a five-cell cross-model test
-(`docs/notes/claude-models-test.md`): under v2.1.0 the same prompt leaked internal
-stage work on 2 of 5 configurations — one of them 7,723 words, most of it the
-search rather than its result — and 3 of 5 dropped the numbered sections entirely.
+role briefs and the lens bank. Driven by a five-cell model/effort test
+(2026-08-28, internal notes): under v2.1.0 the same prompt leaked internal stage
+work on 2 of 5 configurations — one of them 7,723 words, most of it the search
+rather than its result — 3 of 5 dropped the section numbering, and 1 of 5 dropped
+six of the seven sections outright.
 
 ### Added — protocol
 - **An output contract (binding rules).** Stage work — framing, lenses, candidate

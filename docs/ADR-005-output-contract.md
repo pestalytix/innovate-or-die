@@ -3,8 +3,8 @@
 **Date:** 2026-08-28 · **Status:** **ACCEPTED 2026-08-28, applied in v2.2.0** ·
 **Affects:** core protocol v2.1.0 → **v2.2.0**
 
-Raised by a five-cell cross-model test of the v2.1.0 protocol on a single real
-prompt (`docs/notes/claude-models-test.md`), run across two vendors and five
+Raised by a five-cell model/effort test of the v2.1.0 protocol on a single real
+prompt (2026-08-28, internal notes), run across two vendors and five
 model/effort configurations.
 
 ---
@@ -20,13 +20,23 @@ user's answer.
 
 Every cell ran the same prompt against the same v2.1.0 protocol:
 
-| Cell | Banner | Numbered sections 1–7 | Stage work leaked | Words |
-|---|---|---|---|---|
-| Fable — Low | yes | **7/7** | **yes** | 1,521 |
-| Opus — Medium | yes | **7/7** | no | 2,155 |
-| Sonnet — High | yes | **0/7** | no | 1,853 |
-| Haiku — Extended | yes | **0/7** | **yes** | **7,723** |
-| GPT-5.6 Sol — High | **no** | **0/7** | no | 2,028 |
+| Cell | Banner | Sections present | Numbered | Stage work leaked | Words |
+|---|---|---|---|---|---|
+| Fable — Low | yes | 7/7 | 7/7 | **yes** | 1,521 |
+| Opus — Medium | yes | 7/7 | 7/7 | no | 2,155 |
+| Sonnet — High | yes | 7/7 | **0/7** | no | 1,853 |
+| Haiku — Extended | yes | 7/7 | **0/7** | **yes** | **7,723** |
+| GPT-5.6 Sol — High | **no** | **1/7** | **0/7** | no | 2,028 |
+
+**How these columns are counted.** *Sections present* matches each of the seven
+delivery sections by title against any markdown heading in the cell, case- and
+numbering-insensitive, accepting the wording variants the protocol itself uses
+(`Cheapest`/`Best low-cost … experiment`, `Compact kill list`/`Kill list`,
+`Top opportunities`/`Top 3 opportunities`). *Numbered* is the stricter check:
+headings matching `^#+ [1-7]\. `. *Banner* is the exact `⟦innovate-or-die
+v<semver>⟧` string. *Stage work leaked* matches stage narration — a literal
+`STAGE n` heading or a "let me read / I'll run the protocol" preamble. *Words*
+is a whitespace split over the whole cell.
 
 Two failures matter, and they are different failures.
 
@@ -40,14 +50,26 @@ internal drafts, audits, and scores unless the user asks"*, which is a
 disclosure rule about artifacts. It does not forbid narrating the process, and
 two of five models read it accordingly.
 
-**Structure noncompliance.** Three of five cells emitted none of the seven
-numbered sections. They are not bad answers — Sonnet and GPT-5.6 both produce
-strong, well-organised prose — but the section numbers, and therefore anything
-downstream that reads position, are gone. GPT-5.6 Sol also dropped the banner,
-restructured into free-form headings (`# The product: Commercial Rodent Entry
-Control`), and never produced a kill list under any heading. Stage 6 described
-the delivery as a seven-item outline; a description invites paraphrase, and
-three of five models paraphrased it.
+**Structure noncompliance, which is smaller than it first appears and must be
+stated precisely.** Four of five cells emitted all seven delivery sections. Only
+**one — GPT-5.6 Sol — actually lost the structure**, keeping the thesis and
+dropping the other six: no reframing heading, no opportunities, no contrarian
+hypothesis, no experiment spec, no kill list, no what-may-still-be-missing,
+restructured instead into free-form headings (`# The product: Commercial Rodent
+Entry Control`). It also dropped the banner. That is the one hard failure in the
+set, and one of five is the honest count.
+
+What three of five cells dropped is the **numbering**. Sonnet and Haiku produced
+all seven sections under the outline's own wording (`Compact kill list`,
+`Cheapest high-information experiment`) with no `1.`–`7.` prefixes. Those are
+good answers, and under a v2.1.0 outline that never showed a literal heading they
+are arguably conformant. The cost is positional: anything reading "section 5"
+cannot find it, the mechanical compliance checks in ADR-004 undercount, and the
+reader loses the ordering the protocol relies on to lead with the thesis.
+
+Stage 6 described the delivery as a seven-item outline. A description invites
+paraphrase; three of five models paraphrased the form while keeping the content,
+and one paraphrased the content away.
 
 **Length is unbounded.** No cell came in under 1,500 words; the spread is 1,521
 to 7,723. Nothing in v2.1.0 bounds the deliverable, and the evaluator is
@@ -236,10 +258,12 @@ rather than quoting a size that goes stale each release.
 
 A model that ignores a described outline will ignore a literal template too. The
 template is a stronger instrument — it removes the paraphrase step, and the
-three noncompliant cells all produced *reasonable* prose, suggesting paraphrase
-rather than refusal — but "stronger" is not "reliable," and the compliance rates
-in ADR-004 (12/17, 10/17, 4/17 on late-position elements) are the base rate to
-beat.
+cells that dropped the numbering kept every section, which suggests paraphrase
+rather than refusal and is the failure a literal template most directly fixes.
+GPT-5.6 Sol is the harder case: it did not paraphrase the form, it replaced it,
+and nothing here guarantees a template survives that. "Stronger" is not
+"reliable," and the compliance rates in ADR-004 (12/17, 10/17, 4/17 on
+late-position elements) are the base rate to beat.
 
 Note the new risk this introduces: **a template invites structural compliance
 without substance.** A model can emit seven correctly-numbered headings filled
@@ -271,10 +295,11 @@ verify mechanically.
    unresolved-placeholder check, which must still fail on a `{{CORE_VERSION}}`
    that did not substitute, wherever the banner lives.
 3. **Re-run the five-cell test on v2.2.0**, same prompt, same five
-   model/effort configurations. Record per cell: banner present, sections 1–7
-   present and numbered, any stage-work leakage, word count. The pre-registered
-   prediction is that leakage goes to 0/5 and numbered sections to 5/5; the
-   interesting cell is Haiku — Extended, which failed both.
+   model/effort configurations, counted by the same definitions given above.
+   The pre-registered prediction is that leakage goes to 0/5, sections present
+   to 5/5, and numbering to 5/5. Two cells are the ones to watch: **Haiku —
+   Extended**, the worst leak and the longest answer, and **GPT-5.6 Sol**, the
+   only cell that lost the structure and the only one that missed the banner.
 4. **One paste smoke test per web target**, because the split moves text the
    model needs across a file boundary: paste the instructions, attach the
    knowledge file, and confirm the answer follows the template that now lives
@@ -306,12 +331,15 @@ verify mechanically.
 
 ## Evidence
 
-- `docs/notes/claude-models-test.md` — the five-cell test. One prompt
-  (commercial rodent-exclusion marketing, Worcester County), five
-  model/effort configurations across two vendors, run under v2.1.0.
-- The compliance table above — computed mechanically over that file:
-  banner by exact string, numbered sections by `^## [1-7]\. ` heading match,
-  leakage by stage-narration match, words by whitespace split.
+- The five-cell model/effort test, 2026-08-28 (internal notes, not committed).
+  One prompt (commercial rodent-exclusion marketing, Worcester County), five
+  model/effort configurations across two vendors, run under v2.1.0. The table
+  above reproduces every measurement taken from it.
+- The compliance table above — computed mechanically over those notes, by the
+  definitions stated beside the table. The *sections present* column is
+  title-matched rather than numbering-matched: an earlier count conflated the
+  two and scored Sonnet and Haiku at 0/7 when both emitted all seven sections
+  under the outline's own wording.
 - Build measurements in the split table — real builds of
   `chatgpt-gpt-instructions.md` against the verified 8,000-char cap, 2026-08-28.
 - `docs/ADR-004-activation-banner.md` — the banner, the 301-char reserve this
