@@ -18,17 +18,20 @@ import re
 
 import pytest
 
-# One string carrying every shape the script claims to handle.
+# One string carrying every shape the script claims to handle. Every identifier
+# in it is SYNTHETIC, of the real shape: pinning a real username, address or uid
+# here would put back into this file the identifiers the rules exist to remove.
 DIRTY = """\
-home: /Users/kpendergast/.claude/plugins/cache/x
+home: /Users/testuser/.claude/plugins/cache/x
 other: /Users/someoneelse/projects/thing.md
-trailing: /Users/kpendergast
+trailing: /Users/testuser
 openai: sk-abcdefghijklmnop1234
 anthropic: sk-ant-api03-AAAAAAAABBBBBBBBCCCCCCCC
 project: sk-proj-ZZZZZZZZYYYYYYYYXXXXXXXX
 header: Bearer eyJhbGciOiJIUzI1NiJ9abcdefg
 env: ANTHROPIC_API_KEY=sk-ant-secretvaluehere
-mail: ken@pestalytix.com
+mail: operator@example.com
+scratch: /private/tmp/claude-1234/session/scratchpad
 tmpdir: /private/var/folders/by/abcdefghijklmnopqrstuvwx000000/T/iod-with_skill-87murdly/x
 memdir: .claude/projects/-private-var-folders-by-abcdefghijklmnopqrstuvwx000000-T-iod-with-skill-87murdly/memory/
 """
@@ -51,7 +54,7 @@ def write_tree(root, files):
 
 def test_every_declared_pattern_is_replaced(redact):
     out, counts = redact.redact(DIRTY)
-    assert "/Users/kpendergast" not in out
+    assert "/Users/testuser" not in out
     assert "/Users/someoneelse" not in out
     assert out.count("/Users/REDACTED") == 3
     assert "sk-abcdefghijklmnop1234" not in out
@@ -59,18 +62,20 @@ def test_every_declared_pattern_is_replaced(redact):
     assert "sk-proj-ZZZZZZZZYYYYYYYYXXXXXXXX" not in out
     assert "Bearer" not in out
     assert "secretvaluehere" not in out
-    assert "ken@pestalytix.com" not in out
+    assert "operator@example.com" not in out
     assert "[REDACTED-EMAIL]" in out
     assert "abcdefghijklmnopqrstuvwx000000" not in out
     assert "/var/folders/REDACTED/T/" in out
     assert "-var-folders-REDACTED-T-" in out
+    assert "claude-1234" not in out
+    assert "/tmp/claude-REDACTED/" in out
     assert out.count("[REDACTED-SECRET]") == 5, out
     # The VARIABLE NAME survives; only its value is redacted. That is the point
     # of the constrained value class: `[` is not in it, so once the `sk-` rule
     # has replaced the value the `_API_KEY=` rule correctly declines to eat the
     # `[REDACTED-SECRET]` token and everything after it.
     assert "ANTHROPIC_API_KEY=[REDACTED-SECRET]" in out
-    assert sum(counts.values()) == 11, counts
+    assert sum(counts.values()) == 12, counts
 
 
 def test_nothing_survives_the_residual_scan(redact):
@@ -156,6 +161,62 @@ def test_unrelated_var_paths_are_untouched(redact, innocent):
     assert redact.redact(innocent)[0] == innocent
 
 
+# ----------------------------------------------------- the scratchpad root
+
+# `/tmp/claude-<uid>/` carries the account's numeric user id. The uid below is
+# SYNTHETIC: the real one is what this rule removes, so pinning it here would put
+# it straight back into the repo -- the same slip cd7f92c fixed for the temp-dir
+# hash. Any digit run exercises the rule identically.
+SCRATCH_UID = "1234"
+
+
+@pytest.mark.parametrize("dirty,clean", [
+    (f"/private/tmp/claude-{SCRATCH_UID}/x", "/private/tmp/claude-REDACTED/x"),
+    # `/tmp` is a symlink to `/private/tmp` on macOS and both spellings occur, so
+    # the rule anchors on `tmp/claude-` rather than on an absolute root.
+    (f"/tmp/claude-{SCRATCH_UID}/x", "/tmp/claude-REDACTED/x"),
+    # The dash-flattened encoding does not occur in the published corpus, but the
+    # `/var/folders` rule is in this file because that form DID occur there and a
+    # slash-only rule would have missed it. One character class covers it here.
+    (f"-private-tmp-claude-{SCRATCH_UID}-x", "-private-tmp-claude-REDACTED-x"),
+])
+def test_the_scratchpad_uid_is_normalised(redact, dirty, clean):
+    out, counts = redact.redact(dirty)
+    assert out == clean
+    assert SCRATCH_UID not in out
+    assert sum(counts.values()) == 1
+
+
+def test_an_already_redacted_scratchpad_is_not_recounted(redact):
+    """`[0-9]+` cannot match `REDACTED`, so this rule is its own fixed point
+    without a negative lookahead. Pinned so that stays true if it is widened."""
+    out, counts = redact.redact("/tmp/claude-REDACTED/x")
+    assert out == "/tmp/claude-REDACTED/x"
+    assert counts == {}
+
+
+@pytest.mark.parametrize("innocent", [
+    # Not a uid: the rule must not eat a directory that merely starts `claude-`.
+    "/tmp/claude-code-notes",
+    "the claude-1234 release",     # no `tmp/` marker in front
+    "/tmp/claude/1234",
+])
+def test_non_uid_claude_paths_are_untouched(redact, innocent):
+    assert redact.redact(innocent)[0] == innocent
+
+
+# ------------------------------------------------- a home path with no trailing slash
+
+def test_any_user_is_redacted_with_or_without_a_trailing_slash(redact):
+    """The no-trailing-slash case was once carried by a rule that pinned the
+    operator's username as a literal, which put that identifier in the published
+    source. It now belongs to the generic rule, so it must hold for ANY user."""
+    for dirty in ("/Users/someone", "/Users/someone/x", '"/Users/someone"'):
+        out, _ = redact.redact(dirty)
+        assert "someone" not in out
+        assert "/Users/REDACTED" in out
+
+
 # ------------------------------------------- the regression the naive pattern hit
 
 def test_risk_prose_is_not_mistaken_for_an_api_key(redact):
@@ -199,17 +260,17 @@ def run(tmp_path, redact, monkeypatch):
 def test_clean_run_exits_zero_and_readback_passes(run):
     rc, got = run({"iteration-1/p/t/case/with_skill/outputs/response.md": DIRTY,
                    "iteration-1/p/t/case/with_skill/timing.json":
-                       json.dumps({"cwd": "/Users/kpendergast/tmp"})})
+                       json.dumps({"cwd": "/Users/testuser/tmp"})})
     assert rc == 0
     for text in got.values():
-        assert "kpendergast" not in text
+        assert "testuser" not in text
     assert "/Users/REDACTED/tmp" in got["iteration-1/p/t/case/with_skill/timing.json"]
 
 
 def test_json_stays_parseable_after_redaction(run):
     rel = "iteration-1/p/t/case/with_skill/timing.json"
     rc, got = run({rel: json.dumps(
-        {"cwd": "/Users/kpendergast/T/x", "who": "ken@pestalytix.com",
+        {"cwd": "/Users/testuser/T/x", "who": "operator@example.com",
          "note": "risk-stratify the accounts"})})
     assert rc == 0
     d = json.loads(got[rel])           # the replacements must not break the JSON
@@ -311,11 +372,11 @@ INIT = {"type": "system", "subtype": "init",
         "session_id": "0f2211c2-a425-4366-bd56-3d6c35ba9da6",
         "uuid": "c4839b80-aab8-4d47-9d5f-52e498dc7035",
         "tools": ["Task", "Bash", "Skill", "WebSearch"],
-        "mcp_servers": [{"name": "wordpress-mcp", "status": "pending"},
-                        {"name": "bigquery", "status": "pending"}],
+        "mcp_servers": [{"name": "example-cms-mcp", "status": "pending"},
+                        {"name": "example-warehouse-mcp", "status": "pending"}],
         "model": "claude-sonnet-5",
-        "slash_commands": ["pestalytix-media-exif", "innovate-or-die"],
-        "skills": ["pestalytix-media-exif", "innovate-or-die"],
+        "slash_commands": ["example-media-tool", "innovate-or-die"],
+        "skills": ["example-media-tool", "innovate-or-die"],
         "plugins": [{"name": "frontend-design",
                      "path": "/Users/REDACTED/.claude/plugins/cache/x",
                      "source": "frontend-design@claude-plugins-official"}],
@@ -357,7 +418,7 @@ def test_unnamed_fields_are_left_alone(redact):
 
 def test_the_identifying_values_are_actually_gone(redact):
     out, _ = redact.redact_init_event(stream(INIT))
-    for leaked in ("wordpress-mcp", "bigquery", "pestalytix-media-exif",
+    for leaked in ("example-cms-mcp", "example-warehouse-mcp", "example-media-tool",
                    "frontend-design@claude-plugins-official",
                    "0f2211c2-a425-4366-bd56-3d6c35ba9da6",
                    "c4839b80-aab8-4d47-9d5f-52e498dc7035"):

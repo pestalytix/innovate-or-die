@@ -60,19 +60,20 @@ python3 evals/runners/redact_transcripts.py --copy-from evals-workspace
 
 | Pattern | Replacement |
 |---|---|
-| `/Users/<name>/…` (any user) | `/Users/REDACTED/…` |
+| `/Users/<name>/…` (any user, with or without a trailing slash) | `/Users/REDACTED/…` |
 | `/var/folders/<xx>/<hash>/T/…` (machine temp dir, both encodings) | `/var/folders/REDACTED/T/…` |
+| `/tmp/claude-<uid>/…` (scratchpad root, both spellings) | `/tmp/claude-REDACTED/…` |
 | `sk-…`, `sk-ant-…`, `sk-proj-…` | `[REDACTED-SECRET]` |
 | `Bearer <token>`, `*_API_KEY=<value>` | `[REDACTED-SECRET]` |
 | email addresses | `[REDACTED-EMAIL]` |
 | init-event host environment (below) | `[REDACTED-HOST-ENV]` |
 
-What that actually removed on this corpus: **150 replacements across 3 of 175
-files** — 18 host-environment values, 3 home-directory paths, and 129 machine
-temp-directory segments. The first two land in the three `stream.jsonl` init
-events; the temp-directory paths recur throughout those same three streams,
-wherever a tool call named a file. No secret or email pattern matched anything,
-before or after.
+What that actually removed on this corpus: **174 replacements across 3 of 175
+files** — 18 host-environment values, 3 home-directory paths, 129 machine
+temp-directory segments and 24 scratchpad user ids. The first two land in the
+three `stream.jsonl` init events; the temp-directory and scratchpad paths recur
+throughout those same three streams, wherever a tool call named a file. No secret
+or email pattern matched anything, before or after.
 
 (21 rather than 24 for the host-environment and home-directory rules, because the
 structural rule runs first: it discards the whole `plugins` value, which was

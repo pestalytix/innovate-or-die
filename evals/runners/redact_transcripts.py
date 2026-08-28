@@ -67,6 +67,11 @@ from it for `memory_paths` -- because a rule covering only the first leaves the
 identifier in the file. The run-scoped `iod-<arm>-<random>` suffix is KEPT: it is
 regenerated per run, identifies nothing, and distinguishes runs in the evidence.
 
+## The scratchpad root
+
+`/tmp/claude-<uid>/` carries the account's numeric user id. It is normalised to
+`/tmp/claude-REDACTED/`, in both the `/private`-prefixed and bare spellings.
+
 ## Out of scope, deliberately
 
 Only the shapes listed in `SECRET_PATTERNS` are redacted: OpenAI/Anthropic-style
@@ -93,14 +98,20 @@ REDACTED_USER = "/Users/REDACTED"
 SECRET = "[REDACTED-SECRET]"
 EMAIL = "[REDACTED-EMAIL]"
 
-# Applied in order. The specific home directory first so it is caught with or
-# without a trailing slash; the generic rule then normalises every other user.
+# Applied in order. One rule covers every user, with or without a trailing slash.
 PATH_PATTERNS: list[tuple[re.Pattern, str]] = [
-    (re.compile(r"/Users/kpendergast"), REDACTED_USER),
-    # `REDACTED` is excluded from the name class so an already-redacted path is
-    # not counted as a replacement on a second pass -- that is what makes the
-    # reported counts mean "work done" rather than "rules that still match".
-    (re.compile(r"/Users/(?!REDACTED/)[^/\s\"'\\]+/"), REDACTED_USER + "/"),
+    # Any user, with or without a trailing slash. `REDACTED` is excluded from the
+    # name class so an already-redacted path is not counted as a replacement on a
+    # second pass -- that is what makes the reported counts mean "work done"
+    # rather than "rules that still match".
+    #
+    # A rule pinning the operator's own username as a literal used to sit in front
+    # of this one, and it was the only rule that caught a home path with NO
+    # trailing slash. Hardcoding that name wrote the very identifier being
+    # redacted into the published source, so the no-trailing-slash case moved into
+    # this generic rule instead. That is strictly wider coverage: it now holds for
+    # every user, not just the one whose name was pinned here.
+    (re.compile(r"/Users/(?!REDACTED\b)[^/\s\"'\\]+"), REDACTED_USER),
 ]
 
 # ------------------------------------------------------ macOS temp directory
@@ -128,6 +139,17 @@ TMPDIR_PATTERNS: list[tuple[re.Pattern, str]] = [
      "REDACTED/"),
     (re.compile(r"(?<=-var-folders-)(?!REDACTED-)[A-Za-z0-9]+-[A-Za-z0-9]+-(?=T-)"),
      "REDACTED-"),
+    # The scratchpad root, `/tmp/claude-<uid>/`, whose `<uid>` is the account's
+    # numeric user id on the machine. `/tmp` is a symlink to `/private/tmp` on
+    # macOS and both spellings occur, so the lookbehind anchors on `tmp/claude-`
+    # rather than on an absolute root; the separator class admits the
+    # dash-flattened encoding too. That flattened form does NOT occur in this
+    # corpus -- checked, not assumed -- but it costs one character class to
+    # cover, and the rule above it is here precisely because that encoding DID
+    # occur for `/var/folders` and a slash-only rule would have sailed past it.
+    # `[0-9]+` cannot match `REDACTED`, so this rule is its own fixed point
+    # without needing a negative lookahead.
+    (re.compile(r"(?<=[/-]tmp[/-]claude-)[0-9]+"), "REDACTED"),
 ]
 
 SECRET_PATTERNS: list[tuple[re.Pattern, str]] = [
