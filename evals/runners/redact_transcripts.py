@@ -57,6 +57,16 @@ because they are evidence. This rule is structural (parse, replace values,
 re-serialise) rather than textual, and only rewrites a line whose values actually
 changed, so everything else stays byte-identical.
 
+## The macOS temp directory
+
+`cwd` and `memory_paths` carry `/var/folders/<xx>/<hash>/T/…`, whose `<hash>` is
+stable per account per machine and so identifies the operator's machine. It is
+normalised to `/var/folders/REDACTED/T/…`. Two encodings exist and both are
+handled -- the path itself, and the dash-flattened directory name the CLI derives
+from it for `memory_paths` -- because a rule covering only the first leaves the
+identifier in the file. The run-scoped `iod-<arm>-<random>` suffix is KEPT: it is
+regenerated per run, identifies nothing, and distinguishes runs in the evidence.
+
 ## Out of scope, deliberately
 
 Only the shapes listed in `SECRET_PATTERNS` are redacted: OpenAI/Anthropic-style
@@ -93,6 +103,33 @@ PATH_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"/Users/(?!REDACTED/)[^/\s\"'\\]+/"), REDACTED_USER + "/"),
 ]
 
+# ------------------------------------------------------ macOS temp directory
+# The per-user temp directory, `/var/folders/<xx>/<hash>/T/`. `<hash>` is stable
+# for the life of the account on the machine, so it identifies the MACHINE. The
+# `iod-<arm>-<random>` suffix beneath it is regenerated per run, identifies
+# nothing, and is deliberately kept -- it is what distinguishes one run's paths
+# from another's in the evidence.
+#
+# The identifier reaches a transcript in TWO encodings, and a rule that handles
+# only the obvious one leaves it sitting in the file:
+#
+#   1. as a path       `/private/var/folders/by/<hash>/T/iod-with_skill-x`
+#   2. dash-flattened  the CLI flattens that same path into a directory NAME for
+#                      `memory_paths`: `…/projects/-private-var-folders-by-<hash>-T-iod-…`
+#
+# Both are anchored with a LOOKBEHIND on the literal `var/folders` marker. That
+# keeps the `/private` prefix -- present in the path form, and not always present
+# at all, since macOS reports the same directory both ways -- outside the match,
+# so one rule covers both spellings. It also makes each replacement a fixed point
+# of its own rule (the negative lookahead declines the already-redacted form),
+# which is what keeps re-runs at zero replacements.
+TMPDIR_PATTERNS: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"(?<=/var/folders/)(?!REDACTED/)[^/\s\"'\\]+/[^/\s\"'\\]+/"),
+     "REDACTED/"),
+    (re.compile(r"(?<=-var-folders-)(?!REDACTED-)[A-Za-z0-9]+-[A-Za-z0-9]+-(?=T-)"),
+     "REDACTED-"),
+]
+
 SECRET_PATTERNS: list[tuple[re.Pattern, str]] = [
     # Token-boundary guarded -- see the docstring. Covers sk-, sk-ant-, sk-proj-.
     (re.compile(r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{8,}"), SECRET),
@@ -106,7 +143,7 @@ SECRET_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), EMAIL),
 ]
 
-RULES = PATH_PATTERNS + SECRET_PATTERNS
+RULES = PATH_PATTERNS + TMPDIR_PATTERNS + SECRET_PATTERNS
 
 # ---------------------------------------------------- host-environment stripping
 # The Claude CLI opens a `stream.jsonl` with a `{"type":"system","subtype":"init"}`

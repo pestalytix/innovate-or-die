@@ -61,19 +61,23 @@ python3 evals/runners/redact_transcripts.py --copy-from evals-workspace
 | Pattern | Replacement |
 |---|---|
 | `/Users/<name>/…` (any user) | `/Users/REDACTED/…` |
+| `/var/folders/<xx>/<hash>/T/…` (machine temp dir, both encodings) | `/var/folders/REDACTED/T/…` |
 | `sk-…`, `sk-ant-…`, `sk-proj-…` | `[REDACTED-SECRET]` |
 | `Bearer <token>`, `*_API_KEY=<value>` | `[REDACTED-SECRET]` |
 | email addresses | `[REDACTED-EMAIL]` |
 | init-event host environment (below) | `[REDACTED-HOST-ENV]` |
 
-What that actually removed on this corpus: **21 replacements across 3 of 171
-files** — 18 host-environment values and 3 home-directory paths, all in the three
-`stream.jsonl` init events. No secret or email pattern matched anything, before
-or after.
+What that actually removed on this corpus: **150 replacements across 3 of 175
+files** — 18 host-environment values, 3 home-directory paths, and 129 machine
+temp-directory segments. The first two land in the three `stream.jsonl` init
+events; the temp-directory paths recur throughout those same three streams,
+wherever a tool call named a file. No secret or email pattern matched anything,
+before or after.
 
-(21 rather than 24 because the structural rule runs first: it discards the whole
-`plugins` value, which was itself carrying one of the two home-directory paths in
-each file, so the textual rule then has one path left to fix rather than two.)
+(21 rather than 24 for the host-environment and home-directory rules, because the
+structural rule runs first: it discards the whole `plugins` value, which was
+itself carrying one of the two home-directory paths in each file, so the textual
+rule then has one path left to fix rather than two.)
 
 ### Host environment, stripped
 
@@ -117,9 +121,6 @@ instead of passing quietly. None occur here.
 
 Stated rather than left to be discovered:
 
-- **Temporary paths.** `cwd` and `memory_paths` still carry the per-run temp
-  directory (`/private/var/folders/…/iod-with_skill-<random>`). The username
-  within them is redacted; the run-scoped random suffix is not.
 - **`session_id` and `uuid` on non-init event lines**, as described above — the
   init-event rule is scoped to the init event by design, and these two fields
   recur on every line of a stream.

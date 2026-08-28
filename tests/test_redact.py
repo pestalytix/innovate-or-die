@@ -29,6 +29,8 @@ project: sk-proj-ZZZZZZZZYYYYYYYYXXXXXXXX
 header: Bearer eyJhbGciOiJIUzI1NiJ9abcdefg
 env: ANTHROPIC_API_KEY=sk-ant-secretvaluehere
 mail: ken@pestalytix.com
+tmpdir: /private/var/folders/by/d2f80qjn0h11nyrgsw8plkd00000gn/T/iod-with_skill-87murdly/x
+memdir: .claude/projects/-private-var-folders-by-d2f80qjn0h11nyrgsw8plkd00000gn-T-iod-with-skill-87murdly/memory/
 """
 
 # The prose that the naive pattern destroyed. Must survive byte-for-byte.
@@ -59,13 +61,16 @@ def test_every_declared_pattern_is_replaced(redact):
     assert "secretvaluehere" not in out
     assert "ken@pestalytix.com" not in out
     assert "[REDACTED-EMAIL]" in out
+    assert "d2f80qjn0h11nyrgsw8plkd00000gn" not in out
+    assert "/var/folders/REDACTED/T/" in out
+    assert "-var-folders-REDACTED-T-" in out
     assert out.count("[REDACTED-SECRET]") == 5, out
     # The VARIABLE NAME survives; only its value is redacted. That is the point
     # of the constrained value class: `[` is not in it, so once the `sk-` rule
     # has replaced the value the `_API_KEY=` rule correctly declines to eat the
     # `[REDACTED-SECRET]` token and everything after it.
     assert "ANTHROPIC_API_KEY=[REDACTED-SECRET]" in out
-    assert sum(counts.values()) == 9, counts
+    assert sum(counts.values()) == 11, counts
 
 
 def test_nothing_survives_the_residual_scan(redact):
@@ -85,6 +90,68 @@ def test_an_already_redacted_path_is_not_recounted(redact):
     out, counts = redact.redact("/Users/REDACTED/.claude/x")
     assert out == "/Users/REDACTED/.claude/x"
     assert counts == {}
+
+
+# ------------------------------------------------- the machine's temp directory
+
+# `<xx>/<hash>` is stable per account per machine, so it identifies the machine.
+# It reaches a transcript in two encodings and both must go: the path itself, and
+# the dash-flattened directory NAME the CLI derives from it for `memory_paths`.
+TMPDIR_HASH = "d2f80qjn0h11nyrgsw8plkd00000gn"
+TMPDIR_PATH = f"/private/var/folders/by/{TMPDIR_HASH}/T/iod-with_skill-87murdly"
+TMPDIR_FLAT = f"-private-var-folders-by-{TMPDIR_HASH}-T-iod-with-skill-87murdly"
+
+
+@pytest.mark.parametrize("dirty,clean", [
+    (TMPDIR_PATH, "/private/var/folders/REDACTED/T/iod-with_skill-87murdly"),
+    # macOS reports the same directory with and without the `/private` prefix,
+    # so the rule anchors on the `var/folders` marker, not on an absolute root.
+    (TMPDIR_PATH.replace("/private", ""),
+     "/var/folders/REDACTED/T/iod-with_skill-87murdly"),
+    (TMPDIR_FLAT, "-private-var-folders-REDACTED-T-iod-with-skill-87murdly"),
+])
+def test_the_machine_temp_dir_is_normalised_in_both_encodings(redact, dirty, clean):
+    out, counts = redact.redact(dirty)
+    assert out == clean
+    assert TMPDIR_HASH not in out
+    assert sum(counts.values()) == 1
+
+
+def test_the_run_scoped_suffix_survives_temp_dir_redaction(redact):
+    """`<xx>/<hash>` identifies the machine and goes. `iod-<arm>-<random>` is
+    regenerated per run, identifies nothing, and is what tells two runs' paths
+    apart in the evidence -- so it stays."""
+    assert redact.redact(TMPDIR_PATH)[0].endswith("/T/iod-with_skill-87murdly")
+
+
+@pytest.mark.parametrize("already", [
+    "/private/var/folders/REDACTED/T/iod-with_skill-87murdly",
+    "-private-var-folders-REDACTED-T-iod-with-skill-87murdly",
+])
+def test_an_already_redacted_temp_dir_is_not_recounted(redact, already):
+    """Same fixed-point requirement as the user-path rule: a replacement that
+    re-matched its own pattern would report phantom work on every re-run."""
+    out, counts = redact.redact(already)
+    assert out == already
+    assert counts == {}
+
+
+def test_temp_dir_redaction_cannot_eat_a_json_string(redact):
+    """The value class excludes the quote and the backslash, so the rule cannot
+    consume a closing quote -- the exact failure the parse guard exists for."""
+    out, _ = redact.redact(json.dumps({"cwd": TMPDIR_PATH, "keep": "evidence"}))
+    d = json.loads(out)
+    assert d["keep"] == "evidence"
+    assert TMPDIR_HASH not in d["cwd"]
+
+
+@pytest.mark.parametrize("innocent", [
+    "the var/folders naming convention",
+    "/var/log/system.log",
+    "wrote it to /var/folders/REDACTED/T/ during the run",
+])
+def test_unrelated_var_paths_are_untouched(redact, innocent):
+    assert redact.redact(innocent)[0] == innocent
 
 
 # ------------------------------------------- the regression the naive pattern hit
